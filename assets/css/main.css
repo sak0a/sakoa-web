@@ -1,0 +1,321 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark Mode Only - Fixed Colors */
+:root {
+  /* Base colors */
+  --color-black: #000000;
+  --color-white: #ffffff;
+
+  /* Brand colors */
+  --color-primary: #734C96;
+  --color-secondary: #23104D;
+  --color-accent: #9B6BC7;
+  --color-purple-dark: #1A0B2E;
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md transition-all duration-300 font-medium;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-accent transition-colors duration-300;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-white hover:bg-purple-dark transition-colors duration-300;
+  }
+
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section {
+    @apply py-12 md:py-16;
+  }
+
+  .card {
+    background-color: #242424;
+    color: #ffffff;
+    border: 1px solid #333333;
+    @apply rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-lg;
+  }
+
+  .glass-effect {
+    @apply backdrop-blur-md bg-opacity-50;
+  }
+
+  /* Animation classes with respect for reduced motion */
+  @media (prefers-reduced-motion: no-preference) {
+    .animate-on-scroll {
+      opacity: 0;
+    }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  @media (prefers-reduced-motion: reduce) {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+/* Navigation Bar Styles */
+.navigation {
+  --ease: cubic-bezier(0.6, 0.6, 0, 1);
+  --duration: 1s;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.nav-buttons-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-container {
+  background-color: rgba(26, 26, 26, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 8px;
+  border-width: 1px;
+  border-color: rgba(255, 255, 255, 0.1);
+  margin-top: 0px;
+  transition: width var(--duration) var(--ease), padding var(--duration) var(--ease), border-color var(--duration) var(--ease), background-color var(--duration) var(--ease), backdrop-filter var(--duration) var(--ease);
+  padding: 1.2rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.nav-parent {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.nav-logo {
+  position: relative;
+  width: 280px;
+  overflow: hidden;
+  transition: width var(--duration) var(--ease);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.nav-logo-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 7px;
+  transition: all var(--duration) var(--ease);
+}
+
+.nav-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity var(--duration) var(--ease), transform var(--duration) var(--ease);
+}
+
+.nav-title-hidden {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+  margin: 0 40px;
+  gap: 8px;
+}
+
+.nav-buttons-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Navigation Scrolled State */
+.navigation.scrolled {
+  background-color: transparent;
+  transform: translateY(0);
+  top: 1rem;
+}
+
+.navigation.scrolled .nav-container {
+  border-radius: 8px;
+  width: 50rem;
+  padding: 0.8rem 1.5rem;
+  border-color: rgba(255, 255, 255, 0.15);
+  background-color: rgba(26, 26, 26, 0.4);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: none;
+}
+
+.navigation.scrolled .nav-logo {
+  width: 44px;
+}
+
+.navigation.scrolled .nav-logo-img {
+  width: 28px;
+  height: 28px;
+}
+
+.navigation.scrolled .nav-menu {
+  margin: 0 50px;
+  gap: 2px;
+}
+
+.navigation.scrolled .nav-link {
+  font-size: 0.78em;
+  padding: 6px 8px;
+}
+
+.navigation.scrolled .nav-button {
+  font-size: 0.72em;
+  padding: 6px 10px;
+}
+
+.navigation.scrolled .nav-buttons-right {
+  gap: 4px;
+}
+
+/* Navigation Links */
+.nav-link {
+  padding: 6px 12px;
+  text-decoration: none;
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 0.9em;
+  transition: all var(--duration) var(--ease);
+  border-radius: 4px;
+}
+
+.nav-link:hover {
+  color: var(--color-primary);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Navigation Buttons */
+.nav-button {
+  padding: 6px 14px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: 400;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85em;
+  transition: all var(--duration) var(--ease);
+}
+
+.nav-button.outline {
+  border: 1px solid #ffffff;
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.nav-button.outline:hover {
+  background-color: #ffffff;
+  color: #000000;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.nav-button.outline:hover .nav-button-arrow {
+  transform: translateX(3px);
+}
+
+.nav-button-arrow {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.3s ease;
+}
+
+.nav-button.primary {
+  background-color: #000000;
+  color: #ffffff;
+  border: 1px solid #000000;
+}
+
+.nav-button.primary:hover {
+  background-color: #333333;
+  border-color: #333333;
+}
+
+/* Mobile Responsive */
+@media only screen and (max-width: 991px) {
+  .nav-menu {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: #1a1a1a;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    margin: 0;
+    padding: 1rem;
+    border-radius: 0 0 8px 8px;
+  }
+
+  .nav-menu.open {
+    display: flex;
+  }
+
+  .nav-buttons-right {
+    flex-direction: column;
+    width: 100%;
+    margin-left: 0;
+    padding: 10px 0;
+  }
+
+  .nav-button {
+    margin: 5px 0;
+    width: calc(100% - 20px);
+  }
+
+  .nav-logo {
+    width: 200px;
+  }
+
+  .nav-title {
+    font-size: 0.8rem;
+  }
+
+  .navigation.scrolled .nav-container {
+    width: 95%;
+  }
+
+  .navigation.scrolled .nav-logo {
+    width: 40px;
+  }
+
+  .navigation.scrolled .nav-logo-img {
+    width: 24px;
+    height: 24px;
+  }
+}
