@@ -23,7 +23,7 @@ jobs:
       run: npm ci
       
     - name: Build project
-      run: npm run generate
+      run: npm run build
       env:
         DB_HOST: ${{ secrets.DB_HOST }}
         DB_PORT: ${{ secrets.DB_PORT }}
@@ -42,15 +42,17 @@ jobs:
         # key: ${{ secrets.PLESK_SSH_KEY }}
         script: |
           # Navigate to your domain's directory
-          cd /var/www/vhosts/sakoa.xyz/httpdocs
-          
+          cd /var/www/vhosts/sakoa.xyz
+
           # Backup current deployment (optional)
           if [ -d "backup" ]; then rm -rf backup; fi
           mkdir backup
-          cp -r * backup/ 2>/dev/null || true
-          
+          cp -r .output backup/ 2>/dev/null || true
+          cp -r server backup/ 2>/dev/null || true
+          cp .env backup/ 2>/dev/null || true
+
           # Clear current files (except backup)
-          find . -maxdepth 1 -not -name 'backup' -not -name '.' -not -name '..' -exec rm -rf {} +
+          rm -rf .output server .env 2>/dev/null || true
           
     - name: Upload built files
       uses: appleboy/scp-action@v0.1.7
@@ -60,20 +62,49 @@ jobs:
         password: ${{ secrets.PLESK_PASSWORD }}
         # Alternative: use key instead of password
         # key: ${{ secrets.PLESK_SSH_KEY }}
-        source: ".output/public/*"
-        target: "/var/www/vhosts/sakoa.xyz/httpdocs"
-        strip_components: 2  # Remove .output/public/ from path
-        
-    - name: Set file permissions
+        source: ".output/*,server/*"
+        target: "/var/www/vhosts/sakoa.xyz"
+        strip_components: 0  # Keep directory structure
+
+    - name: Create environment file
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.PLESK_HOST }}
         username: ${{ secrets.PLESK_USERNAME }}
         password: ${{ secrets.PLESK_PASSWORD }}
         script: |
-          cd /var/www/vhosts/sakoa.xyz/httpdocs
-          find . -type f -exec chmod 644 {} \;
-          find . -type d -exec chmod 755 {} \;
+          cd /var/www/vhosts/sakoa.xyz
+          cat > .env << EOF
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          EOF
+        
+    - name: Set file permissions and configure Node.js
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.PLESK_HOST }}
+        username: ${{ secrets.PLESK_USERNAME }}
+        password: ${{ secrets.PLESK_PASSWORD }}
+        script: |
+          cd /var/www/vhosts/sakoa.xyz
+
+          # Set file permissions
+          find .output -type f -exec chmod 644 {} \;
+          find .output -type d -exec chmod 755 {} \;
+          find server -type f -exec chmod 644 {} \;
+          find server -type d -exec chmod 755 {} \;
+          chmod 600 .env
+
+          # Make server executable
+          chmod +x .output/server/index.mjs
+
+          # Restart Node.js application (if using Plesk Node.js)
+          # This command may vary depending on your Plesk setup
+          # plesk bin site --update sakoa.xyz -nodejs-restart || true
           
     - name: Deployment notification
       run: |
