@@ -19,23 +19,16 @@ jobs:
         node-version: '20'
         cache: 'npm'
 
-    - name: Install build dependencies for native modules
-      run: |
-        # Install build tools that might be needed for native bindings
-        sudo apt-get update
-        sudo apt-get install -y build-essential python3
-
     - name: Clean and install dependencies
       run: |
         # Clean any cached build artifacts
         rm -rf .nuxt .output dist node_modules/.cache
-        # Install dependencies without running postinstall scripts to avoid native binding issues
-        npm ci --ignore-scripts
+        npm ci
 
-    - name: Build project (handle native binding issues)
+    - name: Build project
       run: |
-        # Use custom CI build script that handles native binding issues gracefully
-        npm run ci-build
+        # Build the project
+        npm run build
       env:
         DB_HOST: ${{ secrets.DB_HOST }}
         DB_PORT: ${{ secrets.DB_PORT }}
@@ -43,13 +36,6 @@ jobs:
         DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         DB_NAME: ${{ secrets.DB_NAME }}
         ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-        # Environment variables to help with native binding issues
-        NODE_ENV: production
-        CI: true
-        NITRO_PRESET: node-server
-        NUXT_TELEMETRY_DISABLED: 1
-        # Disable problematic features that might cause native binding issues
-        NUXT_EXPERIMENTAL_WASM: false
         
     - name: Deploy to Plesk via SSH
       uses: appleboy/ssh-action@v1.0.3
