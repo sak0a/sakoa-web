@@ -104,6 +104,20 @@ jobs:
 
           # Execute restart script
           ./restart-app.sh
+
+          # Additional Passenger-specific restart methods
+          echo "🔄 Additional Passenger restart attempts..."
+
+          # Method 1: Touch restart.txt in application root (Passenger standard)
+          touch restart.txt
+
+          # Method 2: Touch restart.txt in tmp directory (Passenger alternative)
+          mkdir -p tmp && touch tmp/restart.txt
+
+          # Method 3: Update file timestamps to trigger Passenger reload
+          find .output/server -name "*.mjs" -exec touch {} \; 2>/dev/null || true
+
+          echo "✅ Passenger restart triggers created"
           
     - name: Deployment notification
       run: |

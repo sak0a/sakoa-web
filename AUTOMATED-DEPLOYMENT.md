@@ -191,13 +191,20 @@ Both workflows now automatically restart your Node.js application in Plesk after
 - New code changes require application restart
 - Database connection settings need restart to apply
 
-The workflows use a custom restart script (`restart-app.sh`) that tries multiple methods:
-1. **Touch restart files** - Creates trigger files that some process managers watch
-2. **Graceful process termination** - Sends SIGTERM to existing Node.js processes
-3. **Force kill if needed** - Ensures old processes are stopped
-4. **Manual start attempt** - Tries to start the application if not managed by Plesk
+The workflows use a custom restart script (`restart-app.sh`) optimized for **Passenger** (Plesk's Node.js process manager):
 
-**Note**: Plesk commands require root access, so we use alternative non-root methods.
+**Passenger-Specific Methods:**
+1. **Touch restart.txt files** - Standard Passenger restart trigger
+2. **Terminate Passenger NodeApp** - Gracefully stops Passenger processes
+3. **Create tmp/restart.txt** - Alternative Passenger restart method
+4. **Update file timestamps** - Triggers Passenger file change detection
+
+**Why Passenger?** Your Plesk uses Passenger to manage Node.js apps:
+- Process: `Passenger NodeApp: /var/www/vhosts/sakoa.xyz/.output/server`
+- Passenger automatically restarts when it detects restart triggers
+- No root access needed for restart files
+
+**Note**: Direct Plesk commands require root access, so we use Passenger-compatible methods.
 
 **Manual Restart (if automatic fails):**
 1. Go to Plesk control panel
