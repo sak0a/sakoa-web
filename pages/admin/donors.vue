@@ -249,6 +249,11 @@
             </div>
           </div>
         </div>
+
+        <!-- File Manager Section -->
+        <div class="mt-8">
+          <AdminFileManager file-type="donors" />
+        </div>
       </div>
     </AdminLayout>
   </div>

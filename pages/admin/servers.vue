@@ -234,6 +234,11 @@
             </div>
           </div>
         </div>
+
+        <!-- File Manager Section -->
+        <div class="mt-8">
+          <AdminFileManager file-type="servers" />
+        </div>
       </div>
     </AdminLayout>
   </div>

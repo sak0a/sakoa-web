@@ -3,16 +3,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "nuxt build",
+    "build": "nuxt build && node scripts/copy-data-files.js",
     "dev": "nuxt dev",
-    "generate": "nuxt generate",
+    "generate": "nuxt generate && node scripts/copy-data-files.js",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "deploy": "npm run generate && echo '✅ Static files ready in .output/public/ - Upload to sakoa.xyz'",
+    "copy-data": "node scripts/copy-data-files.js"
   },
   "dependencies": {
     "gsap": "^3.13.0",
     "mysql2": "^3.14.1",
-    "nuxt": "^3.17.5",
+    "nuxt": "^3.16.0",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1"
   },

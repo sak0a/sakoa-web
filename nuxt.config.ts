@@ -5,10 +5,18 @@ export default defineNuxtConfig({
   modules: [
     '@nuxtjs/tailwindcss'
   ],
+  experimental: {
+    headNext: true
+  },
+  unhead: {
+    renderSSRHeadOptions: {
+      omitLineBreaks: false
+    }
+  },
   css: ['~/assets/css/main.css'],
   app: {
     head: {
-      title: "Saka's Dodgeball Server Donations",
+      title: "saka's Dodgeball Server",
       meta: [
         { name: 'description', content: 'Support Saka\'s Team Fortress 2 Dodgeball Server through donations' }
       ],
@@ -30,5 +38,13 @@ export default defineNuxtConfig({
     public: {
       serverIp: '45.81.234.145:27015'
     }
+  },
+  nitro: {
+    publicAssets: [
+      {
+        baseURL: '/data',
+        dir: 'server/data'
+      }
+    ]
   }
 })
