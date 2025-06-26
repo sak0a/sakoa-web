@@ -69,7 +69,7 @@ jobs:
         password: ${{ secrets.PLESK_PASSWORD }}
         # Alternative: use key instead of password
         # key: ${{ secrets.PLESK_SSH_KEY }}
-        source: ".output/*,server/*,scripts/diagnose-deployment.sh,scripts/test-server-start.js,scripts/run-node-script.sh"
+        source: ".output/*,server/*,scripts/diagnose-deployment.sh,scripts/test-server-start.js,scripts/run-node-script.sh,scripts/restart-app.sh,manual-restart.sh"
         target: "/var/www/vhosts/sakoa.xyz/httpdocs"
         strip_components: 0  # Keep directory structure
 
@@ -110,21 +110,12 @@ jobs:
           chmod +x .output/server/index.mjs
           chmod +x scripts/run-node-script.sh
           chmod +x scripts/diagnose-deployment.sh
+          chmod +x scripts/restart-app.sh
+          chmod +x manual-restart.sh
 
-          # Create deployment trigger for systemd watcher
-          echo "🎯 Creating deployment trigger for systemd service..."
-          echo "$(date '+%Y-%m-%d %H:%M:%S') - Deployment triggered by GitHub Actions" > .deployment_trigger
-
-          echo "✅ Deployment trigger (.deployment_trigger) created successfully"
-          echo "📋 The systemd service 'sakoa-deployment-watcher' will detect this file and restart the Node.js application"
-
-          # Fallback: Traditional Passenger restart methods (in case systemd service is not running)
-          echo "🔄 Creating fallback Passenger restart triggers..."
-          touch restart.txt 2>/dev/null || true
-          mkdir -p tmp && touch tmp/restart.txt 2>/dev/null || true
-          touch .output/server/restart.txt 2>/dev/null || true
-
-          echo "✅ All restart triggers created - deployment completed"
+          # Use comprehensive restart script
+          echo "🔄 Running comprehensive application restart..."
+          ./scripts/restart-app.sh
 
     - name: Test server startup
       uses: appleboy/ssh-action@v1.0.3
@@ -156,3 +147,8 @@ jobs:
         echo "🚀 Deployment completed successfully!"
         echo "🌐 Site should be live at: https://sakoa.xyz"
         echo "🔍 Check the diagnostic output above for any issues"
+        echo ""
+        echo "📋 If the site shows 500 errors or dynamic content isn't loading:"
+        echo "   1. Wait 1-2 minutes for automatic restart to complete"
+        echo "   2. Run: ./manual-restart.sh on the server"
+        echo "   3. Or restart via Plesk control panel: sakoa.xyz > Node.js > Restart App"
