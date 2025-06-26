@@ -1,9 +1,7 @@
-name: Deploy to Plesk
+name: Deploy to Plesk (Bun)
 
 on:
-  push:
-    branches: [ main, master ]  # Deploy when pushing to main/master branch
-  workflow_dispatch:  # Allow manual deployment
+  workflow_dispatch:  # Manual deployment only (to avoid conflicts with Node.js workflow)
 
 jobs:
   deploy:
@@ -13,17 +11,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
       with:
-        node-version: '20'
-        cache: 'npm'
+        bun-version: latest
         
     - name: Install dependencies
-      run: npm ci
+      run: bun install
       
     - name: Build project
-      run: npm run build
+      run: bun run build
       env:
         DB_HOST: ${{ secrets.DB_HOST }}
         DB_PORT: ${{ secrets.DB_PORT }}
@@ -64,7 +61,7 @@ jobs:
         source: ".output/*,server/*"
         target: "/var/www/vhosts/sakoa.xyz/httpdocs"
         strip_components: 0  # Keep directory structure
-
+        
     - name: Create environment file
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -81,8 +78,8 @@ jobs:
           DB_NAME=${{ secrets.DB_NAME }}
           ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
           EOF
-        
-    - name: Set file permissions and configure Node.js
+          
+    - name: Set file permissions and configure runtime
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.PLESK_HOST }}
@@ -97,15 +94,18 @@ jobs:
           find server -type f -exec chmod 644 {} \;
           find server -type d -exec chmod 755 {} \;
           chmod 600 .output/server/.env
-
+          
           # Make server executable
           chmod +x .output/server/index.mjs
-
-          # Restart Node.js application (if using Plesk Node.js)
-          # This command may vary depending on your Plesk setup
+          
+          # Install Bun on server if not present (optional)
+          # curl -fsSL https://bun.sh/install | bash || true
+          
+          # Restart Node.js/Bun application (if using Plesk runtime)
           # plesk bin site --update sakoa.xyz -nodejs-restart || true
           
     - name: Deployment notification
       run: |
         echo "🚀 Deployment completed successfully!"
         echo "🌐 Site should be live at: https://sakoa.xyz"
+        echo "⚡ Built with Bun for faster performance!"

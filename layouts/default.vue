@@ -29,7 +29,7 @@
             <a href="#server-status" class="nav-link">Status</a>
             <a href="#leaderboard" class="nav-link">Leaderboard</a>
             <a href="#tiers" class="nav-link">Rewards</a>
-            <a href="#donors" class="nav-link">Donors</a>
+            <a href="#donors" class="nav-link">Donators</a>
 
           </nav>
 
