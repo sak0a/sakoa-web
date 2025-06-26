@@ -27,21 +27,37 @@ function runCommand(command, description, continueOnError = false) {
   }
 }
 
-// Step 1: Try to prepare Nuxt (may fail due to native bindings)
+// Step 1: Handle npm optional dependency issues
+console.log('\n🔧 Checking for npm optional dependency issues...');
+if (!existsSync('node_modules') || !existsSync('package-lock.json')) {
+  console.log('📦 Installing dependencies (handling optional dependency issues)...');
+  runCommand('npm install', 'Install dependencies', false);
+}
+
+// Step 2: Try to prepare Nuxt (may fail due to native bindings)
 console.log('\n🔧 Attempting Nuxt preparation...');
 const prepareSuccess = runCommand('nuxt prepare', 'Nuxt prepare', true);
 
 if (!prepareSuccess) {
   console.log('\n🔄 Nuxt prepare failed (likely due to native bindings), trying alternative approach...');
-  
-  // Create minimal .nuxt directory structure if it doesn't exist
-  if (!existsSync('.nuxt')) {
-    console.log('📁 Creating minimal .nuxt directory structure...');
-    runCommand('mkdir -p .nuxt', 'Create .nuxt directory', false);
+
+  // Try to install missing rollup bindings
+  console.log('🔧 Attempting to install missing rollup bindings...');
+  runCommand('npm install @rollup/rollup-linux-x64-gnu --save-optional', 'Install rollup bindings', true);
+
+  // Retry nuxt prepare
+  const retryPrepare = runCommand('nuxt prepare', 'Nuxt prepare (retry)', true);
+
+  if (!retryPrepare) {
+    // Create minimal .nuxt directory structure if it doesn't exist
+    if (!existsSync('.nuxt')) {
+      console.log('📁 Creating minimal .nuxt directory structure...');
+      runCommand('mkdir -p .nuxt', 'Create .nuxt directory', false);
+    }
   }
 }
 
-// Step 2: Run the build
+// Step 3: Run the build
 console.log('\n🏗️ Building project...');
 const buildSuccess = runCommand('nuxt build', 'Nuxt build', true);
 
@@ -52,7 +68,7 @@ if (!buildSuccess) {
   runCommand('nuxt build', 'Nuxt build (retry)', false);
 }
 
-// Step 3: Copy data files
+// Step 4: Copy data files
 console.log('\n📂 Copying data files...');
 runCommand('node scripts/copy-data-files.js', 'Copy data files', false);
 
