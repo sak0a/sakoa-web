@@ -44,8 +44,29 @@ echo "🚀 Checking if server can start..."
 cd .output/server
 echo "Current directory: $(pwd)"
 
-echo "📋 Attempting to start server (will timeout after 10 seconds)..."
-timeout 10s node index.mjs 2>&1 || echo "Server start attempt completed/timed out"
+# Find Node.js executable
+if [ -n "$NODE_CMD" ]; then
+  NODE_EXEC="$NODE_CMD"
+elif command -v node >/dev/null 2>&1; then
+  NODE_EXEC="node"
+elif [ -f "/opt/plesk/node/20/bin/node" ]; then
+  NODE_EXEC="/opt/plesk/node/20/bin/node"
+elif [ -f "/usr/local/psa/var/modules/psa-node/versions/node-20/bin/node" ]; then
+  NODE_EXEC="/usr/local/psa/var/modules/psa-node/versions/node-20/bin/node"
+elif [ -f "/usr/bin/node" ]; then
+  NODE_EXEC="/usr/bin/node"
+else
+  echo "❌ Node.js not found - cannot test server startup"
+  NODE_EXEC=""
+fi
+
+if [ -n "$NODE_EXEC" ]; then
+  echo "📋 Using Node.js: $NODE_EXEC"
+  echo "📋 Attempting to start server (will timeout after 10 seconds)..."
+  timeout 10s "$NODE_EXEC" index.mjs 2>&1 || echo "Server start attempt completed/timed out"
+else
+  echo "⚠️  Skipping server startup test - Node.js not available"
+fi
 echo ""
 
 echo "🔍 Checking for any error logs..."
@@ -66,10 +87,22 @@ ls -la ../public/
 echo ""
 
 echo "🔍 Checking for Node.js and npm..."
-which node || echo "❌ Node.js not found"
-node --version 2>/dev/null || echo "❌ Cannot get Node.js version"
-which npm || echo "❌ npm not found"
-npm --version 2>/dev/null || echo "❌ Cannot get npm version"
+if [ -n "$NODE_EXEC" ]; then
+  echo "✅ Node.js found: $NODE_EXEC"
+  "$NODE_EXEC" --version 2>/dev/null || echo "❌ Cannot get Node.js version"
+
+  # Check for npm in the same directory as node
+  NPM_EXEC=$(dirname "$NODE_EXEC")/npm
+  if [ -f "$NPM_EXEC" ]; then
+    echo "✅ npm found: $NPM_EXEC"
+    "$NPM_EXEC" --version 2>/dev/null || echo "❌ Cannot get npm version"
+  else
+    which npm >/dev/null 2>&1 && echo "✅ npm found: $(which npm)" || echo "❌ npm not found"
+  fi
+else
+  echo "❌ Node.js not found"
+  echo "❌ npm not found"
+fi
 
 echo ""
 echo "🔍 Checking system resources..."
