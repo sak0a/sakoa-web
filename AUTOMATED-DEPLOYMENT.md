@@ -184,4 +184,24 @@ For most users, I recommend **Option 1 (GitHub Actions)** because:
 
 **Note**: Everything is deployed to the `httpdocs` directory. The startup file should be set to `httpdocs/.output/server/index.mjs` in Plesk.
 
-Your TF2 Dodgeball Server will now automatically deploy every time you push changes to GitHub!
+## Automatic Node.js Restart
+
+Both workflows now automatically restart your Node.js application in Plesk after deployment. This is **crucial** because:
+- Environment variables (like admin password) only take effect after restart
+- New code changes require application restart
+- Database connection settings need restart to apply
+
+The workflows use a custom restart script (`restart-app.sh`) that tries multiple methods:
+1. **Touch restart files** - Creates trigger files that some process managers watch
+2. **Graceful process termination** - Sends SIGTERM to existing Node.js processes
+3. **Force kill if needed** - Ensures old processes are stopped
+4. **Manual start attempt** - Tries to start the application if not managed by Plesk
+
+**Note**: Plesk commands require root access, so we use alternative non-root methods.
+
+**Manual Restart (if automatic fails):**
+1. Go to Plesk control panel
+2. Navigate to your domain → Node.js
+3. Click "Restart App" button
+
+Your TF2 Dodgeball Server will now automatically deploy AND restart every time you push changes to GitHub!

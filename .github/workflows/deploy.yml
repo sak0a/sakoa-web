@@ -61,7 +61,7 @@ jobs:
         password: ${{ secrets.PLESK_PASSWORD }}
         # Alternative: use key instead of password
         # key: ${{ secrets.PLESK_SSH_KEY }}
-        source: ".output/*,server/*"
+        source: ".output/*,server/*,restart-app.sh"
         target: "/var/www/vhosts/sakoa.xyz/httpdocs"
         strip_components: 0  # Keep directory structure
 
@@ -98,13 +98,12 @@ jobs:
           find server -type d -exec chmod 755 {} \;
           chmod 600 .output/server/.env
 
-          # Make server executable
+          # Make server and restart script executable
           chmod +x .output/server/index.mjs
+          chmod +x restart-app.sh
 
-          # Restart Node.js application in Plesk (required for env changes)
-          plesk bin site --update sakoa.xyz -nodejs-restart || \
-          plesk bin nodejs --restart sakoa.xyz || \
-          echo "⚠️  Automatic restart failed - Please restart Node.js app manually in Plesk"
+          # Execute restart script
+          ./restart-app.sh
           
     - name: Deployment notification
       run: |
