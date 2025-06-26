@@ -17,24 +17,19 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'yarn'
+        cache: 'npm'
 
-    - name: Install Yarn
+    - name: Clean and install dependencies
       run: |
-        # Install Yarn which handles optional dependencies better than npm
-        npm install -g yarn
-
-    - name: Clean and install dependencies with Yarn
-      run: |
-        # Clean any cached build artifacts
-        rm -rf .nuxt .output dist node_modules/.cache node_modules yarn.lock
-        # Use yarn which handles optional dependencies better
-        yarn install
+        # Clean any cached build artifacts and follow npm's recommendation for optional dependency issues
+        rm -rf .nuxt .output dist node_modules/.cache node_modules package-lock.json
+        # Use npm install instead of npm ci to better handle optional dependencies
+        npm install
 
     - name: Build project (with fallback handling)
       run: |
-        # Try standard build first with yarn, fallback to npm CI build script if needed
-        yarn build || npm run ci-build
+        # Try standard build first, fallback to CI build script if needed
+        npm run build || npm run ci-build
       env:
         DB_HOST: ${{ secrets.DB_HOST }}
         DB_PORT: ${{ secrets.DB_PORT }}
