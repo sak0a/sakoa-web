@@ -2,9 +2,27 @@
   "donors": [
     {
       "name": "saka",
-      "amount": 100,
-      "tier": "VIP",
-      "date": "2024-05-15"
+      "tier": "SAS",
+      "donations": [
+        {
+          "amount": 54,
+          "date": "2025-05-15"
+        },
+        {
+          "amount": 100,
+          "date": "2024-05-15"
+        },
+        {
+          "amount": 20,
+          "date": "2023-05-15"
+        },
+        {
+          "amount": 0.32,
+          "date": "2025-06-26"
+        }
+      ],
+      "amount": 174.32,
+      "steamid": "[U:1:XXXXXXXX]"
     }
   ]
 }

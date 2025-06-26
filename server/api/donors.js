@@ -11,6 +11,20 @@ export default defineEventHandler(async (event) => {
     const data = await fs.promises.readFile(donorsFilePath, 'utf8');
     const donorsData = JSON.parse(data);
 
+    // Process donors to calculate total amounts from individual donations
+    donorsData.donors = donorsData.donors.map(donor => {
+      if (donor.donations && Array.isArray(donor.donations)) {
+        // Calculate total from individual donations
+        const totalAmount = donor.donations.reduce((sum, donation) => sum + (donation.amount || 0), 0);
+        return {
+          ...donor,
+          amount: totalAmount
+        };
+      }
+      // Keep existing structure for donors without donations array
+      return donor;
+    });
+
     // Sort donors by amount (highest first)
     donorsData.donors.sort((a, b) => b.amount - a.amount);
 

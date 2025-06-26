@@ -24,11 +24,11 @@
 
           <!-- Centered navigation menu -->
           <nav class="nav-menu">
+            <a href="#" class="nav-link">Start</a>
             <a href="#about" class="nav-link">About</a>
             <a href="#server-status" class="nav-link">Status</a>
             <a href="#leaderboard" class="nav-link">Leaderboard</a>
-            <a href="#donate" class="nav-link">Donate</a>
-            <a href="#tiers" class="nav-link">Tiers</a>
+            <a href="#tiers" class="nav-link">Rewards</a>
             <a href="#donors" class="nav-link">Donors</a>
 
           </nav>
@@ -36,7 +36,7 @@
           <!-- Right-side buttons -->
           <div class="nav-buttons-right">
             <a href="https://whitelist.sakoa.xyz" target="_blank" rel="noopener noreferrer" class="nav-button outline">
-              <span>Apply</span>
+              <span>Donate</span>
               <svg class="nav-button-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>

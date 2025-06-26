@@ -12,7 +12,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2">
                 <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
               </svg>
-              Join Discord
+              Join our Discord
             </a>
           </div>
         </div>
@@ -79,7 +79,7 @@
     <section id="server-status" class="section" style="background: linear-gradient(135deg, #23104D 0%, #734C96 50%, #9B6BC7 100%);">
       <div class="container-custom">
         <h2 class="text-3xl font-bold mb-8 text-center animate-on-scroll animate-fade-in text-white">Server Status</h2>
-        <div class="max-w-3xl mx-auto animate-on-scroll animate-slide-up">
+        <div class="max-w-6xl mx-auto animate-on-scroll animate-slide-up">
           <ServerStatus />
         </div>
       </div>
@@ -88,9 +88,9 @@
     <!-- Leaderboard Section -->
     <section id="leaderboard" class="section" style="background: linear-gradient(135deg, #1a1a1a 0%, #242424 100%);">
       <div class="container-custom">
-        <h2 class="text-3xl font-bold mb-8 text-center animate-on-scroll animate-fade-in" style="color: #734C96;">Player Leaderboard</h2>
+        <h2 class="text-3xl font-bold mb-8 text-center animate-on-scroll animate-fade-in" style="color: #734C96;">Seasonal Statistics</h2>
         <div class="max-w-6xl mx-auto animate-on-scroll animate-slide-up">
-          <Leaderboard />
+          <SeasonalLeaderboard />
         </div>
       </div>
     </section>
@@ -105,7 +105,7 @@
               Your donations help us maintain and improve the server. All contributions go directly toward server costs, development, and new features.
             </p>
             <div class="flex flex-row gap-4 justify-center mb-8 animate-on-scroll animate-fade-in">
-              <a href="https://paypal.me/saka" target="_blank" rel="noopener noreferrer" class="btn text-lg px-8 py-3 flex items-center bg-[#0070BA] text-white  transition-colors h-12 rounded-xl">
+              <a href="https://paypal.me/sakacom" target="_blank" rel="noopener noreferrer" class="btn text-lg px-8 py-3 flex items-center bg-[#0070BA] text-white  transition-colors h-12 rounded-xl">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2">
                   <path d="M20.067 8.478c.492.88.556 2.014.3 3.327-.74 3.806-3.276 5.12-6.514 5.12h-.5a.805.805 0 0 0-.794.68l-.04.22-.63 4.876-.03.2a.804.804 0 0 1-.794.679h-2.52c-.092 0-.175-.043-.232-.144a.33.33 0 0 1-.035-.2l.955-6.05-.03.2a.805.805 0 0 1 .794-.682h1.5c4.248 0 7.128-1.732 8.042-6.753.4-.015.015-.043.015-.072.21.012.4.015.072.015.778-1.157.778-2.415-.186-3.416z"/>
                   <path d="M18.792 2.904a5.68 5.68 0 0 0-.72-.72C16.93 1.296 15.32.895 13.576.895H5.864c-.44 0-.824.334-.93.76L1.057 17.776a.569.569 0 0 0 .565.673h4.12l1.075-6.706-.033.22a.938.938 0 0 1 .933-.76h1.52c3.734 0 6.182-1.507 6.954-5.87.2-.284.38-.531.555-.736.656-1.482.59-2.656-.316-3.693z"/>
@@ -252,7 +252,7 @@
           <!-- Tier 3 -->
           <div class="card hover:border-primary hover:border-2 transition-all animate-on-scroll animate-slide-in-left flex flex-col relative">
             <!-- Coming Soon Overlay -->
-            <div class="absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center z-10">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-md rounded-lg flex items-center justify-center z-10">
               <div class="text-center">
                 <div class="px-4 py-2 rounded-full font-bold text-lg mb-2 text-white" style="background-color: #734C96;">
                   COMING SOON
@@ -260,8 +260,8 @@
                 <p class="text-white text-sm">Server hosting will be available soon!</p>
               </div>
             </div>
-
-            <div class="text-center mb-6 opacity-30">
+            <!--
+            <div class="text-center mb-6 opacity-30 select-none">
               <span class="inline-block bg-primary text-white rounded-full p-3">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -270,7 +270,7 @@
               <h3 class="text-xl font-bold mt-4" style="color: #ffffff;">Server Tier</h3>
               <p class="mt-2" style="color: #d4d4d4;">from €4,99/month</p>
             </div>
-            <ul class="space-y-3 mb-6 flex-grow opacity-30" style="color: #d4d4d4;">
+            <ul class="space-y-3 mb-6 flex-grow opacity-30 select-none" style="color: #d4d4d4;">
               <li class="flex items-start animate-on-scroll animate-fade-in-delay-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -321,6 +321,7 @@
                 <span>CPU, RAM, Storage & Databases can be upgraded</span>
               </li>
             </ul>
+            -->
           </div>
         </div>
       </div>
@@ -341,5 +342,5 @@
 <script setup>
 import ServerStatus from '~/components/ServerStatus.vue';
 import DonorsList from '~/components/DonorsList.vue';
-import Leaderboard from '~/components/Leaderboard.vue';
+import SeasonalLeaderboard from '~/components/SeasonalLeaderboard.vue';
 </script>

@@ -1,25 +1,44 @@
 import { GameDig } from 'gamedig';
+import fs from 'fs';
+import path from 'path';
 
-// Define our servers
-const servers = [
-  {
-    id: 'main',
-    name: "𝘴𝘢𝘬𝘢 Dodgeball Server",
-    host: '45.81.234.145',
-    port: 27015,
-    location: '🇩🇪 Frankfurt',
-    connectUrl: 'steam://connect/45.81.234.145:27015'
-  },
-  {
-    id: 'advanced',
-    name: "𝘴𝘢𝘬𝘢 Dodgeball Server - Advanced",
-    host: '37.114.54.74',
-    port: 27015,
-    location: '🇩🇪 Frankfurt',
-    connectUrl: 'steam://connect/37.114.54.74:27015',
-    comingSoon: true
+// Get the absolute path to the project root directory
+const projectRoot = process.cwd();
+const serversFilePath = path.join(projectRoot, 'server/data/servers.json');
+
+// Helper function to read servers data
+async function getServersData() {
+  try {
+    const data = await fs.promises.readFile(serversFilePath, 'utf8');
+    const serversData = JSON.parse(data);
+    return serversData.servers || [];
+  } catch (error) {
+    console.error('Error reading servers data:', error);
+    console.error('Attempted to read from:', serversFilePath);
+
+    // Fallback to hardcoded servers if file doesn't exist
+    return [
+      {
+        id: 'main',
+        name: "𝘴𝘢𝘬𝘢 Dodgeball Server",
+        host: '45.81.234.145',
+        port: 27015,
+        location: '🇩🇪 Frankfurt',
+        connectUrl: 'steam://connect/45.81.234.145:27015',
+        comingSoon: false
+      },
+      {
+        id: 'advanced',
+        name: "𝘴𝘢𝘬𝘢 Dodgeball Server - Advanced",
+        host: '37.114.54.74',
+        port: 27015,
+        location: '🇩🇪 Frankfurt',
+        connectUrl: 'steam://connect/37.114.54.74:27015',
+        comingSoon: true
+      }
+    ];
   }
-];
+}
 
 async function queryServer(server) {
   console.log(`Attempting to query TF2 server at ${server.host}:${server.port}`);
@@ -114,6 +133,9 @@ async function queryServer(server) {
 
 export default defineEventHandler(async (event) => {
   try {
+    // Get servers from file
+    const servers = await getServersData();
+
     // Query all servers in parallel
     const serverPromises = servers.map(server => queryServer(server));
     const serverResults = await Promise.all(serverPromises);
@@ -123,6 +145,10 @@ export default defineEventHandler(async (event) => {
     };
   } catch (error) {
     console.error('Unexpected error querying servers:', error);
+
+    // Get servers from file for fallback
+    const servers = await getServersData();
+
     return {
       servers: servers.map(server => ({
         id: server.id,

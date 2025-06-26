@@ -1,62 +1,69 @@
 <template>
-  <div class="rounded-lg p-8 shadow-md border" style="background-color: #242424; border-color: #333333;">
-    <!-- Header with Filter Controls -->
-    <div class="flex flex-col md:flex-row justify-between items-center mb-8">
-      <h3 class="text-2xl font-bold mb-4 md:mb-0" style="color: #734C96;">Player Leaderboard</h3>
-
-      <div class="flex flex-col sm:flex-row gap-4">
-        <!-- Sort Field Selector -->
-        <div class="flex flex-col">
-          <label class="text-sm font-medium mb-1" style="color: #d4d4d4;">Sort by:</label>
-          <select
-            v-model="selectedSort"
-            class="px-3 py-2 rounded border text-sm"
-            style="background-color: #1e1e1e; border-color: #333333; color: #ffffff;"
-          >
-            <option value="points">Points</option>
-            <option value="topspeed">Top Speed</option>
-            <option value="playtime">Playtime</option>
-            <option value="kills">Kills</option>
-            <option value="deaths">Deaths</option>
-          </select>
-        </div>
-
-        <!-- Sort Order Selector -->
-        <div class="flex flex-col">
-          <label class="text-sm font-medium mb-1" style="color: #d4d4d4;">Order:</label>
-          <select
-            v-model="selectedOrder"
-            class="px-3 py-2 rounded border text-sm"
-            style="background-color: #1e1e1e; border-color: #333333; color: #ffffff;"
-          >
-            <option value="desc">Highest First</option>
-            <option value="asc">Lowest First</option>
-          </select>
-        </div>
+  <div class="rounded-lg p-8 shadow-lg border" style="background-color: #242424; border-color: #333333;">
+    <!-- Header with Season Selection -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 gap-4">
+      <div>
+        <h3 class="text-2xl font-bold mb-2" style="color: #ffffff;">Player Leaderboard</h3>
+        <p class="text-sm" style="color: #a3a3a3;">{{ selectedSeason?.displayName || 'Loading seasons...' }}</p>
       </div>
+      
+      <!-- Season Selector -->
+      <div class="flex flex-col sm:flex-row gap-4">
+        <CustomSelect
+          v-model="selectedSeasonNumber"
+          :options="availableSeasons"
+          :loading="seasonsLoading"
+          placeholder="Select a season..."
+          label-key="displayName"
+          value-key="seasonNumber"
+          description-key="dateRange"
+          @change="onSeasonChange"
+          class="min-w-56"
+        />
+      </div>
+    </div>
+
+    <!-- Player Search -->
+    <PlayerSearch
+      v-if="selectedSeason"
+      :selectedSeason="selectedSeason"
+      @playerFound="onPlayerFound"
+    />
+
+    <!-- Sort Controls -->
+    <div class="flex flex-wrap gap-4 mb-6">
+      <CustomSelect
+        v-model="selectedSort"
+        :options="sortOptions"
+        placeholder="Sort by..."
+        label-key="label"
+        value-key="value"
+        @change="fetchLeaderboard"
+        class="min-w-44"
+      />
+
+      <CustomSelect
+        v-model="selectedOrder"
+        :options="orderOptions"
+        placeholder="Order..."
+        label-key="label"
+        value-key="value"
+        @change="fetchLeaderboard"
+        class="min-w-36"
+      />
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="flex justify-center py-8">
-      <div class="space-y-4 w-full">
-        <div class="h-20 rounded animate-pulse" style="background-color: #1a1a1a;"></div>
-        <div class="h-16 rounded animate-pulse" style="background-color: #1a1a1a;"></div>
-        <div class="h-16 rounded animate-pulse" style="background-color: #1a1a1a;"></div>
-        <p class="text-center mt-4" style="color: #a3a3a3;">Loading player statistics...</p>
-      </div>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="error && players.length === 0" class="text-center py-8">
-      <p style="color: #ef4444;">Failed to load leaderboard data</p>
-      <p class="text-sm mt-2" style="color: #a3a3a3;">{{ error }}</p>
+    <div v-if="loading" class="text-center py-8">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style="border-color: #734C96;"></div>
+      <p style="color: #a3a3a3;">Loading leaderboard...</p>
     </div>
 
     <!-- Leaderboard Content -->
     <div v-else-if="!loading && players.length > 0">
       <!-- Top 3 Players (Podium Style) -->
       <div v-if="topThree.length > 0" class="mb-8">
-        <h4 class="text-lg font-bold mb-4 text-center" style="color: #ffffff;">🏆 Top 3 Champions 🏆</h4>
+        <h4 class="text-lg font-bold mb-4 text-center" style="color: #ffffff;"> Top 3 Champions </h4>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div
             v-for="player in topThree"
@@ -76,7 +83,14 @@
 
             <!-- Player Info -->
             <div class="text-center mt-2">
-              <h5 class="font-bold text-lg mb-2 text-shadow-sm" :style="{ color: getPlayerNameColor(player.rank) }">{{ player.name }}</h5>
+              <h5
+                class="font-bold text-lg mb-2 text-shadow-sm cursor-pointer hover:underline transition-all duration-200"
+                :style="{ color: getPlayerNameColor(player.rank) }"
+                @click="openPlayerModal(player.steamid)"
+                :title="`Click to view ${player.name}'s detailed stats`"
+              >
+                {{ player.name }}
+              </h5>
               <div class="text-2xl font-bold mb-2 text-shadow-sm" :style="{ color: getStatValueColor(player.rank) }">
                 {{ formatStatValue(player[selectedSort], selectedSort) }}
               </div>
@@ -108,16 +122,23 @@
             v-for="player in standardList.slice(0, 3)"
             :key="player.steamid"
             class="flex items-center p-4 rounded-lg border transition-all duration-200 hover:border-purple-500 hover:shadow-lg"
-            style="background-color: #1e1e1e; border-color: #333333;"
+            style="background-color: #1a1a1a; border-color: #333333;"
           >
             <!-- Rank -->
-            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white mr-4 flex-shrink-0" style="background-color: #734C96;">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center mr-4 font-bold text-white" style="background-color: #734C96;">
               {{ player.rank }}
             </div>
 
             <!-- Player Info -->
             <div class="flex-1 min-w-0">
-              <h5 class="font-bold truncate mb-1" style="color: #ffffff;" :title="player.name">{{ player.name }}</h5>
+              <h5
+                class="font-bold truncate mb-1 cursor-pointer hover:underline transition-all duration-200"
+                style="color: #ffffff;"
+                :title="`Click to view ${player.name}'s detailed stats`"
+                @click="openPlayerModal(player.steamid)"
+              >
+                {{ player.name }}
+              </h5>
               <div class="space-y-1 text-xs">
                 <div class="flex justify-between items-center">
                   <span style="color: #a3a3a3;">{{ getStatLabel(selectedSort) }}:</span>
@@ -137,21 +158,28 @@
         </div>
 
         <!-- Second Row: Ranks 7-10 (4 columns) -->
-        <div v-if="standardList.slice(3).length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div v-if="standardList.slice(3, 7).length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div
-            v-for="player in standardList.slice(3)"
+            v-for="player in standardList.slice(3, 7)"
             :key="player.steamid"
             class="flex items-center p-4 rounded-lg border transition-all duration-200 hover:border-purple-500 hover:shadow-lg"
-            style="background-color: #1e1e1e; border-color: #333333;"
+            style="background-color: #1a1a1a; border-color: #333333;"
           >
             <!-- Rank -->
-            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white mr-4 flex-shrink-0" style="background-color: #734C96;">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center mr-4 font-bold text-white" style="background-color: #734C96;">
               {{ player.rank }}
             </div>
 
             <!-- Player Info -->
             <div class="flex-1 min-w-0">
-              <h5 class="font-bold truncate mb-1" style="color: #ffffff;" :title="player.name">{{ player.name }}</h5>
+              <h5
+                class="font-bold truncate mb-1 cursor-pointer hover:underline transition-all duration-200"
+                style="color: #ffffff;"
+                :title="`Click to view ${player.name}'s detailed stats`"
+                @click="openPlayerModal(player.steamid)"
+              >
+                {{ player.name }}
+              </h5>
               <div class="space-y-1 text-xs">
                 <div class="flex justify-between items-center">
                   <span style="color: #a3a3a3;">{{ getStatLabel(selectedSort) }}:</span>
@@ -173,7 +201,7 @@
 
       <!-- Positions 11-50 (Scrollable) -->
       <div v-if="scrollableList.length > 0">
-        <h4 class="text-lg font-bold mb-4" style="color: #ffffff;">📊 All Players</h4>
+        <h4 class="text-lg font-bold mb-4" style="color: #ffffff;"> All Players</h4>
         <div class="max-h-96 overflow-y-auto rounded-lg border" style="border-color: #333333;">
           <table class="min-w-full">
             <thead class="sticky top-0" style="background-color: #1a1a1a;">
@@ -185,16 +213,21 @@
                 <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #a3a3a3;">Hours</th>
               </tr>
             </thead>
-            <tbody style="background-color: #1e1e1e;">
+            <tbody style="background-color: #242424;">
               <tr
                 v-for="player in scrollableList"
                 :key="player.steamid"
-                class="border-t hover:bg-opacity-50 transition-colors"
+                class="border-b hover:bg-opacity-50 hover:bg-gray-700 transition-colors"
                 style="border-color: #333333;"
-                :style="{ backgroundColor: player.rank % 2 === 0 ? '#242424' : '#1e1e1e' }"
               >
-                <td class="px-4 py-3 text-sm font-medium" style="color: #ffffff;">{{ player.rank }}</td>
-                <td class="px-4 py-3 text-sm font-medium" style="color: #ffffff;">{{ player.name }}</td>
+                <td class="px-4 py-3 text-sm font-medium" style="color: #734C96;">{{ player.rank }}</td>
+                <td class="px-4 py-3 text-sm font-medium cursor-pointer hover:underline transition-all duration-200"
+                    style="color: #ffffff;"
+                    @click="openPlayerModal(player.steamid)"
+                    :title="`Click to view ${player.name}'s detailed stats`"
+                >
+                  {{ player.name }}
+                </td>
                 <td class="px-4 py-3 text-sm" style="color: #d4d4d4;">{{ formatStatValue(player[selectedSort], selectedSort) }}</td>
                 <td class="px-4 py-3 text-sm" style="color: #d4d4d4;">{{ player.kd_ratio }}</td>
                 <td class="px-4 py-3 text-sm" style="color: #d4d4d4;">{{ player.playtimeHours }}</td>
@@ -217,27 +250,86 @@
 
     <!-- Empty State -->
     <div v-else class="text-center py-8">
-      <p style="color: #a3a3a3;">No player data available</p>
+      <p style="color: #a3a3a3;">No player data available for this season</p>
     </div>
+
+    <!-- Player Modal -->
+    <PlayerModal
+      :isOpen="showPlayerModal"
+      :steamid="selectedPlayerSteamId"
+      :season="selectedSeason"
+      @close="closePlayerModal"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import PlayerSearch from './PlayerSearch.vue';
+import PlayerModal from './PlayerModal.vue';
+import CustomSelect from './CustomSelect.vue';
 
+// Reactive data
+const availableSeasons = ref([]);
+const selectedSeasonNumber = ref(null);
+const selectedSeason = ref(null);
 const players = ref([]);
 const loading = ref(true);
+const seasonsLoading = ref(true);
 const error = ref(null);
 const selectedSort = ref('points');
 const selectedOrder = ref('desc');
+
+// Player modal state
+const showPlayerModal = ref(false);
+const selectedPlayerSteamId = ref(null);
+
+// Sort and order options for CustomSelect
+const sortOptions = ref([
+  { label: 'Sort by Points', value: 'points' },
+  { label: 'Sort by Top Speed', value: 'topspeed' },
+  { label: 'Sort by Playtime', value: 'playtime' },
+  { label: 'Sort by Kills', value: 'kills' },
+  { label: 'Sort by Deaths', value: 'deaths' }
+]);
+
+const orderOptions = ref([
+  { label: 'Highest First', value: 'desc' },
+  { label: 'Lowest First', value: 'asc' }
+]);
 
 // Computed properties for different sections
 const topThree = computed(() => players.value.slice(0, 3));
 const standardList = computed(() => players.value.slice(3, 10));
 const scrollableList = computed(() => players.value.slice(10));
 
-// Fetch leaderboard data
+// Fetch available seasons
+const fetchSeasons = async () => {
+  seasonsLoading.value = true;
+  try {
+    const response = await fetch('/api/seasons');
+    const data = await response.json();
+
+    if (data.success) {
+      availableSeasons.value = data.data.seasons;
+      // Set current season as default
+      if (data.data.seasons.length > 0) {
+        const currentSeason = data.data.seasons.find(s => s.isCurrent) || data.data.seasons[0];
+        selectedSeasonNumber.value = currentSeason.seasonNumber;
+        selectedSeason.value = currentSeason;
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching seasons:', err);
+  } finally {
+    seasonsLoading.value = false;
+  }
+};
+
+// Fetch leaderboard data for selected season
 const fetchLeaderboard = async () => {
+  if (!selectedSeasonNumber.value) return;
+
   loading.value = true;
   error.value = null;
 
@@ -245,7 +337,7 @@ const fetchLeaderboard = async () => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-    const response = await fetch(`/api/leaderboard?sortBy=${selectedSort.value}&order=${selectedOrder.value}&limit=50`, {
+    const response = await fetch(`/api/seasonal-leaderboard?season=${selectedSeasonNumber.value}&sortBy=${selectedSort.value}&order=${selectedOrder.value}&limit=50`, {
       signal: controller.signal
     });
 
@@ -259,6 +351,7 @@ const fetchLeaderboard = async () => {
 
     if (data.success) {
       players.value = data.data.players;
+      selectedSeason.value = data.data.season;
     } else {
       error.value = data.error;
       players.value = data.data?.players || [];
@@ -272,7 +365,45 @@ const fetchLeaderboard = async () => {
   }
 };
 
-// Utility functions
+// Handle season change
+const onSeasonChange = () => {
+  const season = availableSeasons.value.find(s => s.seasonNumber === selectedSeasonNumber.value);
+  if (season) {
+    selectedSeason.value = season;
+    fetchLeaderboard();
+  }
+};
+
+// Handle player found from search
+const onPlayerFound = (data) => {
+  selectedPlayerSteamId.value = data.steamid;
+  showPlayerModal.value = true;
+};
+
+// Open player modal
+const openPlayerModal = (steamid) => {
+  selectedPlayerSteamId.value = steamid;
+  showPlayerModal.value = true;
+};
+
+// Close player modal
+const closePlayerModal = () => {
+  showPlayerModal.value = false;
+  selectedPlayerSteamId.value = null;
+};
+
+// Initialize on mount
+onMounted(async () => {
+  await fetchSeasons();
+  if (selectedSeasonNumber.value) {
+    await fetchLeaderboard();
+  }
+});
+
+// Watch for sort/order changes
+watch([selectedSort, selectedOrder], fetchLeaderboard);
+
+// Utility functions (copied from original Leaderboard component)
 const formatStatValue = (value, statType) => {
   if (!value && value !== 0) return '0';
 
@@ -304,11 +435,11 @@ const getStatLabel = (statType) => {
 
 const getPodiumClass = (rank) => {
   const classes = {
-    1: 'bg-gradient-to-br from-yellow-400 to-yellow-600 border-yellow-400',
+    1: 'bg-gradient-to-br from-yellow-400 to-yellow-600 border-yellow-500',
     2: 'bg-gradient-to-br from-gray-300 to-gray-500 border-gray-400',
-    3: 'bg-gradient-to-br from-orange-400 to-orange-600 border-orange-400'
+    3: 'bg-gradient-to-br from-orange-400 to-orange-600 border-orange-500'
   };
-  return classes[rank] || 'bg-gradient-to-br from-purple-500 to-purple-700 border-purple-500';
+  return classes[rank] || 'bg-gradient-to-br from-purple-500 to-purple-700 border-purple-600';
 };
 
 const getRankBadgeClass = (rank) => {
@@ -317,121 +448,33 @@ const getRankBadgeClass = (rank) => {
     2: 'bg-gray-400',
     3: 'bg-orange-500'
   };
-  return classes[rank] || 'bg-purple-500';
+  return classes[rank] || 'bg-purple-600';
 };
 
-const getRankColor = (rank) => {
-  const colors = {
-    1: '#fbbf24', // yellow
-    2: '#9ca3af', // gray
-    3: '#f97316'  // orange
-  };
-  return colors[rank] || '#a855f7'; // purple
-};
-
-// New color functions for better text contrast in top 3 champions
 const getPlayerNameColor = (rank) => {
   const colors = {
-    1: '#1a1a1a', // dark text on yellow background
-    2: '#1a1a1a', // dark text on gray background
-    3: '#ffffff'  // white text on orange background
+    1: '#1f2937', // Dark for gold background
+    2: '#1f2937', // Dark for silver background
+    3: '#1f2937'  // Dark for bronze background
   };
   return colors[rank] || '#ffffff';
 };
 
 const getStatValueColor = (rank) => {
   const colors = {
-    1: '#92400e', // dark yellow/brown for main stat on yellow background
-    2: '#374151', // dark gray for main stat on gray background
-    3: '#1a1a1a'  // dark text for main stat on orange background
+    1: '#1f2937', // Dark for gold background
+    2: '#1f2937', // Dark for silver background
+    3: '#1f2937'  // Dark for bronze background
   };
   return colors[rank] || '#ffffff';
 };
 
 const getStatLabelColor = (rank) => {
   const colors = {
-    1: '#451a03', // very dark brown for labels on yellow background
-    2: '#1f2937', // very dark gray for labels on gray background
-    3: '#7c2d12'  // dark orange for labels on orange background
+    1: '#374151', // Slightly lighter dark for gold background
+    2: '#374151', // Slightly lighter dark for silver background
+    3: '#374151'  // Slightly lighter dark for bronze background
   };
   return colors[rank] || '#a3a3a3';
 };
-
-// Initialize component
-onMounted(() => {
-  fetchLeaderboard();
-});
-
-// Watch for changes in sort parameters and refetch data
-// But prevent initial double-fetch by using immediate: false
-watch([selectedSort, selectedOrder], () => {
-  fetchLeaderboard();
-}, { immediate: false });
 </script>
-
-<style scoped>
-.text-shadow-sm {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-/* Hover effects for better interactivity */
-.hover\:border-purple-500:hover {
-  border-color: #734C96 !important;
-}
-
-/* Ensure proper text contrast on gradient backgrounds */
-.bg-gradient-to-br {
-  position: relative;
-}
-
-.bg-gradient-to-br::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-/* Responsive grid adjustments for two-row layout */
-/* First row (ranks 4-6): 3 columns on large screens */
-@media (max-width: 767px) {
-  .grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-  .grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1024px) {
-  .grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-/* Second row (ranks 7-10): 4 columns on large screens */
-@media (max-width: 639px) {
-  .grid-cols-1.sm\:grid-cols-2.lg\:grid-cols-4 {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 640px) and (max-width: 1023px) {
-  .grid-cols-1.sm\:grid-cols-2.lg\:grid-cols-4 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1024px) {
-  .grid-cols-1.sm\:grid-cols-2.lg\:grid-cols-4 {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-</style>

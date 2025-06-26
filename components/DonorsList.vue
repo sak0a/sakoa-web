@@ -35,16 +35,16 @@
         <div class="flex items-center">
           <div
             :class="[
-              'rounded-full w-10 h-10 flex items-center justify-center font-bold mr-3 text-white',
+              'rounded-full w-10 h-10 flex items-center justify-center font-bold mr-3 text-white text-xs',
               donor.tier === 'VIP' ? 'bg-primary' :
               donor.tier === 'Premium' ? 'bg-primary' : 'bg-gray-500'
             ]"
           >
-            {{ donor.tier === 'VIP' ? 'VIP' : donor.tier === 'Premium' ? 'P' : 'T' }}
+            {{ getTierDisplay(donor.tier) }}
           </div>
           <div>
             <h4 class="font-bold" style="color: #ffffff;">{{ donor.name }}</h4>
-            <p class="text-sm" style="color: #a3a3a3;">{{ donor.amount }}€ total contribution</p>
+            <p class="text-sm" style="color: #a3a3a3;">€{{ donor.amount }} total contribution</p>
           </div>
         </div>
       </div>
@@ -93,4 +93,20 @@ const displayDonors = computed(() => {
   }
   return donors.value;
 });
+
+// Function to get tier display text
+const getTierDisplay = (tier) => {
+  if (!tier) return 'T';
+
+  // Special cases for specific tiers
+  if (tier.toUpperCase() === 'VIP') return 'VIP';
+  if (tier.toUpperCase() === 'PREMIUM') return 'P';
+
+  // For other tiers, show the full tier if it's 3 characters or less, otherwise abbreviate
+  if (tier.length <= 3) {
+    return tier.toUpperCase();
+  } else {
+    return tier.substring(0, 3).toUpperCase();
+  }
+};
 </script>
