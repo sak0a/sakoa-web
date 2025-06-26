@@ -61,7 +61,7 @@ jobs:
         password: ${{ secrets.PLESK_PASSWORD }}
         # Alternative: use key instead of password
         # key: ${{ secrets.PLESK_SSH_KEY }}
-        source: ".output/*,server/*,restart-app.sh,trigger-restart.sh"
+        source: ".output/*,server/*,trigger-restart.sh"
         target: "/var/www/vhosts/sakoa.xyz/httpdocs"
         strip_components: 0  # Keep directory structure
 
@@ -103,9 +103,11 @@ jobs:
           chmod +x trigger-restart.sh 2>/dev/null || true
 
           # Create deployment trigger for systemd watcher
-          echo "🎯 Creating deployment trigger..."
-          touch .deployment_trigger
+          echo "🎯 Creating deployment trigger for systemd service..."
           echo "$(date '+%Y-%m-%d %H:%M:%S') - Deployment triggered by GitHub Actions" > .deployment_trigger
+
+          echo "✅ Deployment trigger (.deployment_trigger) created successfully"
+          echo "📋 The systemd service 'sakoa-deployment-watcher' will detect this file and restart the Node.js application"
 
           # Fallback: Traditional Passenger restart methods (in case systemd service is not running)
           echo "🔄 Creating fallback Passenger restart triggers..."
@@ -113,7 +115,7 @@ jobs:
           mkdir -p tmp && touch tmp/restart.txt 2>/dev/null || true
           touch .output/server/restart.txt 2>/dev/null || true
 
-          echo "✅ Deployment trigger created - systemd service will handle the restart"
+          echo "✅ All restart triggers created - deployment completed"
           
     - name: Deployment notification
       run: |
