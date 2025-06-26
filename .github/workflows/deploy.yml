@@ -101,9 +101,10 @@ jobs:
           # Make server executable
           chmod +x .output/server/index.mjs
 
-          # Restart Node.js application (if using Plesk Node.js)
-          # This command may vary depending on your Plesk setup
-          # plesk bin site --update sakoa.xyz -nodejs-restart || true
+          # Restart Node.js application in Plesk (required for env changes)
+          plesk bin site --update sakoa.xyz -nodejs-restart || \
+          plesk bin nodejs --restart sakoa.xyz || \
+          echo "⚠️  Automatic restart failed - Please restart Node.js app manually in Plesk"
           
     - name: Deployment notification
       run: |
