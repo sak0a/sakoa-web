@@ -10,7 +10,7 @@
     "postinstall": "nuxt prepare",
     "prepare-nuxt": "nuxt prepare",
     "ci-build": "node scripts/ci-build.js",
-    "deploy": "npm run generate && echo '✅ Static files ready in .output/public/ - Upload to sakoa.xyz'",
+
     "copy-data": "node scripts/copy-data-files.js"
   },
   "dependencies": {

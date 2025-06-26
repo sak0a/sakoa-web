@@ -69,7 +69,7 @@ jobs:
         password: ${{ secrets.PLESK_PASSWORD }}
         # Alternative: use key instead of password
         # key: ${{ secrets.PLESK_SSH_KEY }}
-        source: ".output/*,server/*,trigger-restart.sh,scripts/diagnose-deployment.sh,scripts/test-server-start.js"
+        source: ".output/*,server/*,scripts/diagnose-deployment.sh,scripts/test-server-start.js"
         target: "/var/www/vhosts/sakoa.xyz/httpdocs"
         strip_components: 0  # Keep directory structure
 
@@ -106,9 +106,8 @@ jobs:
           find server -type d -exec chmod 755 {} \; 2>/dev/null || true
           chmod 600 .output/server/.env
 
-          # Make server and scripts executable
+          # Make server executable
           chmod +x .output/server/index.mjs
-          chmod +x trigger-restart.sh 2>/dev/null || true
 
           # Create deployment trigger for systemd watcher
           echo "🎯 Creating deployment trigger for systemd service..."

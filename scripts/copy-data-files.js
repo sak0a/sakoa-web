@@ -13,7 +13,7 @@ export function copyDataFiles() {
   }
   
   // Copy files if they exist
-  const filesToCopy = ['donors.json', 'servers.json']
+  const filesToCopy = ['donors.json', 'servers.json', 'settings.json']
   
   filesToCopy.forEach(fileName => {
     const sourcePath = path.join(sourceDir, fileName)
