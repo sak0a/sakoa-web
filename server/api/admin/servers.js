@@ -2,7 +2,10 @@ import fs from 'fs';
 import path from 'path';
 
 // Get the absolute path to the project root directory
-const projectRoot = process.cwd();
+// In production, we need to go up from .output/server to the root
+const projectRoot = process.cwd().includes('.output/server')
+  ? path.join(process.cwd(), '../../')
+  : process.cwd();
 const serversFilePath = path.join(projectRoot, 'server/data/servers.json');
 
 // Helper function to check admin authentication

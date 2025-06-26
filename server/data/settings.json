@@ -1,9 +1,9 @@
 {
   "maintenance": {
-    "enabled": true,
+    "enabled": false,
     "title": "Maintenance Mode",
     "message": "We're currently performing maintenance on our website. Please check back soon!",
     "estimatedTime": "",
-    "lastUpdated": "2025-06-26T18:08:36.806Z"
+    "lastUpdated": "2025-06-26T18:39:29.582Z"
   }
 }

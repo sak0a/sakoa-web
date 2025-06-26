@@ -23,20 +23,25 @@ export default defineEventHandler(async (event) => {
         let filePath
         let fileName
         
+        // Get the correct project root path
+        const projectRoot = process.cwd().includes('.output/server')
+          ? path.join(process.cwd(), '../../')
+          : process.cwd();
+
         if (fileType === 'donors') {
           fileName = 'donors.json'
-          filePath = path.join(process.cwd(), 'server/data/donors.json')
-          
+          filePath = path.join(projectRoot, 'server/data/donors.json')
+
           // Also create in public for static deployment
-          const publicPath = path.join(process.cwd(), 'public/donors.json')
+          const publicPath = path.join(projectRoot, 'public/donors.json')
           fs.writeFileSync(publicPath, JSON.stringify(data, null, 2))
-          
+
         } else if (fileType === 'servers') {
           fileName = 'servers.json'
-          filePath = path.join(process.cwd(), 'server/data/servers.json')
-          
+          filePath = path.join(projectRoot, 'server/data/servers.json')
+
           // Also create in public for static deployment
-          const publicPath = path.join(process.cwd(), 'public/servers.json')
+          const publicPath = path.join(projectRoot, 'public/servers.json')
           fs.writeFileSync(publicPath, JSON.stringify(data, null, 2))
           
         } else {
