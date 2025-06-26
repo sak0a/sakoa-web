@@ -61,7 +61,7 @@ jobs:
         password: ${{ secrets.PLESK_PASSWORD }}
         # Alternative: use key instead of password
         # key: ${{ secrets.PLESK_SSH_KEY }}
-        source: ".output/*,server/*,restart-app.sh"
+        source: ".output/*,server/*,restart-app.sh,trigger-restart.sh"
         target: "/var/www/vhosts/sakoa.xyz/httpdocs"
         strip_components: 0  # Keep directory structure
 
@@ -82,7 +82,7 @@ jobs:
           ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
           EOF
         
-    - name: Set file permissions and configure Node.js
+    - name: Set file permissions and trigger deployment restart
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.PLESK_HOST }}
@@ -94,30 +94,26 @@ jobs:
           # Set file permissions
           find .output -type f -exec chmod 644 {} \;
           find .output -type d -exec chmod 755 {} \;
-          find server -type f -exec chmod 644 {} \;
-          find server -type d -exec chmod 755 {} \;
+          find server -type f -exec chmod 644 {} \; 2>/dev/null || true
+          find server -type d -exec chmod 755 {} \; 2>/dev/null || true
           chmod 600 .output/server/.env
 
-          # Make server and restart script executable
+          # Make server and scripts executable
           chmod +x .output/server/index.mjs
-          chmod +x restart-app.sh
+          chmod +x trigger-restart.sh 2>/dev/null || true
 
-          # Execute restart script
-          ./restart-app.sh
+          # Create deployment trigger for systemd watcher
+          echo "🎯 Creating deployment trigger..."
+          touch .deployment_trigger
+          echo "$(date '+%Y-%m-%d %H:%M:%S') - Deployment triggered by GitHub Actions" > .deployment_trigger
 
-          # Additional Passenger-specific restart methods
-          echo "🔄 Additional Passenger restart attempts..."
+          # Fallback: Traditional Passenger restart methods (in case systemd service is not running)
+          echo "🔄 Creating fallback Passenger restart triggers..."
+          touch restart.txt 2>/dev/null || true
+          mkdir -p tmp && touch tmp/restart.txt 2>/dev/null || true
+          touch .output/server/restart.txt 2>/dev/null || true
 
-          # Method 1: Touch restart.txt in application root (Passenger standard)
-          touch restart.txt
-
-          # Method 2: Touch restart.txt in tmp directory (Passenger alternative)
-          mkdir -p tmp && touch tmp/restart.txt
-
-          # Method 3: Update file timestamps to trigger Passenger reload
-          find .output/server -name "*.mjs" -exec touch {} \; 2>/dev/null || true
-
-          echo "✅ Passenger restart triggers created"
+          echo "✅ Deployment trigger created - systemd service will handle the restart"
           
     - name: Deployment notification
       run: |
