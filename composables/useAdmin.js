@@ -176,6 +176,32 @@ export const useAdmin = () => {
     }
   };
 
+  // Settings management
+  const getSettings = async () => {
+    try {
+      const response = await $fetch('/api/admin/settings', {
+        method: 'GET'
+      });
+      return response;
+    } catch (err) {
+      console.error('Failed to get settings:', err);
+      throw err;
+    }
+  };
+
+  const updateSettings = async (settings) => {
+    try {
+      const response = await $fetch('/api/admin/settings', {
+        method: 'PUT',
+        body: { settings }
+      });
+      return response;
+    } catch (err) {
+      console.error('Failed to update settings:', err);
+      throw err;
+    }
+  };
+
   return {
     isAuthenticated: readonly(isAuthenticated),
     isLoading: readonly(isLoading),
@@ -190,6 +216,8 @@ export const useAdmin = () => {
     getServers,
     addServer,
     updateServer,
-    deleteServer
+    deleteServer,
+    getSettings,
+    updateSettings
   };
 };

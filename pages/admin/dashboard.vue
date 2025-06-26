@@ -7,6 +7,45 @@
           <p class="text-gray-400">Manage your TF2 dodgeball server settings</p>
         </div>
 
+        <!-- Maintenance Mode Toggle -->
+        <div class="mb-8">
+          <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-1">Maintenance Mode</h3>
+                <p class="text-gray-400 text-sm">Enable maintenance mode to temporarily disable the site for all users except admins</p>
+              </div>
+              <div class="flex items-center space-x-3">
+                <span class="text-sm text-gray-400">
+                  {{ maintenanceSettings?.enabled ? 'Enabled' : 'Disabled' }}
+                </span>
+                <button
+                  @click="toggleMaintenance"
+                  :disabled="isTogglingMaintenance"
+                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50"
+                  :class="maintenanceSettings?.enabled ? 'bg-purple-600' : 'bg-gray-600'"
+                >
+                  <span
+                    class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                    :class="maintenanceSettings?.enabled ? 'translate-x-6' : 'translate-x-1'"
+                  ></span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Maintenance Status -->
+            <div v-if="maintenanceSettings?.enabled" class="mt-4 p-3 bg-yellow-900/20 border border-yellow-700 rounded-lg">
+              <div class="flex items-center">
+                <svg class="w-5 h-5 text-yellow-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <span class="text-yellow-400 text-sm font-medium">Maintenance mode is currently active</span>
+              </div>
+              <p class="text-yellow-300 text-sm mt-1">All users except admins will see the maintenance page</p>
+            </div>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <!-- Donors Card -->
           <div class="bg-white/10 backdrop-blur-lg rounded-lg p-6 border border-white/20">
@@ -120,7 +159,7 @@ definePageMeta({
   layout: false
 });
 
-const { getDonors, getServers, checkAuth } = useAdmin();
+const { getDonors, getServers, checkAuth, getSettings, updateSettings } = useAdmin();
 
 const donorStats = ref({
   total: 0,
@@ -132,6 +171,32 @@ const serverStats = ref({
   online: 0
 });
 
+const maintenanceSettings = ref(null);
+const isTogglingMaintenance = ref(false);
+
+// Toggle maintenance mode
+const toggleMaintenance = async () => {
+  try {
+    isTogglingMaintenance.value = true;
+
+    const newEnabled = !maintenanceSettings.value?.enabled;
+
+    const response = await updateSettings({
+      maintenance: {
+        enabled: newEnabled
+      }
+    });
+
+    if (response.success) {
+      maintenanceSettings.value = response.settings.maintenance;
+    }
+  } catch (error) {
+    console.error('Failed to toggle maintenance mode:', error);
+  } finally {
+    isTogglingMaintenance.value = false;
+  }
+};
+
 // Load dashboard data
 onMounted(async () => {
   try {
@@ -141,6 +206,10 @@ onMounted(async () => {
       await navigateTo('/admin');
       return;
     }
+
+    // Load settings
+    const settingsData = await getSettings();
+    maintenanceSettings.value = settingsData.maintenance;
 
     // Load donor stats
     const donorsData = await getDonors();

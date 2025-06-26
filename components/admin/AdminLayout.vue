@@ -35,7 +35,14 @@
             >
               Servers
             </NuxtLink>
-            
+            <NuxtLink
+              to="/admin/settings"
+              class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              :class="{ 'bg-gray-700 text-white': $route.path === '/admin/settings' }"
+            >
+              Settings
+            </NuxtLink>
+
             <div class="border-l border-gray-600 pl-4 ml-4">
               <NuxtLink
                 to="/"
