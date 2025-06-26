@@ -125,11 +125,11 @@
                   </svg>
                 </div>
                 <div class="ml-3">
-                  <h3 class="text-sm font-medium text-amber-400">Important Information</h3>
+                  <h3 class="text-sm font-medium text-amber-400">Terms & Conditions</h3>
                   <div class="mt-2 text-sm text-amber-300">
-                    <p class="mb-2">Donations are non-refundable and are made purely as a gesture of appreciation for the server. They are not considered purchases and do not entitle you to any specific services or guarantees.</p>
-                    <p class="mb-2">To be eligible for donation rewards (Discord roles, server perks, etc.), you must provide your Discord name or other contact information when donating.</p>
-                    <p>If you prefer not to be displayed in the public donor list, please mention this when making your donation.</p>
+                    <p class="mb-2">All contributions are final and non-refundable. Donations constitute voluntary support for server operations and are not commercial transactions that guarantee specific services or benefits.</p>
+                    <p class="mb-2">To receive community recognition and server privileges (Discord roles, in-game perks, etc.), contributors must provide their Discord username or alternative contact information during the donation process.</p>
+                    <p>Contributors who wish to remain anonymous and exclude their information from public donor listings should specify this preference when making their contribution.</p>
                   </div>
                 </div>
               </div>
