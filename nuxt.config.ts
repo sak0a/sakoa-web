@@ -6,7 +6,11 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss'
   ],
   experimental: {
-    headNext: true
+    headNext: false,
+    // Disable features that cause issues in Plesk/Passenger
+    buildManifest: false,
+    payloadExtraction: false,
+    clientFallback: false
   },
   unhead: {
     renderSSRHeadOptions: {
@@ -14,18 +18,6 @@ export default defineNuxtConfig({
     }
   },
   css: ['~/assets/css/main.css'],
-  app: {
-    head: {
-      title: "saka's Dodgeball Server",
-      meta: [
-        { name: 'description', content: 'Support Saka\'s Team Fortress 2 Dodgeball Server through donations' }
-      ],
-      link: [
-        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
-        { rel: 'apple-touch-icon', href: '/favicon.png' }
-      ]
-    }
-  },
   runtimeConfig: {
     // Private keys (only available on server-side)
     dbHost: process.env.DB_HOST || 'localhost',
@@ -45,6 +37,37 @@ export default defineNuxtConfig({
         baseURL: '/data',
         dir: 'server/data'
       }
-    ]
+    ],
+    // Better Plesk/Passenger compatibility
+    experimental: {
+      wasm: false
+    },
+    // Ensure proper static file serving
+    serveStatic: true,
+    // Disable build manifest routes that cause 500 errors
+    routeRules: {
+      '/_nuxt/builds/**': { prerender: false, index: false }
+    }
+  },
+  // Additional SSR configuration for better stability
+  ssr: true,
+  // Disable client-side routing features that cause manifest issues
+  router: {
+    options: {
+      hashMode: false
+    }
+  },
+  // Ensure proper client-side hydration
+  app: {
+    head: {
+      title: "saka's Dodgeball Server",
+      meta: [
+        { name: 'description', content: 'Support Saka\'s Team Fortress 2 Dodgeball Server through donations' }
+      ],
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+        { rel: 'apple-touch-icon', href: '/favicon.png' }
+      ]
+    }
   }
 })
