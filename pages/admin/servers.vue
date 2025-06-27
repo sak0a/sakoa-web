@@ -277,24 +277,30 @@ const deleting = ref(false);
 // Load servers
 const loadServers = async () => {
   try {
+    console.log('loadServers: Starting to load servers...');
     loading.value = true;
     error.value = null;
 
-    // Check authentication first
-    const isAuth = await checkAuth();
-    if (!isAuth) {
-      await navigateTo('/admin');
-      return;
-    }
-
+    console.log('loadServers: Calling getServers()...');
     const data = await getServers();
-    servers.value = data.servers;
+    console.log('loadServers: Received data:', data);
+
+    if (data && data.servers) {
+      servers.value = data.servers;
+      console.log('loadServers: Servers set successfully:', servers.value);
+    } else {
+      console.error('loadServers: Invalid data structure received:', data);
+      error.value = 'Invalid server data received';
+    }
   } catch (err) {
-    error.value = err.data?.message || 'Failed to load servers';
-    if (err.status === 401) {
+    console.error('loadServers: Failed to load servers:', err);
+    error.value = err.data?.message || err.message || 'Failed to load servers';
+    if (err.status === 401 || err.statusCode === 401) {
+      console.log('loadServers: Authentication failed, redirecting to login');
       await navigateTo('/admin');
     }
   } finally {
+    console.log('loadServers: Setting loading to false');
     loading.value = false;
   }
 };
@@ -368,7 +374,29 @@ const deleteServerConfirmed = async () => {
 };
 
 // Load data on mount
-onMounted(() => {
-  loadServers();
+onMounted(async () => {
+  try {
+    console.log('Servers page mounted, checking authentication...');
+
+    // Small delay to ensure proper initialization
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Check authentication first
+    const isAuth = await checkAuth();
+    console.log('Authentication check result:', isAuth);
+
+    if (!isAuth) {
+      console.log('Not authenticated, redirecting to login');
+      await navigateTo('/admin');
+      return;
+    }
+
+    // Load servers after authentication is confirmed
+    console.log('Authentication confirmed, loading servers...');
+    await loadServers();
+  } catch (error) {
+    console.error('Failed to initialize servers page:', error);
+    await navigateTo('/admin');
+  }
 });
 </script>

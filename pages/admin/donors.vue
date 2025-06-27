@@ -292,18 +292,13 @@ const loadDonors = async () => {
     loading.value = true;
     error.value = null;
 
-    // Check authentication first
-    const isAuth = await checkAuth();
-    if (!isAuth) {
-      await navigateTo('/admin');
-      return;
-    }
-
     const data = await getDonors();
     donors.value = data.donors;
   } catch (err) {
+    console.error('Failed to load donors:', err);
     error.value = err.data?.message || 'Failed to load donors';
     if (err.status === 401) {
+      console.log('Authentication failed, redirecting to login');
       await navigateTo('/admin');
     }
   } finally {
@@ -406,7 +401,29 @@ const deleteDonorConfirmed = async () => {
 };
 
 // Load data on mount
-onMounted(() => {
-  loadDonors();
+onMounted(async () => {
+  try {
+    console.log('Donors page mounted, checking authentication...');
+
+    // Small delay to ensure proper initialization
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Check authentication first
+    const isAuth = await checkAuth();
+    console.log('Authentication check result:', isAuth);
+
+    if (!isAuth) {
+      console.log('Not authenticated, redirecting to login');
+      await navigateTo('/admin');
+      return;
+    }
+
+    // Load donors after authentication is confirmed
+    console.log('Authentication confirmed, loading donors...');
+    await loadDonors();
+  } catch (error) {
+    console.error('Failed to initialize donors page:', error);
+    await navigateTo('/admin');
+  }
 });
 </script>

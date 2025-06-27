@@ -18,10 +18,11 @@ export default defineEventHandler(async (event) => {
       }
 
       if (!config.adminPassword) {
-        console.error('Admin password not configured in environment');
+        console.error('Admin password not configured in environment variables');
+        console.error('Please set ADMIN_PASSWORD environment variable');
         throw createError({
           statusCode: 500,
-          statusMessage: 'Admin password not configured'
+          statusMessage: 'Admin password not found. Please log in again.'
         });
       }
 
@@ -30,8 +31,9 @@ export default defineEventHandler(async (event) => {
         setCookie(event, 'admin-session', 'authenticated', {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-          maxAge: 60 * 60 * 24 // 24 hours
+          sameSite: 'lax', // Changed from 'strict' to 'lax' for better compatibility
+          maxAge: 60 * 60 * 24, // 24 hours
+          path: '/' // Explicitly set path
         });
 
         return {
@@ -57,14 +59,47 @@ export default defineEventHandler(async (event) => {
   } else if (method === 'GET') {
     // Check authentication status
     const sessionCookie = getCookie(event, 'admin-session');
-    
+    const isAuthenticated = sessionCookie === 'authenticated';
+
+    console.log('Admin auth check:', {
+      sessionCookie: sessionCookie ? 'present' : 'missing',
+      isAuthenticated,
+      cookieHeader: getHeader(event, 'cookie') ? 'present' : 'missing'
+    });
+
     return {
-      authenticated: sessionCookie === 'authenticated'
+      authenticated: isAuthenticated
     };
+  } else if (method === 'PATCH') {
+    // Refresh session (extend expiry)
+    const sessionCookie = getCookie(event, 'admin-session');
+
+    if (sessionCookie === 'authenticated') {
+      // Refresh the cookie with new expiry
+      setCookie(event, 'admin-session', 'authenticated', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24, // 24 hours
+        path: '/'
+      });
+
+      return {
+        success: true,
+        message: 'Session refreshed'
+      };
+    } else {
+      throw createError({
+        statusCode: 401,
+        statusMessage: 'Not authenticated'
+      });
+    }
   } else if (method === 'DELETE') {
     // Logout
-    deleteCookie(event, 'admin-session');
-    
+    deleteCookie(event, 'admin-session', {
+      path: '/' // Make sure to delete with same path
+    });
+
     return {
       success: true,
       message: 'Logged out successfully'

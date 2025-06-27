@@ -12,9 +12,10 @@ const settingsFilePath = path.join(projectRoot, 'server/data/settings.json');
 function checkAdminAuth(event) {
   const sessionCookie = getCookie(event, 'admin-session');
   if (sessionCookie !== 'authenticated') {
+    console.error('Admin authentication failed - invalid or missing session cookie');
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized - Admin access required'
+      statusMessage: 'Admin password not found. Please log in again.'
     });
   }
 }
@@ -33,6 +34,16 @@ async function readSettingsData() {
         title: "Maintenance Mode",
         message: "We're currently performing maintenance on our servers. Please check back soon!",
         estimatedTime: "",
+        lastUpdated: ""
+      },
+      seasons: {
+        startYear: 2025,
+        startMonth: 5,
+        startDay: 15,
+        lastUpdated: ""
+      },
+      discord: {
+        inviteUrl: "https://discord.gg/JuxYYVEkzc",
         lastUpdated: ""
       }
     };
@@ -80,6 +91,24 @@ export default defineEventHandler(async (event) => {
         settingsData.maintenance = {
           ...settingsData.maintenance,
           ...settings.maintenance,
+          lastUpdated: new Date().toISOString()
+        };
+      }
+
+      // Update season settings
+      if (settings.seasons) {
+        settingsData.seasons = {
+          ...settingsData.seasons,
+          ...settings.seasons,
+          lastUpdated: new Date().toISOString()
+        };
+      }
+
+      // Update Discord settings
+      if (settings.discord) {
+        settingsData.discord = {
+          ...settingsData.discord,
+          ...settings.discord,
           lastUpdated: new Date().toISOString()
         };
       }

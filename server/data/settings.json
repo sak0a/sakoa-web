@@ -1,9 +1,19 @@
 {
   "maintenance": {
-    "enabled": false,
+    "enabled": true,
     "title": "Maintenance Mode",
     "message": "We're currently performing maintenance on our website. Please check back soon!",
     "estimatedTime": "",
-    "lastUpdated": "2025-06-26T18:39:29.582Z"
+    "lastUpdated": "2025-06-27T18:21:46.337Z"
+  },
+  "seasons": {
+    "startYear": 2025,
+    "startMonth": 5,
+    "startDay": 15,
+    "lastUpdated": "2025-06-27T18:41:49.755Z"
+  },
+  "discord": {
+    "inviteUrl": "https://discord.gg/JuxYYVEkzc",
+    "lastUpdated": ""
   }
 }

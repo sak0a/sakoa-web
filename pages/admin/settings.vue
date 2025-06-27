@@ -119,6 +119,128 @@
           </div>
         </div>
 
+        <!-- Season Settings -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-xl font-semibold text-white mb-2">Season Configuration</h2>
+              <p class="text-gray-400">Configure when seasons start (year, month, day)</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Start Year</label>
+              <input
+                v-model.number="seasonForm.startYear"
+                type="number"
+                min="2020"
+                max="2030"
+                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="2025"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Start Month</label>
+              <select
+                v-model.number="seasonForm.startMonth"
+                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Start Day</label>
+              <input
+                v-model.number="seasonForm.startDay"
+                type="number"
+                min="1"
+                max="31"
+                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="15"
+              />
+            </div>
+          </div>
+
+          <div class="flex gap-4">
+            <button
+              @click="saveSeasonSettings"
+              :disabled="isLoading"
+              class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              <span v-if="isLoading">Saving...</span>
+              <span v-else>Save Season Settings</span>
+            </button>
+            <button
+              @click="resetSeasonForm"
+              :disabled="isLoading"
+              class="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              Reset
+            </button>
+          </div>
+
+          <!-- Last Updated -->
+          <div v-if="settings?.seasons?.lastUpdated" class="mt-4 text-xs text-gray-500">
+            Last updated: {{ formatDate(settings.seasons.lastUpdated) }}
+          </div>
+        </div>
+
+        <!-- Discord Settings -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-xl font-semibold text-white mb-2">Discord Configuration</h2>
+              <p class="text-gray-400">Configure Discord invite link for the server</p>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-300 mb-2">Discord Invite URL</label>
+            <input
+              v-model="discordForm.inviteUrl"
+              type="url"
+              class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              placeholder="https://discord.gg/your-invite-code"
+            />
+            <p class="text-xs text-gray-500 mt-1">This link will be used throughout the website for Discord references</p>
+          </div>
+
+          <div class="flex gap-4">
+            <button
+              @click="saveDiscordSettings"
+              :disabled="isLoading"
+              class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              <span v-if="isLoading">Saving...</span>
+              <span v-else>Save Discord Settings</span>
+            </button>
+            <button
+              @click="resetDiscordForm"
+              :disabled="isLoading"
+              class="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              Reset
+            </button>
+          </div>
+
+          <!-- Last Updated -->
+          <div v-if="settings?.discord?.lastUpdated" class="mt-4 text-xs text-gray-500">
+            Last updated: {{ formatDate(settings.discord.lastUpdated) }}
+          </div>
+        </div>
+
         <!-- Success/Error Messages -->
         <div v-if="message" class="mb-6">
           <div
@@ -151,6 +273,16 @@ const maintenanceForm = ref({
   estimatedTime: ''
 });
 
+const seasonForm = ref({
+  startYear: 2025,
+  startMonth: 5,
+  startDay: 15
+});
+
+const discordForm = ref({
+  inviteUrl: ''
+});
+
 // Load settings
 const loadSettings = async () => {
   try {
@@ -163,6 +295,20 @@ const loadSettings = async () => {
         title: settingsData.maintenance.title || '',
         message: settingsData.maintenance.message || '',
         estimatedTime: settingsData.maintenance.estimatedTime || ''
+      };
+    }
+
+    if (settingsData.seasons) {
+      seasonForm.value = {
+        startYear: settingsData.seasons.startYear || 2025,
+        startMonth: settingsData.seasons.startMonth || 5,
+        startDay: settingsData.seasons.startDay || 15
+      };
+    }
+
+    if (settingsData.discord) {
+      discordForm.value = {
+        inviteUrl: settingsData.discord.inviteUrl || ''
       };
     }
   } catch (error) {
@@ -221,6 +367,54 @@ const saveMaintenanceSettings = async () => {
   }
 };
 
+// Save season settings
+const saveSeasonSettings = async () => {
+  try {
+    isLoading.value = true;
+
+    const response = await updateSettings({
+      seasons: {
+        startYear: seasonForm.value.startYear,
+        startMonth: seasonForm.value.startMonth,
+        startDay: seasonForm.value.startDay
+      }
+    });
+
+    if (response.success) {
+      settings.value = response.settings;
+      showMessage('Season settings saved successfully', 'success');
+    }
+  } catch (error) {
+    console.error('Failed to save season settings:', error);
+    showMessage('Failed to save season settings', 'error');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Save Discord settings
+const saveDiscordSettings = async () => {
+  try {
+    isLoading.value = true;
+
+    const response = await updateSettings({
+      discord: {
+        inviteUrl: discordForm.value.inviteUrl
+      }
+    });
+
+    if (response.success) {
+      settings.value = response.settings;
+      showMessage('Discord settings saved successfully', 'success');
+    }
+  } catch (error) {
+    console.error('Failed to save Discord settings:', error);
+    showMessage('Failed to save Discord settings', 'error');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 // Reset form to current settings
 const resetForm = () => {
   if (settings.value?.maintenance) {
@@ -228,6 +422,26 @@ const resetForm = () => {
       title: settings.value.maintenance.title || '',
       message: settings.value.maintenance.message || '',
       estimatedTime: settings.value.maintenance.estimatedTime || ''
+    };
+  }
+};
+
+// Reset season form
+const resetSeasonForm = () => {
+  if (settings.value?.seasons) {
+    seasonForm.value = {
+      startYear: settings.value.seasons.startYear || 2025,
+      startMonth: settings.value.seasons.startMonth || 5,
+      startDay: settings.value.seasons.startDay || 15
+    };
+  }
+};
+
+// Reset Discord form
+const resetDiscordForm = () => {
+  if (settings.value?.discord) {
+    discordForm.value = {
+      inviteUrl: settings.value.discord.inviteUrl || ''
     };
   }
 };

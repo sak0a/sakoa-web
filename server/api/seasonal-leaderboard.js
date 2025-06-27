@@ -14,11 +14,11 @@ export default defineEventHandler(async (event) => {
     if (!targetSeason) {
       // Import getCurrentSeason here to avoid circular dependency issues
       const { getCurrentSeason } = await import('../utils/seasons.js');
-      targetSeason = getCurrentSeason();
+      targetSeason = await getCurrentSeason();
     }
 
     // Validate season number
-    if (!isValidSeason(targetSeason)) {
+    if (!(await isValidSeason(targetSeason))) {
       throw createError({
         statusCode: 400,
         statusMessage: `Invalid season number: ${targetSeason}`
@@ -43,8 +43,8 @@ export default defineEventHandler(async (event) => {
     }
 
     // Get the correct table name for the season
-    const tableName = getSeasonTableName(targetSeason);
-    const seasonInfo = getSeasonInfo(targetSeason);
+    const tableName = await getSeasonTableName(targetSeason);
+    const seasonInfo = await getSeasonInfo(targetSeason);
 
     // Build the SQL query
     const sql = `

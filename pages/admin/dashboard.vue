@@ -173,6 +173,7 @@ const serverStats = ref({
 
 const maintenanceSettings = ref(null);
 const isTogglingMaintenance = ref(false);
+const debugInfo = ref(null);
 
 // Toggle maintenance mode
 const toggleMaintenance = async () => {
@@ -224,6 +225,16 @@ onMounted(async () => {
       total: serversData.servers.length,
       online: 0 // We could query server status here if needed
     };
+
+    // Load debug info (only in development)
+    if (process.dev) {
+      try {
+        const debugResponse = await $fetch('/api/admin/debug');
+        debugInfo.value = debugResponse.debug;
+      } catch (debugError) {
+        console.warn('Failed to load debug info:', debugError);
+      }
+    }
   } catch (error) {
     console.error('Failed to load dashboard data:', error);
     await navigateTo('/admin');

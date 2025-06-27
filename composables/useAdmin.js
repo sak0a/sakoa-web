@@ -9,12 +9,30 @@ export const useAdmin = () => {
       isLoading.value = true;
       error.value = null;
 
+      console.log('Checking admin authentication...');
+
       const response = await $fetch('/api/admin/auth', {
         method: 'GET'
       });
 
-      isAuthenticated.value = response?.authenticated || false;
-      return response?.authenticated || false;
+      const authenticated = response?.authenticated || false;
+      isAuthenticated.value = authenticated;
+
+      console.log('Auth check result:', { authenticated, response });
+
+      // If authenticated, refresh the session
+      if (authenticated) {
+        try {
+          await $fetch('/api/admin/auth', {
+            method: 'PATCH'
+          });
+          console.log('Session refreshed successfully');
+        } catch (refreshErr) {
+          console.warn('Failed to refresh session:', refreshErr);
+        }
+      }
+
+      return authenticated;
     } catch (err) {
       console.error('Auth check failed:', err);
       error.value = err.data?.message || 'Authentication check failed';
@@ -75,12 +93,22 @@ export const useAdmin = () => {
   // Donors management
   const getDonors = async () => {
     try {
+      console.log('Fetching donors data...');
       const response = await $fetch('/api/admin/donors', {
         method: 'GET'
       });
+      console.log('Donors data fetched successfully:', response);
       return response;
     } catch (err) {
       console.error('Failed to get donors:', err);
+      console.error('Error details:', { status: err.status, statusCode: err.statusCode, data: err.data });
+
+      // If it's an auth error, clear the authentication state
+      if (err.status === 401 || err.statusCode === 401) {
+        console.log('Authentication error detected, clearing auth state');
+        isAuthenticated.value = false;
+      }
+
       throw err;
     }
   };
@@ -127,12 +155,22 @@ export const useAdmin = () => {
   // Servers management
   const getServers = async () => {
     try {
+      console.log('Fetching servers data...');
       const response = await $fetch('/api/admin/servers', {
         method: 'GET'
       });
+      console.log('Servers data fetched successfully:', response);
       return response;
     } catch (err) {
       console.error('Failed to get servers:', err);
+      console.error('Error details:', { status: err.status, statusCode: err.statusCode, data: err.data });
+
+      // If it's an auth error, clear the authentication state
+      if (err.status === 401 || err.statusCode === 401) {
+        console.log('Authentication error detected, clearing auth state');
+        isAuthenticated.value = false;
+      }
+
       throw err;
     }
   };
@@ -185,6 +223,12 @@ export const useAdmin = () => {
       return response;
     } catch (err) {
       console.error('Failed to get settings:', err);
+
+      // If it's an auth error, clear the authentication state
+      if (err.status === 401) {
+        isAuthenticated.value = false;
+      }
+
       throw err;
     }
   };

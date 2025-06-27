@@ -53,7 +53,7 @@
           </button>
 
           <a
-            href="https://discord.gg/your-discord"
+            href="https://discord.gg/JuxYYVEkzc"
             target="_blank"
             rel="noopener noreferrer"
             class="text-white/80 hover:text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"

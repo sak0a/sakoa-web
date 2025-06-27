@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   try {
     const query = getQuery(event);
     const steamidInput = query.steamid;
-    const seasonNumber = parseInt(query.season) || getCurrentSeason();
+    const seasonNumber = parseInt(query.season) || await getCurrentSeason();
 
     // Validate required parameters
     if (!steamidInput) {
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Validate season number
-    if (!isValidSeason(seasonNumber)) {
+    if (!(await isValidSeason(seasonNumber))) {
       throw createError({
         statusCode: 400,
         statusMessage: `Invalid season number: ${seasonNumber}`
@@ -43,8 +43,8 @@ export default defineEventHandler(async (event) => {
     }
 
     // Get the correct table name and season info
-    const tableName = getSeasonTableName(seasonNumber);
-    const seasonInfo = getSeasonInfo(seasonNumber);
+    const tableName = await getSeasonTableName(seasonNumber);
+    const seasonInfo = await getSeasonInfo(seasonNumber);
 
     // Build the SQL query to find the player
     const sql = `

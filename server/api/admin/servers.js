@@ -12,9 +12,10 @@ const serversFilePath = path.join(projectRoot, 'server/data/servers.json');
 function checkAdminAuth(event) {
   const sessionCookie = getCookie(event, 'admin-session');
   if (sessionCookie !== 'authenticated') {
+    console.error('Admin authentication failed - invalid or missing session cookie');
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized - Admin access required'
+      statusMessage: 'Admin password not found. Please log in again.'
     });
   }
 }
