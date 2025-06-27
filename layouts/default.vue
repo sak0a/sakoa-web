@@ -1,8 +1,11 @@
 <template>
   <div class="min-h-screen flex flex-col">
+    <!-- Admin Notice -->
+    <AdminNotice />
+
     <header
       ref="navigation"
-      class="navigation fixed top-0 left-0 w-full z-50 transition-all duration-1000 ease-out"
+      class="navigation fixed left-0 w-full z-50 transition-all duration-1000 ease-out admin-aware"
       :class="{ 'scrolled': scrolled }"
     >
       <div class="nav-container">
@@ -66,6 +69,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import BackToTop from '~/components/BackToTop.vue';
+import AdminNotice from '~/components/AdminNotice.vue';
 
 const navigation = ref(null);
 const scrolled = ref(false);
