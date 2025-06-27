@@ -1,4 +1,4 @@
-name: Deploy to Plesk
+name: Deploy to Plesk (Node)
 
 on:
   push:

@@ -1,7 +1,9 @@
 name: Deploy to Plesk (Bun)
 
 on:
-  workflow_dispatch:  # Manual deployment only (to avoid conflicts with Node.js workflow)
+  push:
+    branches: [ main, master ]  # Deploy when pushing to main/master branch
+  workflow_dispatch:  # Allow manual deployment
 
 jobs:
   deploy:
