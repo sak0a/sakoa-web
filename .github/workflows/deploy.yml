@@ -69,7 +69,7 @@ jobs:
         password: ${{ secrets.PLESK_PASSWORD }}
         # Alternative: use key instead of password
         # key: ${{ secrets.PLESK_SSH_KEY }}
-        source: ".output/*,server/*,scripts/diagnose-deployment.sh,scripts/test-server-start.js,scripts/run-node-script.sh,scripts/restart-app.sh,manual-restart.sh"
+        source: ".output/*,server/*"
         target: "/var/www/vhosts/sakoa.xyz/httpdocs"
         strip_components: 0  # Keep directory structure
 
@@ -90,7 +90,7 @@ jobs:
           ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
           EOF
         
-    - name: Set file permissions and trigger deployment restart
+    - name: Set file permissions
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.PLESK_HOST }}
@@ -106,30 +106,17 @@ jobs:
           find server -type d -exec chmod 755 {} \; 2>/dev/null || true
           chmod 600 .output/server/.env
 
-          # Make server and scripts executable
+          # Make server executable
           chmod +x .output/server/index.mjs
-          chmod +x scripts/run-node-script.sh
-          chmod +x scripts/diagnose-deployment.sh
-          chmod +x scripts/restart-app.sh
-          chmod +x manual-restart.sh
 
-          # Use comprehensive restart script
-          echo "🔄 Running comprehensive application restart..."
-          ./scripts/restart-app.sh
+          echo "✅ File permissions set successfully"
+          echo "ℹ️  Please restart the Node.js application manually via Plesk control panel"
 
-    - name: Test server startup
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.PLESK_HOST }}
-        username: ${{ secrets.PLESK_USERNAME }}
-        password: ${{ secrets.PLESK_PASSWORD }}
-        script: |
-          cd /var/www/vhosts/sakoa.xyz/httpdocs
-          echo "🧪 Running server startup test..."
-          ./scripts/run-node-script.sh scripts/test-server-start.js || {
-            echo "⚠️  Server startup test failed, but deployment can continue"
-            echo "ℹ️  This is not critical for deployment success"
-          }
+    - name: Deployment notification
+      run: |
+        echo "🚀 Deployment completed successfully!"
+        echo "🌐 Site: https://sakoa.xyz"
+        echo "⚠️  MANUAL ACTION REQUIRED: Please restart the Node.js application via Plesk control panel"
 
     - name: Run deployment diagnostics
       uses: appleboy/ssh-action@v1.0.3

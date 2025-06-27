@@ -58,7 +58,7 @@ jobs:
         password: ${{ secrets.PLESK_PASSWORD }}
         # Alternative: use key instead of password
         # key: ${{ secrets.PLESK_SSH_KEY }}
-        source: ".output/*,server/*,restart-app.sh"
+        source: ".output/*,server/*"
         target: "/var/www/vhosts/sakoa.xyz/httpdocs"
         strip_components: 0  # Keep directory structure
         
@@ -94,33 +94,16 @@ jobs:
           find server -type f -exec chmod 644 {} \;
           find server -type d -exec chmod 755 {} \;
           chmod 600 .output/server/.env
-          
-          # Make server and restart script executable
+
+          # Make server executable
           chmod +x .output/server/index.mjs
-          chmod +x restart-app.sh
 
-          # Install Bun on server if not present (optional)
-          # curl -fsSL https://bun.sh/install | bash || true
-
-          # Execute restart script
-          ./restart-app.sh
-
-          # Additional Passenger-specific restart methods
-          echo "🔄 Additional Passenger restart attempts..."
-
-          # Method 1: Touch restart.txt in application root (Passenger standard)
-          touch restart.txt
-
-          # Method 2: Touch restart.txt in tmp directory (Passenger alternative)
-          mkdir -p tmp && touch tmp/restart.txt
-
-          # Method 3: Update file timestamps to trigger Passenger reload
-          find .output/server -name "*.mjs" -exec touch {} \; 2>/dev/null || true
-
-          echo "✅ Passenger restart triggers created"
+          echo "✅ File permissions set successfully"
+          echo "ℹ️  Please restart the Node.js application manually via Plesk control panel"
           
     - name: Deployment notification
       run: |
         echo "🚀 Deployment completed successfully!"
-        echo "🌐 Site should be live at: https://sakoa.xyz"
+        echo "🌐 Site: https://sakoa.xyz"
         echo "⚡ Built with Bun for faster performance!"
+        echo "⚠️  MANUAL ACTION REQUIRED: Please restart the Node.js application via Plesk control panel"
