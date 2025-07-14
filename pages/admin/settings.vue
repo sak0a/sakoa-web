@@ -241,6 +241,89 @@
           </div>
         </div>
 
+        <!-- Cache Settings -->
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-8">
+          <h3 class="text-xl font-semibold text-white mb-4">Cache Settings</h3>
+          <p class="text-gray-400 mb-6">Configure cache intervals for different data types (in seconds)</p>
+
+          <form @submit.prevent="updateCacheSettings" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">
+                  Server Status Interval
+                </label>
+                <input
+                  v-model.number="cacheForm.serverStatusInterval"
+                  type="number"
+                  min="5"
+                  max="300"
+                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="30"
+                />
+                <p class="text-xs text-gray-500 mt-1">How often to query game servers (5-300 seconds)</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">
+                  Leaderboard Interval
+                </label>
+                <input
+                  v-model.number="cacheForm.leaderboardInterval"
+                  type="number"
+                  min="5"
+                  max="300"
+                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="10"
+                />
+                <p class="text-xs text-gray-500 mt-1">How often to refresh leaderboard data (5-300 seconds)</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">
+                  Player Search Interval
+                </label>
+                <input
+                  v-model.number="cacheForm.playerSearchInterval"
+                  type="number"
+                  min="5"
+                  max="300"
+                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="10"
+                />
+                <p class="text-xs text-gray-500 mt-1">How often to refresh player search results (5-300 seconds)</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">
+                  Database Status Interval
+                </label>
+                <input
+                  v-model.number="cacheForm.databaseStatusInterval"
+                  type="number"
+                  min="1"
+                  max="60"
+                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="5"
+                />
+                <p class="text-xs text-gray-500 mt-1">How often to check database status (1-60 seconds)</p>
+              </div>
+            </div>
+
+            <div class="flex justify-end">
+              <button
+                type="submit"
+                :disabled="isLoading"
+                class="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              >
+                Update Cache Settings
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Cache Management -->
+        <CacheManagement />
+
         <!-- Success/Error Messages -->
         <div v-if="message" class="mb-6">
           <div
@@ -283,6 +366,14 @@ const discordForm = ref({
   inviteUrl: ''
 });
 
+const cacheForm = ref({
+  serverStatusInterval: 30,
+  leaderboardInterval: 10,
+  playerSearchInterval: 10,
+  seasonalLeaderboardInterval: 10,
+  databaseStatusInterval: 5
+});
+
 // Load settings
 const loadSettings = async () => {
   try {
@@ -309,6 +400,16 @@ const loadSettings = async () => {
     if (settingsData.discord) {
       discordForm.value = {
         inviteUrl: settingsData.discord.inviteUrl || ''
+      };
+    }
+
+    if (settingsData.cache) {
+      cacheForm.value = {
+        serverStatusInterval: settingsData.cache.serverStatusInterval || 30,
+        leaderboardInterval: settingsData.cache.leaderboardInterval || 10,
+        playerSearchInterval: settingsData.cache.playerSearchInterval || 10,
+        seasonalLeaderboardInterval: settingsData.cache.seasonalLeaderboardInterval || 10,
+        databaseStatusInterval: settingsData.cache.databaseStatusInterval || 5
       };
     }
   } catch (error) {
@@ -410,6 +511,33 @@ const saveDiscordSettings = async () => {
   } catch (error) {
     console.error('Failed to save Discord settings:', error);
     showMessage('Failed to save Discord settings', 'error');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Save cache settings
+const updateCacheSettings = async () => {
+  try {
+    isLoading.value = true;
+
+    const response = await updateSettings({
+      cache: {
+        serverStatusInterval: cacheForm.value.serverStatusInterval,
+        leaderboardInterval: cacheForm.value.leaderboardInterval,
+        playerSearchInterval: cacheForm.value.playerSearchInterval,
+        seasonalLeaderboardInterval: cacheForm.value.seasonalLeaderboardInterval,
+        databaseStatusInterval: cacheForm.value.databaseStatusInterval
+      }
+    });
+
+    if (response.success) {
+      settings.value = response.settings;
+      showMessage('Cache settings saved successfully', 'success');
+    }
+  } catch (error) {
+    console.error('Failed to save cache settings:', error);
+    showMessage('Failed to save cache settings', 'error');
   } finally {
     isLoading.value = false;
   }

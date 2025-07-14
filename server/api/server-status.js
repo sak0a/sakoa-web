@@ -1,6 +1,7 @@
 import { GameDig } from 'gamedig';
 import fs from 'fs';
 import path from 'path';
+import { getCachedData, generateServerCacheKey, cache, CacheEntry } from '../utils/cache.js';
 
 // Get the absolute path to the project root directory
 // In production, we need to go up from .output/server to the root
@@ -49,9 +50,9 @@ async function queryServer(server) {
   // Query all servers normally, but mark coming soon servers
 
   try {
-    // Try multiple game types and increased timeout
+    // Try multiple game types with fast timeout for responsiveness
     const queryOptions = [
-      { type: 'teamfortress2', host: server.host, port: server.port, maxAttempts: 2, socketTimeout: 10000, attemptTimeout: 15000 },
+      { type: 'teamfortress2', host: server.host, port: server.port, maxAttempts: 2, socketTimeout: 3000, attemptTimeout: 5000 },
     ];
 
     let lastError = null;
@@ -75,8 +76,8 @@ async function queryServer(server) {
           maxplayers: state.maxplayers || 24,
           players: (state.players || []).map(player => ({
             name: player.name || 'Unknown Player',
-            score: player.score || 0,
-            time: player.time || 0
+            score: player.raw?.score || 0,
+            time: player.raw?.time || 0
           })),
           location: server.location,
           connectUrl: server.connectUrl,
@@ -134,20 +135,184 @@ async function queryServer(server) {
   }
 }
 
+// Async function to query server and update cache (runs in background)
+async function queryServerAsync(server, cacheKey) {
+  try {
+    console.log(`Starting async query for server ${server.id}...`);
+
+    const result = await queryServer(server);
+
+    // Get cache settings for TTL
+    const settings = await getCacheSettings();
+    const ttl = settings.serverStatus || 30;
+
+    // Store result in cache
+    const entry = new CacheEntry(result, ttl);
+    cache.set(cacheKey, entry);
+
+    console.log(`Async query completed for server ${server.id}: ${result.status}`);
+  } catch (error) {
+    console.error(`Async query failed for server ${server.id}:`, error);
+
+    // Store offline status in cache
+    const offlineResult = {
+      id: server.id,
+      status: 'offline',
+      name: server.name,
+      map: 'Unknown',
+      maxplayers: 24,
+      players: [],
+      location: server.location,
+      connectUrl: server.connectUrl,
+      comingSoon: server.comingSoon || false,
+      error: error.message || 'Failed to query server'
+    };
+
+    const settings = await getCacheSettings();
+    const ttl = settings.serverStatus || 30;
+    const entry = new CacheEntry(offlineResult, ttl);
+    cache.set(cacheKey, entry);
+  }
+}
+
+// Import getCacheSettings function
+async function getCacheSettings() {
+  try {
+    const projectRoot = process.cwd().includes('.output/server')
+      ? path.join(process.cwd(), '../../')
+      : process.cwd();
+    const settingsFilePath = path.join(projectRoot, 'server/data/settings.json');
+
+    const data = await fs.promises.readFile(settingsFilePath, 'utf8');
+    const settings = JSON.parse(data);
+
+    if (settings.cache) {
+      return {
+        serverStatus: settings.cache.serverStatusInterval || 30
+      };
+    }
+  } catch (error) {
+    console.warn('Failed to load cache settings, using defaults:', error.message);
+  }
+
+  return { serverStatus: 30 };
+}
+
 export default defineEventHandler(async (event) => {
+  const query = getQuery(event);
+  const forceRefresh = query.force === 'true';
+  const serverId = query.serverId; // Optional: query specific server
+
   try {
     // Get servers from file
     const servers = await getServersData();
 
-    // Query all servers in parallel
-    const serverPromises = servers.map(server => queryServer(server));
-    const serverResults = await Promise.all(serverPromises);
+    // If specific server requested, handle it individually
+    if (serverId) {
+      const server = servers.find(s => s.id === serverId);
+      if (!server) {
+        throw createError({
+          statusCode: 404,
+          statusMessage: 'Server not found'
+        });
+      }
+
+      const cacheKey = generateServerCacheKey(serverId);
+      const result = await getCachedData(
+        cacheKey,
+        () => queryServer(server),
+        'serverStatus',
+        forceRefresh
+      );
+
+      return {
+        server: result.data,
+        cache: {
+          cached: result.cached,
+          timestamp: result.timestamp,
+          ttl: result.ttl,
+          source: result.source
+        }
+      };
+    }
+
+    // Handle all servers - return cached data immediately, start fresh queries for expired entries
+    const serverResults = [];
+
+    for (const server of servers) {
+      const cacheKey = generateServerCacheKey(server.id);
+
+      try {
+        // First, check if we have valid cached data
+        const cached = cache.get(cacheKey);
+
+        if (cached && !cached.isExpired() && !forceRefresh) {
+          // Return cached data immediately
+          serverResults.push({
+            ...cached.data,
+            cache: {
+              cached: true,
+              timestamp: cached.timestamp,
+              ttl: cached.getRemainingTTL(),
+              source: 'cache'
+            }
+          });
+        } else {
+          // No valid cache - start async query but return checking status immediately
+          const checkingStatus = {
+            id: server.id,
+            status: 'checking',
+            name: server.name,
+            map: 'Unknown',
+            maxplayers: 24,
+            players: [],
+            location: server.location,
+            connectUrl: server.connectUrl,
+            comingSoon: server.comingSoon || false,
+            cache: {
+              cached: false,
+              timestamp: Date.now(),
+              ttl: 0,
+              source: 'checking'
+            }
+          };
+
+          serverResults.push(checkingStatus);
+
+          // Start async query (don't await - let it run in background)
+          queryServerAsync(server, cacheKey);
+        }
+      } catch (error) {
+        console.error(`Failed to get status for server ${server.id}:`, error);
+
+        // Return offline status for failed servers
+        serverResults.push({
+          id: server.id,
+          status: 'offline',
+          name: server.name,
+          map: 'Unknown',
+          maxplayers: 24,
+          players: [],
+          location: server.location,
+          connectUrl: server.connectUrl,
+          comingSoon: server.comingSoon || false,
+          error: 'Failed to query server status',
+          cache: {
+            cached: false,
+            timestamp: Date.now(),
+            ttl: 0,
+            source: 'error'
+          }
+        });
+      }
+    }
 
     return {
       servers: serverResults
     };
+
   } catch (error) {
-    console.error('Unexpected error querying servers:', error);
+    console.error('Unexpected error in server status API:', error);
 
     // Get servers from file for fallback
     const servers = await getServersData();
@@ -163,7 +328,13 @@ export default defineEventHandler(async (event) => {
         location: server.location,
         connectUrl: server.connectUrl,
         comingSoon: server.comingSoon || false,
-        error: 'Failed to query server status'
+        error: 'Failed to query server status',
+        cache: {
+          cached: false,
+          timestamp: Date.now(),
+          ttl: 0,
+          source: 'error_fallback'
+        }
       }))
     };
   }

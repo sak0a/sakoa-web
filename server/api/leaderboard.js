@@ -1,4 +1,5 @@
 import { executeQuery } from '../utils/database.js';
+import { getCachedData, generateDbCacheKey } from '../utils/cache.js';
 
 export default defineEventHandler(async (event) => {
   try {
@@ -6,6 +7,7 @@ export default defineEventHandler(async (event) => {
     const sortBy = query.sortBy || 'points';
     const order = query.order || 'desc';
     const limit = Math.min(parseInt(query.limit) || 50, 50); // Max 50 players
+    const forceRefresh = query.force === 'true';
 
     // Validate sortBy parameter
     const validSortFields = ['topspeed', 'points', 'playtime', 'kills', 'deaths'];
@@ -50,30 +52,48 @@ export default defineEventHandler(async (event) => {
       LIMIT ?
     `;
 
-    console.log(`Executing leaderboard query: sortBy=${sortBy}, order=${order}, limit=${limit}`);
+    // Generate cache key based on query parameters
+    const cacheKey = generateDbCacheKey(sql, [limit], `leaderboard_${sortBy}_${order}_${limit}`);
 
-    const players = await executeQuery(sql, [limit]);
+    const result = await getCachedData(
+      cacheKey,
+      async () => {
+        console.log(`Executing leaderboard query: sortBy=${sortBy}, order=${order}, limit=${limit}`);
 
-    // Add ranking to each player
-    const rankedPlayers = players.map((player, index) => ({
-      ...player,
-      rank: index + 1,
-      // Format playtime to hours
-      playtimeHours: Math.round(player.playtime / 3600 * 100) / 100,
-      // Convert timestamps to readable dates
-      lastLoginDate: player.lastLogin ? new Date(player.lastLogin * 1000).toLocaleDateString() : 'Never',
-      firstLoginDate: player.firstLogin ? new Date(player.firstLogin * 1000).toLocaleDateString() : 'Unknown'
-    }));
+        const players = await executeQuery(sql, [limit]);
 
-    console.log(`Leaderboard query successful: ${rankedPlayers.length} players found`);
+        // Add ranking to each player
+        const rankedPlayers = players.map((player, index) => ({
+          ...player,
+          rank: index + 1,
+          // Format playtime to hours
+          playtimeHours: Math.round(player.playtime / 3600 * 100) / 100,
+          // Convert timestamps to readable dates
+          lastLoginDate: player.lastLogin ? new Date(player.lastLogin * 1000).toLocaleDateString() : 'Never',
+          firstLoginDate: player.firstLogin ? new Date(player.firstLogin * 1000).toLocaleDateString() : 'Unknown'
+        }));
+
+        console.log(`Leaderboard query successful: ${rankedPlayers.length} players found`);
+
+        return {
+          players: rankedPlayers,
+          sortBy,
+          order,
+          total: rankedPlayers.length
+        };
+      },
+      'leaderboard',
+      forceRefresh
+    );
 
     return {
       success: true,
-      data: {
-        players: rankedPlayers,
-        sortBy,
-        order,
-        total: rankedPlayers.length
+      data: result.data,
+      cache: {
+        cached: result.cached,
+        timestamp: result.timestamp,
+        ttl: result.ttl,
+        source: result.source
       }
     };
 

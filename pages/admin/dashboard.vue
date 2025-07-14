@@ -127,6 +127,9 @@
           </div>
         </div>
 
+        <!-- Database Status -->
+        <DatabaseStatus />
+
         <!-- Recent Activity -->
         <div class="bg-white/10 backdrop-blur-lg rounded-lg p-6 border border-white/20">
           <h2 class="text-xl font-semibold text-white mb-4">Recent Activity</h2>

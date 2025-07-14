@@ -45,6 +45,14 @@ async function readSettingsData() {
       discord: {
         inviteUrl: "https://discord.gg/JuxYYVEkzc",
         lastUpdated: ""
+      },
+      cache: {
+        serverStatusInterval: 30,
+        leaderboardInterval: 10,
+        playerSearchInterval: 10,
+        seasonalLeaderboardInterval: 10,
+        databaseStatusInterval: 5,
+        lastUpdated: ""
       }
     };
   }
@@ -109,6 +117,15 @@ export default defineEventHandler(async (event) => {
         settingsData.discord = {
           ...settingsData.discord,
           ...settings.discord,
+          lastUpdated: new Date().toISOString()
+        };
+      }
+
+      // Update cache settings
+      if (settings.cache) {
+        settingsData.cache = {
+          ...settingsData.cache,
+          ...settings.cache,
           lastUpdated: new Date().toISOString()
         };
       }

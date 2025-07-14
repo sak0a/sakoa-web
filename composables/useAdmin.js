@@ -246,6 +246,198 @@ export const useAdmin = () => {
     }
   };
 
+  // Database management functions
+  const getDatabaseStatus = async () => {
+    try {
+      isLoading.value = true;
+      error.value = null;
+
+      const response = await $fetch('/api/admin/database', {
+        method: 'GET'
+      });
+
+      if (response.success) {
+        return response.data;
+      } else {
+        throw new Error(response.error?.message || 'Failed to get database status');
+      }
+    } catch (err) {
+      console.error('Get database status error:', err);
+      error.value = err.message || 'Failed to get database status';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const testDatabaseConnection = async () => {
+    try {
+      isLoading.value = true;
+      error.value = null;
+
+      const response = await $fetch('/api/admin/database', {
+        method: 'POST',
+        body: { action: 'test' }
+      });
+
+      return response;
+    } catch (err) {
+      console.error('Test database connection error:', err);
+      error.value = err.message || 'Failed to test database connection';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const retryDatabaseConnection = async () => {
+    try {
+      isLoading.value = true;
+      error.value = null;
+
+      const response = await $fetch('/api/admin/database', {
+        method: 'POST',
+        body: { action: 'retry' }
+      });
+
+      return response;
+    } catch (err) {
+      console.error('Retry database connection error:', err);
+      error.value = err.message || 'Failed to retry database connection';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const getDetailedDatabaseStatus = async () => {
+    try {
+      isLoading.value = true;
+      error.value = null;
+
+      const response = await $fetch('/api/admin/database', {
+        method: 'POST',
+        body: { action: 'status' }
+      });
+
+      if (response.success) {
+        return response.data;
+      } else {
+        throw new Error(response.error?.message || 'Failed to get detailed database status');
+      }
+    } catch (err) {
+      console.error('Get detailed database status error:', err);
+      error.value = err.message || 'Failed to get detailed database status';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const reloadDatabaseConfig = async () => {
+    try {
+      isLoading.value = true;
+      error.value = null;
+
+      const response = await $fetch('/api/admin/database', {
+        method: 'POST',
+        body: { action: 'reload' }
+      });
+
+      return response;
+    } catch (err) {
+      console.error('Reload database config error:', err);
+      error.value = err.message || 'Failed to reload database configuration';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  // Cache management functions
+  const getCacheStats = async () => {
+    try {
+      isLoading.value = true;
+      error.value = null;
+
+      const response = await $fetch('/api/admin/cache', {
+        method: 'GET'
+      });
+
+      if (response.success) {
+        return response.data;
+      } else {
+        throw new Error(response.error?.message || 'Failed to get cache statistics');
+      }
+    } catch (err) {
+      console.error('Get cache stats error:', err);
+      error.value = err.message || 'Failed to get cache statistics';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const clearCache = async (key = null) => {
+    try {
+      isLoading.value = true;
+      error.value = null;
+
+      const response = await $fetch('/api/admin/cache', {
+        method: 'POST',
+        body: { action: 'clear', key }
+      });
+
+      return response;
+    } catch (err) {
+      console.error('Clear cache error:', err);
+      error.value = err.message || 'Failed to clear cache';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const forceRefreshCache = async (dataType) => {
+    try {
+      isLoading.value = true;
+      error.value = null;
+
+      const response = await $fetch('/api/admin/cache', {
+        method: 'POST',
+        body: { action: 'forceRefresh', dataType }
+      });
+
+      return response;
+    } catch (err) {
+      console.error('Force refresh cache error:', err);
+      error.value = err.message || 'Failed to force refresh cache';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const cleanupCache = async () => {
+    try {
+      isLoading.value = true;
+      error.value = null;
+
+      const response = await $fetch('/api/admin/cache', {
+        method: 'POST',
+        body: { action: 'cleanup' }
+      });
+
+      return response;
+    } catch (err) {
+      console.error('Cleanup cache error:', err);
+      error.value = err.message || 'Failed to cleanup cache';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
   return {
     isAuthenticated: readonly(isAuthenticated),
     isLoading: readonly(isLoading),
@@ -262,6 +454,15 @@ export const useAdmin = () => {
     updateServer,
     deleteServer,
     getSettings,
-    updateSettings
+    updateSettings,
+    getDatabaseStatus,
+    testDatabaseConnection,
+    retryDatabaseConnection,
+    getDetailedDatabaseStatus,
+    reloadDatabaseConfig,
+    getCacheStats,
+    clearCache,
+    forceRefreshCache,
+    cleanupCache
   };
 };

@@ -8,12 +8,20 @@
   },
   "seasons": {
     "startYear": 2025,
-    "startMonth": 5,
-    "startDay": 15,
-    "lastUpdated": "2025-06-27T18:41:49.755Z"
+    "startMonth": 6,
+    "startDay": 17,
+    "lastUpdated": "2025-07-13T22:52:14.078Z"
   },
   "discord": {
     "inviteUrl": "https://discord.gg/JuxYYVEkzc",
+    "lastUpdated": ""
+  },
+  "cache": {
+    "serverStatusInterval": 30,
+    "leaderboardInterval": 10,
+    "playerSearchInterval": 10,
+    "seasonalLeaderboardInterval": 10,
+    "databaseStatusInterval": 5,
     "lastUpdated": ""
   }
 }

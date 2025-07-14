@@ -8,7 +8,6 @@ export default defineNuxtConfig({
   experimental: {
     headNext: false,
     // Disable features that cause issues in Plesk/Passenger
-    buildManifest: false,
     payloadExtraction: false,
     clientFallback: false
   },
@@ -21,7 +20,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Private keys (only available on server-side)
     dbHost: process.env.DB_HOST || 'localhost',
-    dbPort: process.env.DB_PORT || 3306,
+    dbPort: process.env.DB_PORT || '3306',
     dbUser: process.env.DB_USER || 'root',
     dbPassword: process.env.DB_PASSWORD || '',
     dbName: process.env.DB_NAME || 'sakaStats',
@@ -46,7 +45,7 @@ export default defineNuxtConfig({
     serveStatic: true,
     // Disable build manifest routes that cause 500 errors
     routeRules: {
-      '/_nuxt/builds/**': { prerender: false, index: false }
+      '/_nuxt/builds/**': { prerender: false }
     }
   },
   // Additional SSR configuration for better stability

@@ -1,6 +1,7 @@
 import { executeQuery } from '../utils/database.js';
 import { validateAndConvertSteamID } from '../utils/steamid.js';
 import { getSeasonTableName, isValidSeason, getSeasonInfo, getCurrentSeason } from '../utils/seasons.js';
+import { getCachedData, generateDbCacheKey } from '../utils/cache.js';
 
 export default defineEventHandler(async (event) => {
   try {
