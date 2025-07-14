@@ -3,15 +3,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "nuxt build && tsx scripts/copy-data-files.ts",
+    "build": "nuxt build && tsx scripts/copy-data-files.js",
     "dev": "nuxt dev",
-    "generate": "nuxt generate && tsx scripts/copy-data-files.ts",
+    "generate": "nuxt generate && tsx scripts/copy-data-files.js",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "prepare-nuxt": "nuxt prepare",
     "ci-build": "tsx scripts/ci-build.ts",
     "type-check": "nuxt typecheck",
-    "copy-data": "tsx scripts/copy-data-files.ts"
+    "copy-data": "tsx scripts/copy-data-files.js"
   },
   "dependencies": {
     "gsap": "^3.13.0",
