@@ -14,7 +14,7 @@
           <div class="nav-logo">
             <img
               src="/assets/img/default-512x512.png"
-              alt="Saka's Dodgeball Server Logo"
+              alt="saka's Dodgeball Server Logo"
               class="nav-logo-img"
             />
             <span
@@ -26,17 +26,38 @@
           </div>
 
           <!-- Centered navigation menu -->
-          <nav class="nav-menu">
-            <a href="#" class="nav-link">Start</a>
-            <a href="#about" class="nav-link">About</a>
-            <a href="#server-status" class="nav-link">Status</a>
-            <a href="#leaderboard" class="nav-link">Leaderboard</a>
-            <a href="#tiers" class="nav-link">Rewards</a>
-            <a href="#donors" class="nav-link">Donators</a>
+          <nav class="nav-menu" :class="{ 'open': mobileMenuOpen }">
+            <a href="#" class="nav-link" @click="closeMobileMenu">Start</a>
+            <a href="#about" class="nav-link" @click="closeMobileMenu">About</a>
+            <a href="#server-status" class="nav-link" @click="closeMobileMenu">Status</a>
+            <a href="#leaderboard" class="nav-link" @click="closeMobileMenu">Leaderboard</a>
+            <a href="#tiers" class="nav-link" @click="closeMobileMenu">Rewards</a>
+            <a href="#donors" class="nav-link" @click="closeMobileMenu">Donators</a>
 
+            <!-- Mobile menu buttons -->
+            <div class="nav-buttons-mobile">
+              <a href="#donate" rel="noopener noreferrer" class="nav-button outline" @click="closeMobileMenu">
+                <span>Donate</span>
+                <svg class="nav-button-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+            </div>
           </nav>
 
-          <!-- Right-side buttons -->
+          <!-- Mobile hamburger menu button -->
+          <button
+            class="mobile-menu-toggle"
+            @click="toggleMobileMenu"
+            :class="{ 'open': mobileMenuOpen }"
+            aria-label="Toggle mobile menu"
+          >
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+          </button>
+
+          <!-- Right-side buttons (desktop only) -->
           <div class="nav-buttons-right">
             <a href="#donate" rel="noopener noreferrer" class="nav-button outline">
               <span>Donate</span>
@@ -73,10 +94,54 @@ import AdminNotice from '~/components/AdminNotice.vue';
 
 const navigation = ref(null);
 const scrolled = ref(false);
+const mobileMenuOpen = ref(false);
+
+// Mobile menu functions
+const toggleMobileMenu = () => {
+  mobileMenuOpen.value = !mobileMenuOpen.value;
+
+  // Prevent body scrolling when menu is open
+  if (mobileMenuOpen.value) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
+};
+
+const closeMobileMenu = () => {
+  mobileMenuOpen.value = false;
+  document.body.style.overflow = '';
+};
+
+// Close mobile menu when clicking outside
+const handleClickOutside = (event) => {
+  if (mobileMenuOpen.value && navigation.value && !navigation.value.contains(event.target)) {
+    closeMobileMenu();
+  }
+};
+
+// Close mobile menu on escape key
+const handleEscapeKey = (event) => {
+  if (event.key === 'Escape' && mobileMenuOpen.value) {
+    closeMobileMenu();
+  }
+};
+
+// Close mobile menu on window resize to desktop
+const handleResize = () => {
+  if (window.innerWidth > 991 && mobileMenuOpen.value) {
+    closeMobileMenu();
+  }
+};
 
 onMounted(() => {
   // Register ScrollTrigger plugin
   gsap.registerPlugin(ScrollTrigger);
+
+  // Add event listeners for mobile menu
+  document.addEventListener('click', handleClickOutside);
+  document.addEventListener('keydown', handleEscapeKey);
+  window.addEventListener('resize', handleResize);
 
   // Wait for DOM to be ready
   setTimeout(() => {
@@ -102,5 +167,10 @@ onMounted(() => {
 onUnmounted(() => {
   // Clean up ScrollTrigger instances
   ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+
+  // Remove event listeners
+  document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('keydown', handleEscapeKey);
+  window.removeEventListener('resize', handleResize);
 });
 </script>

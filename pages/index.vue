@@ -104,16 +104,17 @@
             <p class="text-lg mb-6" style="color: #d4d4d4;">
               Your donations help us maintain and improve the server. All contributions go directly toward server costs, development, and new features.
             </p>
-            <div class="flex flex-row gap-4 justify-center mb-8 animate-on-scroll animate-fade-in">
-              <a href="https://paypal.me/sakacom" target="_blank" rel="noopener noreferrer" class="btn text-lg px-8 py-3 flex items-center bg-[#0070BA] text-white  transition-colors h-12 rounded-xl">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2">
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8 animate-on-scroll animate-fade-in">
+              <a href="https://paypal.me/sakacom" target="_blank" rel="noopener noreferrer" class="btn flex items-center justify-center bg-[#0070BA] text-white hover:bg-[#005ea6] transition-colors h-12 rounded-xl px-6 py-3 font-medium text-base sm:text-lg whitespace-nowrap">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="mr-2 flex-shrink-0">
                   <path d="M20.067 8.478c.492.88.556 2.014.3 3.327-.74 3.806-3.276 5.12-6.514 5.12h-.5a.805.805 0 0 0-.794.68l-.04.22-.63 4.876-.03.2a.804.804 0 0 1-.794.679h-2.52c-.092 0-.175-.043-.232-.144a.33.33 0 0 1-.035-.2l.955-6.05-.03.2a.805.805 0 0 1 .794-.682h1.5c4.248 0 7.128-1.732 8.042-6.753.4-.015.015-.043.015-.072.21.012.4.015.072.015.778-1.157.778-2.415-.186-3.416z"/>
                   <path d="M18.792 2.904a5.68 5.68 0 0 0-.72-.72C16.93 1.296 15.32.895 13.576.895H5.864c-.44 0-.824.334-.93.76L1.057 17.776a.569.569 0 0 0 .565.673h4.12l1.075-6.706-.033.22a.938.938 0 0 1 .933-.76h1.52c3.734 0 6.182-1.507 6.954-5.87.2-.284.38-.531.555-.736.656-1.482.59-2.656-.316-3.693z"/>
                 </svg>
-                Donate via PayPal
+                <span class="hidden sm:inline">Donate via PayPal</span>
+                <span class="sm:hidden">PayPal</span>
               </a>
-              <a href="https://www.buymeacoffee.com/sakoa" target="_blank" rel="noopener noreferrer" class="inline-block transition-transform">
-                <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=sakoa&button_colour=FFDD00&font_colour=000000&font_family=Inter&outline_colour=000000&coffee_colour=ffffff" alt="Buy Me A Coffee" class="h-12" />
+              <a href="https://www.buymeacoffee.com/sakoa" target="_blank" rel="noopener noreferrer" class="inline-block transition-transform hover:scale-105">
+                <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=sakoa&button_colour=FFDD00&font_colour=000000&font_family=Inter&outline_colour=000000&coffee_colour=ffffff" alt="Buy Me A Coffee" class="h-12 w-auto" />
               </a>
             </div>
 
@@ -143,7 +144,7 @@
     <section id="tiers" class="section" style="background: linear-gradient(135deg, #9B6BC7 0%, #734C96 50%, #23104D 100%);">
       <div class="container-custom">
         <h2 class="text-3xl font-bold mb-8 text-center animate-on-scroll animate-fade-in text-white">Donation Rewards</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto px-4 sm:px-0">
           <!-- Tier 1 -->
           <div class="card hover:border-primary hover:border-2 transition-all animate-on-scroll animate-slide-in-right flex flex-col">
             <div class="text-center mb-6">
@@ -252,12 +253,12 @@
           <!-- Tier 3 -->
           <div class="card hover:border-primary hover:border-2 transition-all animate-on-scroll animate-slide-in-left flex flex-col relative">
             <!-- Coming Soon Overlay -->
-            <div class="absolute inset-0 bg-black/60 backdrop-blur-md rounded-lg flex items-center justify-center z-10">
-              <div class="text-center">
-                <div class="px-4 py-2 rounded-full font-bold text-lg mb-2 text-white" style="background-color: #734C96;">
+            <div class="absolute inset-0 bg-black/70 backdrop-blur-lg rounded-lg flex items-center justify-center z-10">
+              <div class="text-center px-4">
+                <div class="px-3 py-2 sm:px-4 sm:py-2 rounded-full font-bold text-base sm:text-lg mb-2 text-white" style="background-color: #734C96;">
                   COMING SOON
                 </div>
-                <p class="text-white text-sm">Server hosting will be available soon!</p>
+                <p class="text-white text-xs sm:text-sm">Server hosting will be available soon!</p>
               </div>
             </div>
             <!--

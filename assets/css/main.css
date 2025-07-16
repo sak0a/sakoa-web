@@ -160,7 +160,7 @@ body {
 .navigation.scrolled {
   background-color: transparent;
   transform: translateY(0);
-  top: 1rem;
+
 }
 
 .navigation.scrolled .nav-container {
@@ -184,7 +184,6 @@ body {
 }
 
 .navigation.scrolled .nav-menu {
-  margin: 0 50px;
   gap: 2px;
 }
 
@@ -265,37 +264,180 @@ body {
   border-color: #333333;
 }
 
+/* Mobile Menu Toggle Button */
+.mobile-menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 10;
+  transition: all 0.3s ease;
+  position: relative;
+  margin-left: auto;
+  gap: 4px;
+}
+
+.hamburger-line {
+  width: 16px;
+  height: 1.5px;
+  background-color: #ffffff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+  border-radius: 1px;
+  position: absolute;
+}
+
+.hamburger-line:nth-child(1) {
+  transform: translateY(-4px);
+}
+
+.hamburger-line:nth-child(2) {
+  transform: translateY(0);
+}
+
+.hamburger-line:nth-child(3) {
+  transform: translateY(4px);
+}
+
+.mobile-menu-toggle.open .hamburger-line:nth-child(1) {
+  transform: rotate(45deg) translateY(0);
+}
+
+.mobile-menu-toggle.open .hamburger-line:nth-child(2) {
+  opacity: 0;
+  transform: scale(0);
+}
+
+.mobile-menu-toggle.open .hamburger-line:nth-child(3) {
+  transform: rotate(-45deg) translateY(0);
+}
+
+/* Desktop - Ensure proper visibility */
+@media only screen and (min-width: 992px) {
+  .nav-menu {
+    display: flex !important;
+  }
+
+  .nav-buttons-mobile {
+    display: none !important;
+  }
+
+  .mobile-menu-toggle {
+    display: none !important;
+  }
+
+  .nav-buttons-right {
+    display: flex !important;
+  }
+}
+
+/* Mobile Navigation Buttons - Hidden by default */
+.nav-buttons-mobile {
+  display: none !important;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-buttons-mobile .nav-button {
+  margin: 8px 0;
+  width: 100%;
+  justify-content: center;
+  padding: 14px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.nav-buttons-mobile .nav-button:hover,
+.nav-buttons-mobile .nav-button:active,
+.nav-buttons-mobile .nav-button:focus {
+  background-color: #ffffff;
+  color: #000000;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.nav-buttons-mobile .nav-button:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+}
+
 /* Mobile Responsive */
 @media only screen and (max-width: 991px) {
+  .mobile-menu-toggle {
+    display: flex;
+    width: 20px;
+    height: 20px;
+  }
+
+  .nav-buttons-right {
+    display: none;
+  }
+
+  .nav-buttons-mobile {
+    display: flex !important;
+  }
+
   .nav-menu {
     display: none;
     flex-direction: column;
     position: absolute;
-    top: 100%;
-    left: 0;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px) scale(0.95);
     width: 100%;
-    background-color: #1a1a1a;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    background-color: rgba(26, 26, 26, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     margin: 0;
-    padding: 1rem;
-    border-radius: 0 0 8px 8px;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    box-sizing: border-box;
+    z-index: 1000;
   }
 
   .nav-menu.open {
     display: flex;
+    transform: translateX(-50%) translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
   }
 
-  .nav-buttons-right {
-    flex-direction: column;
+  .nav-link {
+    padding: 14px 20px;
+    margin: 4px 0;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1rem;
+    transition: all 0.3s ease;
     width: 100%;
-    margin-left: 0;
-    padding: 10px 0;
+    display: block;
   }
 
-  .nav-button {
-    margin: 5px 0;
-    width: calc(100% - 20px);
+  .nav-link:hover,
+  .nav-link:active,
+  .nav-link:focus {
+    background-color: rgba(115, 76, 150, 0.2);
+    color: var(--color-primary);
+  }
+
+  .nav-link:active {
+    background-color: rgba(115, 76, 150, 0.3);
+    transform: scale(0.98);
   }
 
   .nav-logo {
@@ -307,7 +449,22 @@ body {
   }
 
   .navigation.scrolled .nav-container {
-    width: 95%;
+    width: calc(100% - 2rem);
+    max-width: 50rem;
+    margin: 0 auto;
+    padding: 0.8rem 1.5rem;
+  }
+
+  /* Ensure mobile menu stays centered in scrolled state and matches nav width */
+  .navigation.scrolled .nav-menu {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px) scale(0.95);
+    width: 100%;
+  }
+
+  .navigation.scrolled .nav-menu.open {
+    transform: translateX(-50%) translateY(0) scale(1);
   }
 
   .navigation.scrolled .nav-logo {
@@ -317,5 +474,139 @@ body {
   .navigation.scrolled .nav-logo-img {
     width: 24px;
     height: 24px;
+  }
+
+
+
+  /* Mobile menu positioning is now handled by fixed positioning and JavaScript */
+}
+
+/* Mobile-specific improvements */
+@media only screen and (max-width: 768px) {
+  /* Donation buttons mobile styling */
+  .btn {
+    font-size: 0.9rem;
+    padding: 0.75rem 1.5rem;
+  }
+
+  /* Donation tier cards mobile improvements */
+  .card {
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Hero section mobile adjustments */
+  .container-custom {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Mobile navigation container adjustments */
+  .nav-container {
+    margin-left: 1rem;
+    margin-right: 1rem;
+    padding: 1rem 1.5rem;
+  }
+
+  .navigation.scrolled .nav-container {
+    padding: 0.75rem 1.25rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+
+  /* Mobile menu positioning is now handled by fixed positioning and JavaScript */
+
+  /* Improve mobile menu spacing */
+  .nav-menu {
+    padding: 1.25rem;
+  }
+
+  .nav-link {
+    padding: 16px 20px;
+    font-size: 1.1rem;
+  }
+
+  .nav-buttons-mobile .nav-button {
+    padding: 16px 20px;
+    font-size: 1rem;
+  }
+
+  /* Mobile donation section improvements */
+  .section {
+    padding: 3rem 0;
+  }
+
+  /* Donation buttons container mobile improvements */
+  .flex.flex-col.sm\\:flex-row {
+    gap: 1rem;
+  }
+
+  /* Donation tier grid mobile improvements */
+  .grid.grid-cols-1.md\\:grid-cols-3 {
+    gap: 1.5rem;
+  }
+
+  /* Better mobile text sizing */
+  h1 {
+    font-size: 2.25rem !important;
+  }
+
+  h2 {
+    font-size: 1.875rem !important;
+  }
+
+  /* Mobile-specific animation adjustments */
+  .animate-on-scroll {
+    animation-duration: 0.4s;
+  }
+}
+
+/* Extra small mobile devices */
+@media only screen and (max-width: 480px) {
+  .nav-container {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    padding: 0.875rem 1.25rem;
+  }
+
+  .navigation.scrolled .nav-container {
+    padding: 0.625rem 1rem;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+  }
+
+  /* Adjust mobile menu padding for very small screens */
+  .nav-menu {
+    padding: 1rem;
+    width: 100%;
+  }
+
+  .nav-title {
+    font-size: 0.75rem;
+  }
+
+  .navigation.scrolled .nav-title {
+    font-size: 0.7rem;
+  }
+
+  /* Donation buttons for very small screens */
+  .btn {
+    font-size: 0.85rem;
+    padding: 0.625rem 1.25rem;
+  }
+
+  /* Card improvements for small screens */
+  .card {
+    padding: 1rem;
+  }
+
+  /* Hero section for small screens */
+  h1 {
+    font-size: 2rem !important;
+  }
+
+  .container-custom {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 }
