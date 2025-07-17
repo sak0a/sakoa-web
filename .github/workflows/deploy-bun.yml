@@ -30,6 +30,8 @@ jobs:
         DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         DB_NAME: ${{ secrets.DB_NAME }}
         ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
+        HUGGINGFACE_API_KEY: ${{ secrets.HUGGINGFACE_API_KEY }}
         
     - name: Deploy to Plesk via SSH
       uses: appleboy/ssh-action@v1.0.3
@@ -79,6 +81,8 @@ jobs:
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           DB_NAME=${{ secrets.DB_NAME }}
           ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          STEAM_API_KEY=${{ secrets.STEAM_API_KEY }}
+          HUGGINGFACE_API_KEY=${{ secrets.HUGGINGFACE_API_KEY }}
           EOF
           
     - name: Set file permissions and restart application
