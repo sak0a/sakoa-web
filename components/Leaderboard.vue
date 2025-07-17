@@ -57,11 +57,11 @@
       <!-- Top 3 Players (Podium Style) -->
       <div v-if="topThree.length > 0" class="mb-8">
         <h4 class="text-lg font-bold mb-4 text-center" style="color: #ffffff;">🏆 Top 3 Champions 🏆</h4>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <div
             v-for="player in topThree"
             :key="player.steamid"
-            class="relative p-6 rounded-xl shadow-lg border-2"
+            class="relative p-6 rounded-xl shadow-lg backdrop-filter backdrop-blur-md"
             :class="getPodiumClass(player.rank)"
           >
             <!-- Rank Badge -->

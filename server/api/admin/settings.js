@@ -46,6 +46,11 @@ async function readSettingsData() {
         inviteUrl: "https://discord.gg/JuxYYVEkzc",
         lastUpdated: ""
       },
+      chatbot: {
+        enabled: true,
+        welcomeMessage: "Hi! I'm your TF2 Dodgeball Server assistant. I can help you with commands, donations, gameplay, and more!",
+        lastUpdated: ""
+      },
       cache: {
         serverStatusInterval: 30,
         leaderboardInterval: 10,
@@ -117,6 +122,15 @@ export default defineEventHandler(async (event) => {
         settingsData.discord = {
           ...settingsData.discord,
           ...settings.discord,
+          lastUpdated: new Date().toISOString()
+        };
+      }
+
+      // Update chatbot settings
+      if (settings.chatbot) {
+        settingsData.chatbot = {
+          ...settingsData.chatbot,
+          ...settings.chatbot,
           lastUpdated: new Date().toISOString()
         };
       }

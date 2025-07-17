@@ -16,7 +16,7 @@
       "port": 27015,
       "location": "🇩🇪 Frankfurt",
       "connectUrl": "steam://connect/37.114.54.74:27015",
-      "comingSoon": true
+      "comingSoon": false
     }
   ]
 }

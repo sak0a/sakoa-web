@@ -2,6 +2,7 @@ import { GameDig } from 'gamedig';
 import fs from 'fs';
 import path from 'path';
 import { getCachedData, generateServerCacheKey, cache, CacheEntry } from '../utils/cache.js';
+import { queryServerInBackground } from '../utils/background-worker.js';
 
 // Get the absolute path to the project root directory
 // In production, we need to go up from .output/server to the root
@@ -44,82 +45,16 @@ async function getServersData() {
   }
 }
 
+// Legacy queryServer function - now uses background worker
 async function queryServer(server) {
-  console.log(`Attempting to query TF2 server at ${server.host}:${server.port}`);
-
-  // Query all servers normally, but mark coming soon servers
-
   try {
-    // Try multiple game types with fast timeout for responsiveness
-    const queryOptions = [
-      { type: 'teamfortress2', host: server.host, port: server.port, maxAttempts: 2, socketTimeout: 3000, attemptTimeout: 5000 },
-    ];
-
-    let lastError = null;
-
-    for (const options of queryOptions) {
-      try {
-        console.log(`Trying query with type: ${options.type}`);
-        const state = await GameDig.query(options);
-
-        console.log('Server query successful:', {
-          name: state.name,
-          map: state.map,
-          players: state.players?.length || 0
-        });
-
-        return {
-          id: server.id,
-          status: 'online',
-          name: state.name || server.name,
-          map: state.map || 'Unknown',
-          maxplayers: state.maxplayers || 24,
-          players: (state.players || []).map(player => ({
-            name: player.name || 'Unknown Player',
-            score: player.raw?.score || 0,
-            time: player.raw?.time || 0
-          })),
-          location: server.location,
-          connectUrl: server.connectUrl,
-          comingSoon: server.comingSoon || false
-        };
-      } catch (queryError) {
-        console.warn(`Query failed with type ${options.type}:`, queryError.message);
-        lastError = queryError;
-        continue;
-      }
-    }
-
-    // All query attempts failed, return offline status
-    console.error('All server query attempts failed:', {
-      message: lastError?.message || 'Unknown error',
-      code: lastError?.code,
-      host: server.host,
-      port: server.port
+    return await queryServerInBackground(server, {
+      timeout: 5000,
+      maxAttempts: 2,
+      silent: true // Reduce console spam
     });
-
-    return {
-      id: server.id,
-      status: 'offline',
-      name: server.name,
-      map: 'Unknown',
-      maxplayers: 24,
-      players: [],
-      location: server.location,
-      connectUrl: server.connectUrl,
-      comingSoon: server.comingSoon || false,
-      error: `Server is offline or unreachable: ${lastError?.message || 'Connection failed'}`
-    };
-
   } catch (error) {
-    console.error('Unexpected error in server status query:', {
-      message: error.message,
-      code: error.code,
-      host: server.host,
-      port: server.port
-    });
-
-    // Return offline status for any unexpected errors
+    // Return offline status for any errors
     return {
       id: server.id,
       status: 'offline',
@@ -138,9 +73,12 @@ async function queryServer(server) {
 // Async function to query server and update cache (runs in background)
 async function queryServerAsync(server, cacheKey) {
   try {
-    console.log(`Starting async query for server ${server.id}...`);
-
-    const result = await queryServer(server);
+    // Use background worker for async queries too
+    const result = await queryServerInBackground(server, {
+      timeout: 5000,
+      maxAttempts: 2,
+      silent: true // No console spam
+    });
 
     // Get cache settings for TTL
     const settings = await getCacheSettings();
@@ -150,10 +88,11 @@ async function queryServerAsync(server, cacheKey) {
     const entry = new CacheEntry(result, ttl);
     cache.set(cacheKey, entry);
 
-    console.log(`Async query completed for server ${server.id}: ${result.status}`);
+    // Only log status changes or errors
+    if (result.status === 'offline' && result.error) {
+      console.warn(`Server ${server.id} is offline: ${result.error}`);
+    }
   } catch (error) {
-    console.error(`Async query failed for server ${server.id}:`, error);
-
     // Store offline status in cache
     const offlineResult = {
       id: server.id,
@@ -172,6 +111,8 @@ async function queryServerAsync(server, cacheKey) {
     const ttl = settings.serverStatus || 30;
     const entry = new CacheEntry(offlineResult, ttl);
     cache.set(cacheKey, entry);
+
+    console.error(`Background query failed for server ${server.id}:`, error.message);
   }
 }
 

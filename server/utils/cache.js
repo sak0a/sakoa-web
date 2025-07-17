@@ -11,7 +11,10 @@ const DEFAULT_INTERVALS = {
   leaderboard: 10,     // Database queries every 10 seconds
   playerSearch: 10,    // Player search cache
   seasonalLeaderboard: 10,
-  databaseStatus: 5    // Database status checks
+  databaseStatus: 5,   // Database status checks
+  donors: 30,          // Donor data cache
+  steamProfiles: 3600, // Steam profile data cache (1 hour)
+  default: 30          // Default cache interval
 };
 
 // Get cache settings from admin settings
@@ -31,7 +34,8 @@ async function getCacheSettings() {
         leaderboard: settings.cache.leaderboardInterval || DEFAULT_INTERVALS.leaderboard,
         playerSearch: settings.cache.playerSearchInterval || DEFAULT_INTERVALS.playerSearch,
         seasonalLeaderboard: settings.cache.seasonalLeaderboardInterval || DEFAULT_INTERVALS.seasonalLeaderboard,
-        databaseStatus: settings.cache.databaseStatusInterval || DEFAULT_INTERVALS.databaseStatus
+        databaseStatus: settings.cache.databaseStatusInterval || DEFAULT_INTERVALS.databaseStatus,
+        steamProfiles: settings.cache.steamProfilesInterval || DEFAULT_INTERVALS.steamProfiles
       };
     }
   } catch (error) {

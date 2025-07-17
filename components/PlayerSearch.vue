@@ -23,7 +23,7 @@
         
         <!-- Help Text -->
         <div class="mt-2 text-xs" style="color: #a3a3a3;">
-          <p>Supported formats: SteamID64 (76561198XXXXXXXXX), SteamID3 ([U:1:XXXXXXXX]), Legacy (STEAM_0:X:XXXXXXXX)</p>
+          <p>Supported formats: SteamID3 ([U:1:XXXXXXXX]), Legacy (STEAM_0:X:XXXXXXXX)</p>
         </div>
       </div>
 

@@ -241,6 +241,75 @@
           </div>
         </div>
 
+
+
+        <!-- Chatbot Settings -->
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-xl font-semibold text-white mb-1">AI Chatbot</h2>
+              <p class="text-gray-400 text-sm">Control the TF2 server assistant chatbot</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <span class="text-sm text-gray-400">
+                {{ settings?.chatbot?.enabled ? 'Enabled' : 'Disabled' }}
+              </span>
+              <button
+                @click="toggleChatbot"
+                :disabled="isLoading"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50"
+                :class="settings?.chatbot?.enabled ? 'bg-purple-600' : 'bg-gray-600'"
+              >
+                <span
+                  class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                  :class="settings?.chatbot?.enabled ? 'translate-x-6' : 'translate-x-1'"
+                ></span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Chatbot Configuration Form -->
+          <form @submit.prevent="saveChatbotSettings" class="space-y-4">
+            <div>
+              <label for="chatbot-welcome" class="block text-sm font-medium text-gray-300 mb-2">
+                Welcome Message
+              </label>
+              <textarea
+                id="chatbot-welcome"
+                v-model="chatbotForm.welcomeMessage"
+                rows="3"
+                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                placeholder="Hi! I'm your TF2 Dodgeball Server assistant..."
+              ></textarea>
+              <p class="text-xs text-gray-500 mt-1">This message will be shown when users first open the chatbot</p>
+            </div>
+
+            <div class="flex gap-4">
+              <button
+                type="submit"
+                :disabled="isLoading"
+                class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                <span v-if="isLoading">Saving...</span>
+                <span v-else>Save Chatbot Settings</span>
+              </button>
+              <button
+                type="button"
+                @click="resetChatbotForm"
+                :disabled="isLoading"
+                class="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+          </form>
+
+          <!-- Last Updated -->
+          <div v-if="settings?.chatbot?.lastUpdated" class="mt-4 text-xs text-gray-500">
+            Last updated: {{ formatDate(settings.chatbot.lastUpdated) }}
+          </div>
+        </div>
+
         <!-- Cache Settings -->
         <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-8">
           <h3 class="text-xl font-semibold text-white mb-4">Cache Settings</h3>
@@ -307,6 +376,8 @@
                 />
                 <p class="text-xs text-gray-500 mt-1">How often to check database status (1-60 seconds)</p>
               </div>
+
+
             </div>
 
             <div class="flex justify-end">
@@ -319,6 +390,84 @@
               </button>
             </div>
           </form>
+        </div>
+
+        <!-- Logging Settings -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-xl font-semibold text-white mb-2">System Logging Configuration</h2>
+              <p class="text-gray-400">Configure logging behavior for server queries and background workers</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div class="flex items-center">
+                <input
+                  v-model="loggingForm.backgroundWorkers"
+                  type="checkbox"
+                  id="backgroundWorkers"
+                  class="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+                />
+                <label for="backgroundWorkers" class="ml-2 text-sm text-gray-300">
+                  Enable Background Workers
+                </label>
+              </div>
+              <p class="text-xs text-gray-500 ml-6">Use background worker system for server queries (recommended)</p>
+
+              <div class="flex items-center">
+                <input
+                  v-model="loggingForm.statusChangesOnly"
+                  type="checkbox"
+                  id="statusChangesOnly"
+                  class="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+                />
+                <label for="statusChangesOnly" class="ml-2 text-sm text-gray-300">
+                  Log Status Changes Only
+                </label>
+              </div>
+              <p class="text-xs text-gray-500 ml-6">Only log when server status changes (reduces log spam)</p>
+            </div>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Server Query Logging Level</label>
+                <select
+                  v-model="loggingForm.serverQueries"
+                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="minimal">Minimal</option>
+                  <option value="normal">Normal</option>
+                  <option value="verbose">Verbose</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Level of detail for server query logging</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-4 mt-6">
+            <button
+              @click="saveLoggingSettings"
+              :disabled="isLoading"
+              class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              <span v-if="isLoading">Saving...</span>
+              <span v-else>Save Logging Settings</span>
+            </button>
+            <button
+              @click="resetLoggingForm"
+              :disabled="isLoading"
+              class="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              Reset
+            </button>
+          </div>
+
+          <!-- Last Updated -->
+          <div v-if="settings?.logging?.lastUpdated" class="mt-4 text-xs text-gray-500">
+            Last updated: {{ formatDate(settings.logging.lastUpdated) }}
+          </div>
         </div>
 
         <!-- Cache Management -->
@@ -366,12 +515,24 @@ const discordForm = ref({
   inviteUrl: ''
 });
 
+
+
+const loggingForm = ref({
+  backgroundWorkers: true,
+  statusChangesOnly: true,
+  serverQueries: 'minimal'
+});
+
 const cacheForm = ref({
   serverStatusInterval: 30,
   leaderboardInterval: 10,
   playerSearchInterval: 10,
   seasonalLeaderboardInterval: 10,
   databaseStatusInterval: 5
+});
+
+const chatbotForm = ref({
+  welcomeMessage: 'Hi! I\'m your TF2 Dodgeball Server assistant. I can help you with commands, donations, gameplay, and more!'
 });
 
 // Load settings
@@ -403,6 +564,16 @@ const loadSettings = async () => {
       };
     }
 
+
+
+    if (settingsData.logging) {
+      loggingForm.value = {
+        backgroundWorkers: settingsData.logging.backgroundWorkers !== false,
+        statusChangesOnly: settingsData.logging.statusChangesOnly !== false,
+        serverQueries: settingsData.logging.serverQueries || 'minimal'
+      };
+    }
+
     if (settingsData.cache) {
       cacheForm.value = {
         serverStatusInterval: settingsData.cache.serverStatusInterval || 30,
@@ -410,6 +581,12 @@ const loadSettings = async () => {
         playerSearchInterval: settingsData.cache.playerSearchInterval || 10,
         seasonalLeaderboardInterval: settingsData.cache.seasonalLeaderboardInterval || 10,
         databaseStatusInterval: settingsData.cache.databaseStatusInterval || 5
+      };
+    }
+
+    if (settingsData.chatbot) {
+      chatbotForm.value = {
+        welcomeMessage: settingsData.chatbot.welcomeMessage || 'Hi! I\'m your TF2 Dodgeball Server assistant. I can help you with commands, donations, gameplay, and more!'
       };
     }
   } catch (error) {
@@ -516,6 +693,63 @@ const saveDiscordSettings = async () => {
   }
 };
 
+
+
+// Toggle chatbot
+const toggleChatbot = async () => {
+  try {
+    isLoading.value = true;
+
+    const newEnabled = !settings.value?.chatbot?.enabled;
+
+    const response = await updateSettings({
+      chatbot: {
+        enabled: newEnabled
+      }
+    });
+
+    if (response.success) {
+      settings.value = response.settings;
+      showMessage(`Chatbot ${newEnabled ? 'enabled' : 'disabled'}`, 'success');
+    }
+  } catch (error) {
+    console.error('Failed to toggle chatbot:', error);
+    showMessage('Failed to toggle chatbot', 'error');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Save chatbot settings
+const saveChatbotSettings = async () => {
+  try {
+    isLoading.value = true;
+
+    const response = await updateSettings({
+      chatbot: {
+        welcomeMessage: chatbotForm.value.welcomeMessage
+      }
+    });
+
+    if (response.success) {
+      settings.value = response.settings;
+      showMessage('Chatbot settings saved successfully', 'success');
+    }
+  } catch (error) {
+    console.error('Failed to save chatbot settings:', error);
+    showMessage('Failed to save chatbot settings', 'error');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Reset chatbot form
+const resetChatbotForm = () => {
+  chatbotForm.value = {
+    welcomeMessage: settings.value?.chatbot?.welcomeMessage || 'Hi! I\'m your TF2 Dodgeball Server assistant. I can help you with commands, donations, gameplay, and more!'
+  };
+};
+
 // Save cache settings
 const updateCacheSettings = async () => {
   try {
@@ -570,6 +804,44 @@ const resetDiscordForm = () => {
   if (settings.value?.discord) {
     discordForm.value = {
       inviteUrl: settings.value.discord.inviteUrl || ''
+    };
+  }
+};
+
+
+
+// Save Logging settings
+const saveLoggingSettings = async () => {
+  try {
+    isLoading.value = true;
+
+    const response = await updateSettings({
+      logging: {
+        backgroundWorkers: loggingForm.value.backgroundWorkers,
+        statusChangesOnly: loggingForm.value.statusChangesOnly,
+        serverQueries: loggingForm.value.serverQueries
+      }
+    });
+
+    if (response.success) {
+      settings.value = response.settings;
+      showMessage('Logging settings saved successfully', 'success');
+    }
+  } catch (error) {
+    console.error('Failed to save logging settings:', error);
+    showMessage('Failed to save logging settings', 'error');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Reset Logging form
+const resetLoggingForm = () => {
+  if (settings.value?.logging) {
+    loggingForm.value = {
+      backgroundWorkers: settings.value.logging.backgroundWorkers !== false,
+      statusChangesOnly: settings.value.logging.statusChangesOnly !== false,
+      serverQueries: settings.value.logging.serverQueries || 'minimal'
     };
   }
 };

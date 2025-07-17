@@ -39,17 +39,24 @@
             <div class="flex justify-between items-start mb-4">
               <div class="flex-1">
                 <div class="flex items-center mb-2">
-                  <h3 class="text-lg font-semibold text-white mr-3">{{ donor.name }}</h3>
+                  <h3 class="text-lg font-semibold text-white mr-3">{{ donor.display_name || donor.name }}</h3>
                   <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-500/20 text-purple-300">
                     {{ donor.tier }}
                   </span>
+                  <span v-if="donor.show_on_website" class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-300">
+                    Visible
+                  </span>
+                  <span v-else class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-gray-500/20 text-gray-300">
+                    Hidden
+                  </span>
                 </div>
-                <p class="text-gray-400 text-sm mb-1">Total: €{{ donor.amount }}</p>
+                <p class="text-gray-400 text-sm mb-1">Total: €{{ donor.total_amount || donor.amount }}</p>
+                <p class="text-gray-400 text-sm mb-1">Donations: {{ donor.donation_count || (donor.donations ? donor.donations.length : 0) }}</p>
                 <p v-if="donor.steamid" class="text-gray-400 text-xs font-mono">{{ donor.steamid }}</p>
               </div>
               <div class="flex space-x-2">
                 <button
-                  @click="openEditModal(index, donor)"
+                  @click="openEditModal(donor.steamid, donor)"
                   class="text-blue-400 hover:text-blue-300 p-2 rounded transition-colors"
                   title="Edit Donor"
                 >
@@ -58,7 +65,7 @@
                   </svg>
                 </button>
                 <button
-                  @click="confirmDelete(index, donor)"
+                  @click="confirmDelete(donor.steamid, donor)"
                   class="text-red-400 hover:text-red-300 p-2 rounded transition-colors"
                   title="Delete Donor"
                 >
@@ -104,13 +111,13 @@
               <!-- Basic Info -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-2">Name *</label>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Display Name *</label>
                   <input
-                    v-model="formData.name"
+                    v-model="formData.display_name"
                     type="text"
                     required
                     class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="Donor name"
+                    placeholder="Name to display on website"
                   />
                 </div>
 
@@ -121,19 +128,39 @@
                     type="text"
                     required
                     class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="VIP, Premium, S, A, B, etc."
+                    placeholder="VIP, Premium, Elite, Supporter, SAS, etc."
                   />
+                  <p class="text-xs text-gray-400 mt-1">This will be displayed as a badge on the website</p>
                 </div>
               </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">SteamID (Optional)</label>
-                <input
-                  v-model="formData.steamid"
-                  type="text"
-                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="[U:1:XXXXXXXX]"
-                />
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">SteamID *</label>
+                  <input
+                    v-model="formData.steamid"
+                    type="text"
+                    required
+                    :disabled="editingSteamId !== null"
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                    placeholder="[U:1:XXXXXXXX] or STEAM_0:X:XXXXXXX"
+                  />
+                  <p v-if="editingSteamId !== null" class="text-xs text-gray-400 mt-1">SteamID cannot be changed when editing</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Website Visibility</label>
+                  <div class="flex items-center space-x-3">
+                    <label class="flex items-center">
+                      <input
+                        v-model="formData.show_on_website"
+                        type="checkbox"
+                        class="rounded bg-gray-700 border-gray-600 text-purple-600 focus:ring-purple-500"
+                      />
+                      <span class="ml-2 text-sm text-gray-300">Show on website</span>
+                    </label>
+                  </div>
+                </div>
               </div>
 
               <!-- Donations Section -->
@@ -174,6 +201,15 @@
                         type="date"
                         required
                         class="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div class="flex-1">
+                      <label class="block text-xs text-gray-400 mb-1">Notes (Optional)</label>
+                      <input
+                        v-model="donation.notes"
+                        type="text"
+                        class="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
+                        placeholder="Optional notes"
                       />
                     </div>
                     <button
@@ -229,7 +265,7 @@
           <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md">
             <h2 class="text-xl font-bold text-white mb-4">Confirm Delete</h2>
             <p class="text-gray-300 mb-6">
-              Are you sure you want to delete <strong>{{ deleteTarget?.name }}</strong>? This action cannot be undone.
+              Are you sure you want to delete <strong>{{ deleteTarget?.display_name || deleteTarget?.name }}</strong>? This action cannot be undone.
             </p>
             
             <div class="flex justify-end space-x-3">
@@ -250,9 +286,19 @@
           </div>
         </div>
 
-        <!-- File Manager Section -->
+        <!-- Cache Management Section -->
         <div class="mt-8">
-          <AdminFileManager file-type="donors" />
+          <div class="bg-white/10 backdrop-blur-lg rounded-lg p-6 border border-white/20">
+            <h2 class="text-xl font-bold text-white mb-4">Cache Management</h2>
+            <p class="text-gray-400 mb-4">Clear donor cache to force refresh of donor data on the website.</p>
+            <button
+              @click="clearDonorCache"
+              :disabled="clearingCache"
+              class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {{ clearingCache ? 'Clearing...' : 'Clear Donor Cache' }}
+            </button>
+          </div>
         </div>
       </div>
     </AdminLayout>
@@ -264,18 +310,19 @@ definePageMeta({
   layout: false
 });
 
-const { getDonors, addDonor, updateDonor, deleteDonor, checkAuth } = useAdmin();
+const { checkAuth } = useAdmin();
 
 const donors = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
 const showModal = ref(false);
-const editingIndex = ref(null);
+const editingSteamId = ref(null);
 const formData = ref({
-  name: '',
+  display_name: '',
   tier: '',
   steamid: '',
+  show_on_website: false,
   donations: []
 });
 const modalError = ref(null);
@@ -283,17 +330,23 @@ const saving = ref(false);
 
 const showDeleteModal = ref(false);
 const deleteTarget = ref(null);
-const deleteIndex = ref(null);
+const deleteSteamId = ref(null);
 const deleting = ref(false);
 
-// Load donors
+const clearingCache = ref(false);
+
+// Load donors from database
 const loadDonors = async () => {
   try {
     loading.value = true;
     error.value = null;
 
-    const data = await getDonors();
-    donors.value = data.donors;
+    const response = await $fetch('/api/admin/donors-db', {
+      method: 'GET',
+      credentials: 'include'
+    });
+
+    donors.value = response.donors || [];
   } catch (err) {
     console.error('Failed to load donors:', err);
     error.value = err.data?.message || 'Failed to load donors';
@@ -308,29 +361,37 @@ const loadDonors = async () => {
 
 // Modal functions
 const openAddModal = () => {
-  editingIndex.value = null;
+  editingSteamId.value = null;
   formData.value = {
-    name: '',
+    display_name: '',
     tier: '',
     steamid: '',
+    show_on_website: false,
     donations: [{
       amount: 0,
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
+      notes: ''
     }]
   };
   modalError.value = null;
   showModal.value = true;
 };
 
-const openEditModal = (index, donor) => {
-  editingIndex.value = index;
+const openEditModal = (steamid, donor) => {
+  editingSteamId.value = steamid;
   formData.value = {
-    name: donor.name || '',
+    display_name: donor.display_name || donor.name || '',
     tier: donor.tier || '',
     steamid: donor.steamid || '',
-    donations: donor.donations ? [...donor.donations] : [{
-      amount: donor.amount || 0,
-      date: donor.date || new Date().toISOString().split('T')[0]
+    show_on_website: donor.show_on_website || false,
+    donations: donor.donations ? donor.donations.map(d => ({
+      amount: d.amount,
+      date: d.date || d.donation_date,
+      notes: d.notes || ''
+    })) : [{
+      amount: donor.total_amount || donor.amount || 0,
+      date: new Date().toISOString().split('T')[0],
+      notes: ''
     }]
   };
   modalError.value = null;
@@ -339,7 +400,7 @@ const openEditModal = (index, donor) => {
 
 const closeModal = () => {
   showModal.value = false;
-  editingIndex.value = null;
+  editingSteamId.value = null;
   modalError.value = null;
 };
 
@@ -347,7 +408,8 @@ const closeModal = () => {
 const addDonation = () => {
   formData.value.donations.push({
     amount: 0,
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    notes: ''
   });
 };
 
@@ -365,13 +427,28 @@ const saveDonor = async () => {
   try {
     saving.value = true;
     modalError.value = null;
-    
-    if (editingIndex.value !== null) {
-      await updateDonor(editingIndex.value, formData.value);
+
+    if (editingSteamId.value !== null) {
+      // Update existing donor
+      await $fetch('/api/admin/donors-db', {
+        method: 'PUT',
+        credentials: 'include',
+        body: {
+          steamid: editingSteamId.value,
+          donor: formData.value
+        }
+      });
     } else {
-      await addDonor(formData.value);
+      // Add new donor
+      await $fetch('/api/admin/donors-db', {
+        method: 'POST',
+        credentials: 'include',
+        body: {
+          donor: formData.value
+        }
+      });
     }
-    
+
     await loadDonors();
     closeModal();
   } catch (err) {
@@ -381,8 +458,8 @@ const saveDonor = async () => {
   }
 };
 
-const confirmDelete = (index, donor) => {
-  deleteIndex.value = index;
+const confirmDelete = (steamid, donor) => {
+  deleteSteamId.value = steamid;
   deleteTarget.value = donor;
   showDeleteModal.value = true;
 };
@@ -390,13 +467,44 @@ const confirmDelete = (index, donor) => {
 const deleteDonorConfirmed = async () => {
   try {
     deleting.value = true;
-    await deleteDonor(deleteIndex.value);
+
+    await $fetch('/api/admin/donors-db', {
+      method: 'DELETE',
+      credentials: 'include',
+      query: {
+        steamid: deleteSteamId.value
+      }
+    });
+
     await loadDonors();
     showDeleteModal.value = false;
   } catch (err) {
     error.value = err.data?.message || 'Failed to delete donor';
   } finally {
     deleting.value = false;
+  }
+};
+
+// Cache management
+const clearDonorCache = async () => {
+  try {
+    clearingCache.value = true;
+
+    await $fetch('/api/admin/cache', {
+      method: 'POST',
+      credentials: 'include',
+      body: {
+        action: 'forceRefresh',
+        dataType: 'donors'
+      }
+    });
+
+    // Reload donors to show fresh data
+    await loadDonors();
+  } catch (err) {
+    error.value = err.data?.message || 'Failed to clear cache';
+  } finally {
+    clearingCache.value = false;
   }
 };
 

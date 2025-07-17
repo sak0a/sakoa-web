@@ -1,106 +1,222 @@
-// SteamID validation and conversion utilities
-
 /**
- * Validates and converts various SteamID formats to SteamID64
- * Supports: SteamID64, SteamID3, SteamID (legacy format)
+ * Steam ID conversion utilities
+ * Handles conversion between different Steam ID formats
+ * Primary format: Steam3 [U:1:XXXXXXX]
  */
 
-// Convert SteamID3 format [U:1:XXXXXXXX] to SteamID64
-function steamID3ToSteamID64(steamID3) {
-  const match = steamID3.match(/\[U:1:(\d+)\]/);
-  if (!match) return null;
-  
-  const accountID = parseInt(match[1]);
-  const steamID64 = (BigInt(accountID) + BigInt('76561197960265728')).toString();
-  return steamID64;
-}
+/**
+ * Convert Steam2 format to Steam3 format
+ * STEAM_0:X:XXXXXXX -> [U:1:XXXXXXX]
+ */
+export function steam2ToSteam3(steam2) {
+  if (!steam2 || typeof steam2 !== 'string') {
+    return null;
+  }
 
-// Convert legacy SteamID format STEAM_0:Y:Z to SteamID64
-function legacySteamIDToSteamID64(steamID) {
-  const match = steamID.match(/STEAM_0:([01]):(\d+)/);
-  if (!match) return null;
-  
-  const y = parseInt(match[1]);
-  const z = parseInt(match[2]);
-  const accountID = (z * 2) + y;
-  const steamID64 = (BigInt(accountID) + BigInt('76561197960265728')).toString();
-  return steamID64;
-}
+  // Check if it's already Steam3 format
+  if (steam2.startsWith('[U:1:') && steam2.endsWith(']')) {
+    return steam2;
+  }
 
-// Validate SteamID64 format
-function isValidSteamID64(steamID64) {
-  if (typeof steamID64 !== 'string') return false;
+  // Parse Steam2 format: STEAM_0:X:XXXXXXX
+  const steam2Match = steam2.match(/^STEAM_0:([01]):(\d+)$/);
+  if (!steam2Match) {
+    return null;
+  }
 
-  // SteamID64 should be 17 digits and start with 7656119
-  // Valid range is approximately 76561197960265728 to 76561202255233023
-  const steamIDRegex = /^7656119[789]\d{9}$/;
-  return steamIDRegex.test(steamID64);
+  const authServer = parseInt(steam2Match[1]);
+  const accountNumber = parseInt(steam2Match[2]);
+
+  // Calculate account ID: accountNumber * 2 + authServer
+  const accountId = accountNumber * 2 + authServer;
+
+  return `[U:1:${accountId}]`;
 }
 
 /**
- * Main function to validate and convert any SteamID format to SteamID64
- * @param {string} input - SteamID in any supported format
- * @returns {object} - { valid: boolean, steamID64: string|null, error: string|null }
+ * Convert Steam3 format to Steam2 format
+ * [U:1:XXXXXXX] -> STEAM_0:X:XXXXXXX
+ */
+export function steam3ToSteam2(steam3) {
+  if (!steam3 || typeof steam3 !== 'string') {
+    return null;
+  }
+
+  // Check if it's already Steam2 format
+  if (steam3.startsWith('STEAM_0:')) {
+    return steam3;
+  }
+
+  // Parse Steam3 format: [U:1:XXXXXXX]
+  const steam3Match = steam3.match(/^\[U:1:(\d+)\]$/);
+  if (!steam3Match) {
+    return null;
+  }
+
+  const accountId = parseInt(steam3Match[1]);
+  const authServer = accountId % 2;
+  const accountNumber = Math.floor(accountId / 2);
+
+  return `STEAM_0:${authServer}:${accountNumber}`;
+}
+
+/**
+ * Normalize Steam ID to Steam3 format
+ * Accepts both Steam2 and Steam3 formats, returns Steam3
+ */
+export function normalizeToSteam3(steamId) {
+  if (!steamId || typeof steamId !== 'string') {
+    return null;
+  }
+
+  // If already Steam3, return as is
+  if (steamId.startsWith('[U:1:') && steamId.endsWith(']')) {
+    return steamId;
+  }
+
+  // If Steam2, convert to Steam3
+  if (steamId.startsWith('STEAM_0:')) {
+    return steam2ToSteam3(steamId);
+  }
+
+  // Unknown format
+  return null;
+}
+
+/**
+ * Validate Steam ID format (accepts both Steam2 and Steam3)
+ */
+export function isValidSteamId(steamId) {
+  if (!steamId || typeof steamId !== 'string') {
+    return false;
+  }
+
+  // Check Steam3 format: [U:1:XXXXXXX]
+  if (/^\[U:1:\d+\]$/.test(steamId)) {
+    return true;
+  }
+
+  // Check Steam2 format: STEAM_0:X:XXXXXXX
+  if (/^STEAM_0:[01]:\d+$/.test(steamId)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Get account ID from Steam ID (works with both formats)
+ */
+export function getAccountId(steamId) {
+  if (!steamId || typeof steamId !== 'string') {
+    return null;
+  }
+
+  // Steam3 format: [U:1:XXXXXXX]
+  const steam3Match = steamId.match(/^\[U:1:(\d+)\]$/);
+  if (steam3Match) {
+    return parseInt(steam3Match[1]);
+  }
+
+  // Steam2 format: STEAM_0:X:XXXXXXX
+  const steam2Match = steamId.match(/^STEAM_0:([01]):(\d+)$/);
+  if (steam2Match) {
+    const authServer = parseInt(steam2Match[1]);
+    const accountNumber = parseInt(steam2Match[2]);
+    return accountNumber * 2 + authServer;
+  }
+
+  return null;
+}
+
+/**
+ * Convert Steam ID for SourcePawn plugin (Steam2 format)
+ * The plugin expects Steam2 format internally
+ */
+export function steamIdForPlugin(steamId) {
+  const normalized = normalizeToSteam3(steamId);
+  if (!normalized) {
+    return null;
+  }
+  return steam3ToSteam2(normalized);
+}
+
+/**
+ * Convert Steam ID for website display (Steam3 format)
+ * The website uses Steam3 format
+ */
+export function steamIdForWebsite(steamId) {
+  return normalizeToSteam3(steamId);
+}
+
+/**
+ * Batch convert Steam IDs to Steam3 format
+ */
+export function batchNormalizeToSteam3(steamIds) {
+  if (!Array.isArray(steamIds)) {
+    return [];
+  }
+
+  return steamIds.map(steamId => ({
+    original: steamId,
+    normalized: normalizeToSteam3(steamId),
+    valid: isValidSteamId(steamId)
+  })).filter(result => result.valid && result.normalized);
+}
+
+/**
+ * Format Steam ID for display in admin panel
+ */
+export function formatSteamIdForDisplay(steamId) {
+  if (!steamId) {
+    return 'Invalid Steam ID';
+  }
+
+  const normalized = normalizeToSteam3(steamId);
+  if (!normalized) {
+    return `Invalid: ${steamId}`;
+  }
+
+  const accountId = getAccountId(normalized);
+  return `${normalized} (ID: ${accountId})`;
+}
+
+/**
+ * Main validation function for admin forms
  */
 export function validateAndConvertSteamID(input) {
   if (!input || typeof input !== 'string') {
     return {
       valid: false,
-      steamID64: null,
-      error: 'Please provide a valid SteamID'
+      steamId: null,
+      error: 'Please provide a valid Steam ID'
     };
   }
 
   const trimmedInput = input.trim();
+  const normalized = normalizeToSteam3(trimmedInput);
 
-  // Check if it's already a valid SteamID64
-  if (isValidSteamID64(trimmedInput)) {
+  if (normalized) {
     return {
       valid: true,
-      steamID64: trimmedInput,
+      steamId: normalized,
       error: null
     };
   }
 
-  // Try SteamID3 format [U:1:XXXXXXXX]
-  if (trimmedInput.startsWith('[U:1:') && trimmedInput.endsWith(']')) {
-    const steamID64 = steamID3ToSteamID64(trimmedInput);
-    if (steamID64 && isValidSteamID64(steamID64)) {
-      return {
-        valid: true,
-        steamID64: steamID64,
-        error: null
-      };
-    }
-  }
-
-  // Try legacy SteamID format STEAM_0:Y:Z
-  if (trimmedInput.startsWith('STEAM_0:')) {
-    const steamID64 = legacySteamIDToSteamID64(trimmedInput);
-    if (steamID64 && isValidSteamID64(steamID64)) {
-      return {
-        valid: true,
-        steamID64: steamID64,
-        error: null
-      };
-    }
-  }
-
-  // If we get here, the format is not recognized
   return {
     valid: false,
-    steamID64: null,
-    error: 'Invalid SteamID format. Please use a correct format.'
+    steamId: null,
+    error: 'Invalid Steam ID format. Use [U:1:XXXXXXX] or STEAM_0:X:XXXXXXX format.'
   };
 }
 
 /**
- * Get example SteamID formats for user guidance
+ * Get example Steam ID formats for user guidance
  */
 export function getSteamIDExamples() {
   return {
-    steamID64: '76561198000000001',
-    steamID3: '[U:1:39735273]',
-    legacy: 'STEAM_0:1:19867636'
+    steam3: '[U:1:39735273]',
+    steam2: 'STEAM_0:1:19867636'
   };
 }

@@ -58,7 +58,8 @@
                 </div>
                 <div>
                   <h3 class="text-lg font-semibold text-white">Donors</h3>
-                  <p class="text-gray-400 text-sm">{{ donorStats.total }} total</p>
+                  <p class="text-gray-400 text-sm">{{ donorStats.total }} total • {{ donorStats.visible }} visible</p>
+                  <p class="text-gray-400 text-xs">€{{ donorStats.totalAmount?.toFixed(2) || '0.00' }} donated</p>
                 </div>
               </div>
             </div>
@@ -215,12 +216,22 @@ onMounted(async () => {
     const settingsData = await getSettings();
     maintenanceSettings.value = settingsData.maintenance;
 
-    // Load donor stats
-    const donorsData = await getDonors();
-    donorStats.value = {
-      total: donorsData.donors.length,
-      totalAmount: donorsData.donors.reduce((sum, donor) => sum + donor.amount, 0)
-    };
+    // Load donor stats from database
+    try {
+      const donorsResponse = await $fetch('/api/admin/donors-db', {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      donorStats.value = {
+        total: donorsResponse.donors.length,
+        totalAmount: donorsResponse.donors.reduce((sum, donor) => sum + (donor.total_amount || 0), 0),
+        visible: donorsResponse.donors.filter(d => d.show_on_website).length
+      };
+    } catch (donorError) {
+      console.warn('Failed to load donor stats:', donorError);
+      donorStats.value = { total: 0, totalAmount: 0, visible: 0 };
+    }
 
     // Load server stats
     const serversData = await getServers();

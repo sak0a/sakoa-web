@@ -235,9 +235,169 @@
           </div>
         </div>
 
-        <!-- File Manager Section -->
-        <div class="mt-8">
-          <AdminFileManager file-type="servers" />
+        <!-- Server Performance & Monitoring Section -->
+        <div class="mt-8 space-y-6">
+          <!-- Cache Management -->
+          <AdminCacheManagement />
+
+          <!-- Database Status -->
+          <DatabaseStatus />
+
+          <!-- Server Query Statistics -->
+          <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-xl font-semibold text-white">Server Query Statistics</h3>
+              <button
+                @click="refreshQueryStats"
+                :disabled="loadingStats"
+                class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-sm transition-colors"
+              >
+                {{ loadingStats ? 'Loading...' : 'Refresh' }}
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div class="bg-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-gray-400 text-sm">Active Queries</p>
+                    <p class="text-white text-2xl font-bold">{{ queryStats.activeQueries }}</p>
+                  </div>
+                  <div class="bg-blue-500/20 p-3 rounded-lg">
+                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-gray-400 text-sm">Query Interval</p>
+                    <p class="text-white text-2xl font-bold">{{ queryStats.interval }}s</p>
+                  </div>
+                  <div class="bg-green-500/20 p-3 rounded-lg">
+                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-gray-400 text-sm">Success Rate</p>
+                    <p class="text-white text-2xl font-bold">{{ queryStats.successRate }}%</p>
+                  </div>
+                  <div class="bg-purple-500/20 p-3 rounded-lg">
+                    <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Server Status Overview -->
+            <div class="bg-gray-700 rounded-lg p-4">
+              <h4 class="text-sm font-medium text-gray-300 mb-3">Server Status Overview</h4>
+              <div class="space-y-2">
+                <div v-for="server in servers" :key="server.id" class="flex items-center justify-between py-2 border-b border-gray-600 last:border-b-0">
+                  <div class="flex items-center space-x-3">
+                    <div
+                      class="w-3 h-3 rounded-full"
+                      :class="getServerStatusColor(server.id)"
+                    ></div>
+                    <span class="text-white font-medium">{{ server.name }}</span>
+                    <span class="text-gray-400 text-sm">{{ server.host }}:{{ server.port }}</span>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-white text-sm">{{ getServerStatus(server.id) }}</div>
+                    <div class="text-gray-400 text-xs">{{ getLastChecked(server.id) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Server Cache Settings -->
+          <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-xl font-semibold text-white">Server Cache Settings</h3>
+              <button
+                @click="saveWorkerSettings"
+                :disabled="savingWorkerSettings"
+                class="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                {{ savingWorkerSettings ? 'Saving...' : 'Save Cache Settings' }}
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Server Status Interval (seconds)</label>
+                  <input
+                    v-model.number="workerSettings.serverStatusInterval"
+                    type="number"
+                    min="5"
+                    max="300"
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <p class="text-xs text-gray-400 mt-1">How often to check server status (5-300 seconds)</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Database Status Interval (seconds)</label>
+                  <input
+                    v-model.number="workerSettings.databaseStatusInterval"
+                    type="number"
+                    min="5"
+                    max="60"
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <p class="text-xs text-gray-400 mt-1">How often to check database connection (5-60 seconds)</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Steam Profiles Cache (seconds)</label>
+                  <input
+                    v-model.number="workerSettings.steamProfilesInterval"
+                    type="number"
+                    min="300"
+                    max="86400"
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <p class="text-xs text-gray-400 mt-1">How long to cache Steam profile data (300-86400 seconds / 5min-24h)</p>
+                </div>
+              </div>
+
+              <div class="bg-blue-900/20 border border-blue-700 rounded-lg p-4">
+                <div class="flex items-center mb-2">
+                  <svg class="w-5 h-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span class="text-blue-400 font-medium">System Logging Settings</span>
+                </div>
+                <p class="text-blue-300 text-sm">
+                  Background worker and logging settings have been moved to the
+                  <NuxtLink to="/admin/settings" class="text-blue-200 hover:text-blue-100 underline">Settings page</NuxtLink>
+                  for better organization.
+                </p>
+              </div>
+            </div>
+
+            <div v-if="workerMessage" class="mt-4">
+              <div
+                class="p-3 rounded-lg text-sm"
+                :class="workerMessageType === 'success' ? 'bg-green-900/20 border border-green-700 text-green-400' : 'bg-red-900/20 border border-red-700 text-red-400'"
+              >
+                {{ workerMessage }}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </AdminLayout>
@@ -249,7 +409,8 @@ definePageMeta({
   layout: false
 });
 
-const { getServers, addServer, updateServer, deleteServer, checkAuth } = useAdmin();
+const { getServers, addServer, updateServer, deleteServer, checkAuth, getSettings, updateSettings } = useAdmin();
+const { getAllServerStates, getServerState } = useServerStatus();
 
 const servers = ref([]);
 const loading = ref(true);
@@ -273,6 +434,24 @@ const showDeleteModal = ref(false);
 const deleteTarget = ref(null);
 const deleteIndex = ref(null);
 const deleting = ref(false);
+
+// Monitoring data
+const queryStats = ref({
+  activeQueries: 0,
+  interval: 30,
+  successRate: 95
+});
+const loadingStats = ref(false);
+
+// Server cache settings
+const workerSettings = ref({
+  serverStatusInterval: 30,
+  databaseStatusInterval: 5,
+  steamProfilesInterval: 3600
+});
+const savingWorkerSettings = ref(false);
+const workerMessage = ref('');
+const workerMessageType = ref('success');
 
 // Load servers
 const loadServers = async () => {
@@ -373,6 +552,117 @@ const deleteServerConfirmed = async () => {
   }
 };
 
+// Monitoring methods
+const refreshQueryStats = async () => {
+  loadingStats.value = true;
+  try {
+    // Simulate fetching query stats - in real implementation, this would call an API
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Get current server states
+    const serverStates = getAllServerStates();
+    const activeCount = Object.values(serverStates).filter(state => state.isQuerying).length;
+    const onlineCount = Object.values(serverStates).filter(state => state.status === 'online').length;
+    const totalCount = Object.keys(serverStates).length;
+
+    queryStats.value = {
+      activeQueries: activeCount,
+      interval: workerSettings.value.serverStatusInterval,
+      successRate: totalCount > 0 ? Math.round((onlineCount / totalCount) * 100) : 0
+    };
+  } catch (err) {
+    console.error('Failed to refresh query stats:', err);
+  } finally {
+    loadingStats.value = false;
+  }
+};
+
+const getServerStatus = (serverId) => {
+  const state = getServerState(serverId);
+  if (!state) return 'Unknown';
+
+  switch (state.status) {
+    case 'online':
+      return `Online (${state.players || 0}/${state.maxplayers || 0})`;
+    case 'offline':
+      return 'Offline';
+    case 'checking':
+      return 'Checking...';
+    default:
+      return 'Unknown';
+  }
+};
+
+const getServerStatusColor = (serverId) => {
+  const state = getServerState(serverId);
+  if (!state) return 'bg-gray-500';
+
+  switch (state.status) {
+    case 'online':
+      return 'bg-green-500';
+    case 'offline':
+      return 'bg-red-500';
+    case 'checking':
+      return 'bg-yellow-500';
+    default:
+      return 'bg-gray-500';
+  }
+};
+
+const getLastChecked = (serverId) => {
+  const state = getServerState(serverId);
+  if (!state || !state.lastChecked) return 'Never';
+
+  const now = new Date();
+  const lastChecked = new Date(state.lastChecked);
+  const diffSeconds = Math.floor((now - lastChecked) / 1000);
+
+  if (diffSeconds < 60) return `${diffSeconds}s ago`;
+  if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
+  return `${Math.floor(diffSeconds / 3600)}h ago`;
+};
+
+const saveWorkerSettings = async () => {
+  savingWorkerSettings.value = true;
+  workerMessage.value = '';
+
+  try {
+    // Get current settings
+    const currentSettings = await getSettings();
+
+    // Update cache settings only
+    const updatedSettings = {
+      ...currentSettings,
+      cache: {
+        ...currentSettings.cache,
+        serverStatusInterval: workerSettings.value.serverStatusInterval,
+        databaseStatusInterval: workerSettings.value.databaseStatusInterval,
+        steamProfilesInterval: workerSettings.value.steamProfilesInterval,
+        lastUpdated: new Date().toISOString()
+      }
+    };
+
+    await updateSettings(updatedSettings);
+
+    workerMessage.value = 'Server cache settings saved successfully!';
+    workerMessageType.value = 'success';
+
+    // Refresh query stats to reflect new interval
+    await refreshQueryStats();
+  } catch (err) {
+    console.error('Failed to save worker settings:', err);
+    workerMessage.value = err.data?.message || 'Failed to save worker settings';
+    workerMessageType.value = 'error';
+  } finally {
+    savingWorkerSettings.value = false;
+
+    // Clear message after 5 seconds
+    setTimeout(() => {
+      workerMessage.value = '';
+    }, 5000);
+  }
+};
+
 // Load data on mount
 onMounted(async () => {
   try {
@@ -394,6 +684,21 @@ onMounted(async () => {
     // Load servers after authentication is confirmed
     console.log('Authentication confirmed, loading servers...');
     await loadServers();
+
+    // Load worker settings
+    try {
+      const settings = await getSettings();
+      if (settings.cache) {
+        workerSettings.value.serverStatusInterval = settings.cache.serverStatusInterval || 30;
+        workerSettings.value.databaseStatusInterval = settings.cache.databaseStatusInterval || 5;
+        workerSettings.value.steamProfilesInterval = settings.cache.steamProfilesInterval || 3600;
+      }
+    } catch (settingsError) {
+      console.warn('Failed to load worker settings:', settingsError);
+    }
+
+    // Initial refresh of query stats
+    await refreshQueryStats();
   } catch (error) {
     console.error('Failed to initialize servers page:', error);
     await navigateTo('/admin');

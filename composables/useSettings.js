@@ -28,6 +28,7 @@ export const useSettings = () => {
         discord: {
           inviteUrl: "https://discord.gg/JuxYYVEkzc"
         },
+
         maintenance: {
           enabled: false
         }
@@ -50,6 +51,8 @@ export const useSettings = () => {
       return "https://discord.gg/JuxYYVEkzc";
     }
   };
+
+
 
   return {
     settings: readonly(settings),

@@ -26,14 +26,8 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Convert to SteamID3 format for database search (since that's what the DB stores)
-    let searchSteamID = steamidValidation.steamID64;
-
-    // Convert SteamID64 to SteamID3 format for database search
-    if (steamidValidation.steamID64) {
-      const accountID = BigInt(steamidValidation.steamID64) - BigInt('76561197960265728');
-      searchSteamID = `[U:1:${accountID}]`;
-    }
+    // Use the normalized Steam3 format for database search
+    const searchSteamID = steamidValidation.steamId;
 
     // Validate season number
     if (!(await isValidSeason(seasonNumber))) {

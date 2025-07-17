@@ -77,6 +77,9 @@
     <!-- Back to Top Button -->
     <BackToTop />
 
+    <!-- Chatbot -->
+    <Chatbot />
+
     <footer class="py-8" style="background-color: #0a0a0a; color: var(--text-primary);">
       <div class=" text-center text-sm animate-on-scroll animate-fade-in animate-delay-3" style="border-color: var(--border-color); color: var(--text-tertiary);">
         <p>&copy; {{ new Date().getFullYear() }} saka's dodgeball server. All rights reserved.</p>
@@ -91,6 +94,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import BackToTop from '~/components/BackToTop.vue';
 import AdminNotice from '~/components/AdminNotice.vue';
+import Chatbot from '~/components/Chatbot.vue';
 
 const navigation = ref(null);
 const scrolled = ref(false);

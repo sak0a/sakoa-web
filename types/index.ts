@@ -44,18 +44,73 @@ export interface LeaderboardResponse {
 export interface Donation {
   amount: number;
   date: string;
+  added_date?: number;
+  added_by?: string;
+  notes?: string;
 }
 
 export interface Donor {
-  name: string;
-  tier: 'VIP' | 'Supporter' | 'Premium' | 'Elite';
-  donations: Donation[];
+  name?: string; // For backward compatibility
+  display_name: string;
+  tier: string; // Allow any custom tier
+  donations?: Donation[];
   amount: number;
-  steamid?: string;
+  total_amount?: number;
+  steamid: string; // Steam3 format [U:1:XXXXXXX]
+  show_on_website: boolean;
+  expiry_date?: number;
+  added_date?: number;
+  added_by?: string;
+  donationCount?: number;
+  donation_count?: number;
+  firstDonation?: string;
+  lastDonation?: string;
 }
 
 export interface DonorsData {
   donors: Donor[];
+  cached?: boolean;
+  timestamp?: string;
+  source?: string;
+  error?: string;
+}
+
+// Database-specific donor types
+export interface DbDonor {
+  steamid: string;
+  display_name: string;
+  tier: string;
+  show_on_website: boolean;
+  expiry_date: number;
+  added_date: number;
+  added_by: string;
+  donations: DbDonation[];
+  total_amount: number;
+}
+
+export interface DbDonation {
+  amount: number;
+  donation_date: string;
+  added_date: number;
+  added_by: string;
+  notes?: string;
+}
+
+// ===== CHATBOT TYPES =====
+
+export interface ChatMessage {
+  id: string;
+  message: string;
+  response: string;
+  timestamp: number;
+  isUser: boolean;
+}
+
+export interface ChatbotResponse {
+  success: boolean;
+  response: string;
+  suggestions?: string[];
+  error?: string;
 }
 
 // ===== SERVER TYPES =====

@@ -119,13 +119,16 @@ export default defineEventHandler(async (event) => {
           case 'database':
             cleared = clearCacheByPattern('^db_');
             break;
+          case 'donors':
+            cleared = clearCacheByPattern('donors');
+            break;
           case 'all':
             cleared = clearAllCache();
             break;
           default:
             throw createError({
               statusCode: 400,
-              statusMessage: 'Invalid dataType. Must be: servers, leaderboard, database, or all'
+              statusMessage: 'Invalid dataType. Must be: servers, leaderboard, database, donors, or all'
             });
         }
 

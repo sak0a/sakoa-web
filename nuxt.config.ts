@@ -25,6 +25,7 @@ export default defineNuxtConfig({
     dbPassword: process.env.DB_PASSWORD || '',
     dbName: process.env.DB_NAME || 'sakaStats',
     adminPassword: process.env.ADMIN_PASSWORD,
+    steamApiKey: process.env.STEAM_API_KEY,
     // Public keys (exposed to client-side)
     public: {
       serverIp: '45.81.234.145:27015'

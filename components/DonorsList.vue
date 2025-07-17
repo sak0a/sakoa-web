@@ -34,16 +34,14 @@
       <div v-for="(donor, index) in displayDonors" :key="index" class="p-4 rounded shadow-sm border animate-on-scroll animate-fade-in" style="background-color: #1e1e1e; border-color: #333333;">
         <div class="flex items-center">
           <div
-            :class="[
-              'rounded-full w-10 h-10 flex items-center justify-center font-bold mr-3 text-white text-xs',
-              donor.tier === 'VIP' ? 'bg-primary' :
-              donor.tier === 'Premium' ? 'bg-primary' : 'bg-gray-500'
-            ]"
+            class="rounded-full w-10 h-10 flex items-center justify-center font-bold mr-3 text-white text-xs bg-primary"
           >
-            {{ getTierDisplay(donor.tier) }}
+            {{ donor.tier }}
           </div>
-          <div>
-            <h4 class="font-bold" style="color: #ffffff;">{{ donor.name }}</h4>
+          <div class="flex-1">
+            <div class="flex items-center">
+              <h4 class="font-bold mr-2" style="color: #ffffff;">{{ donor.display_name || donor.name }}</h4>
+            </div>
             <p class="text-sm" style="color: #a3a3a3;">€{{ donor.amount }} total contribution</p>
           </div>
         </div>
@@ -94,19 +92,9 @@ const displayDonors = computed(() => {
   return donors.value;
 });
 
-// Function to get tier display text
-const getTierDisplay = (tier) => {
-  if (!tier) return 'T';
-
-  // Special cases for specific tiers
-  if (tier.toUpperCase() === 'VIP') return 'VIP';
-  if (tier.toUpperCase() === 'PREMIUM') return 'P';
-
-  // For other tiers, show the full tier if it's 3 characters or less, otherwise abbreviate
-  if (tier.length <= 3) {
-    return tier.toUpperCase();
-  } else {
-    return tier.substring(0, 3).toUpperCase();
-  }
+// Function to get display initial from donor name
+const getDisplayInitial = (donor) => {
+  const name = donor.display_name || donor.name || 'Anonymous';
+  return name.charAt(0).toUpperCase();
 };
 </script>

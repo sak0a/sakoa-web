@@ -33,7 +33,8 @@ async function readSettingsData() {
       discord: {
         inviteUrl: "https://discord.gg/JuxYYVEkzc",
         lastUpdated: ""
-      }
+      },
+
     };
   }
 }
@@ -53,8 +54,12 @@ export default defineEventHandler(async (event) => {
           discord: {
             inviteUrl: settingsData.discord?.inviteUrl || "https://discord.gg/JuxYYVEkzc"
           },
+
           maintenance: {
             enabled: settingsData.maintenance?.enabled || false
+          },
+          chatbot: {
+            enabled: settingsData.chatbot?.enabled !== false
           }
         }
       };
@@ -68,8 +73,12 @@ export default defineEventHandler(async (event) => {
           discord: {
             inviteUrl: "https://discord.gg/JuxYYVEkzc"
           },
+
           maintenance: {
             enabled: false
+          },
+          chatbot: {
+            enabled: true
           }
         }
       };

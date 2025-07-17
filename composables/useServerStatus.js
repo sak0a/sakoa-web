@@ -67,8 +67,6 @@ export const useServerStatus = () => {
     }
 
     try {
-      console.log(`Querying server ${serverId}...`);
-
       const response = await $fetch('/api/server-status', {
         query: {
           serverId,
@@ -78,6 +76,7 @@ export const useServerStatus = () => {
 
       if (response.server) {
         // Update server state with fresh data
+        const previousStatus = serverState.status;
         Object.assign(serverState, {
           status: response.server.status,
           name: response.server.name,
@@ -90,10 +89,13 @@ export const useServerStatus = () => {
           isQuerying: false
         });
 
-        console.log(`Server ${serverId} status updated:`, serverState.status);
+        // Only log status changes
+        if (previousStatus !== serverState.status) {
+          console.log(`Server ${serverId} status changed: ${previousStatus} → ${serverState.status}`);
+        }
       }
     } catch (error) {
-      console.error(`Failed to query server ${serverId}:`, error);
+      console.error(`Failed to query server ${serverId}:`, error.message);
 
       // Set offline state on error
       Object.assign(serverState, {
@@ -179,7 +181,10 @@ export const useServerStatus = () => {
     }, cacheSettings.value.serverStatusInterval * 1000);
 
     serverIntervals.set(serverId, queryInterval);
-    console.log(`Started monitoring server ${serverId} with ${cacheSettings.value.serverStatusInterval}s interval`);
+    // Only log when monitoring starts for the first time
+    if (!serverStates.has(serverId)) {
+      console.log(`Started monitoring server ${serverId} with ${cacheSettings.value.serverStatusInterval}s interval`);
+    }
 
     // Start global polling for all servers
     startGlobalPolling();

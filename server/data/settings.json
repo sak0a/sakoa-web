@@ -1,10 +1,10 @@
 {
   "maintenance": {
-    "enabled": true,
+    "enabled": false,
     "title": "Maintenance Mode",
     "message": "We're currently performing maintenance on our website. Please check back soon!",
-    "estimatedTime": "",
-    "lastUpdated": "2025-06-27T18:21:46.337Z"
+    "estimatedTime": "1 Day",
+    "lastUpdated": "2025-07-17T18:24:39.273Z"
   },
   "seasons": {
     "startYear": 2025,
@@ -22,6 +22,18 @@
     "playerSearchInterval": 10,
     "seasonalLeaderboardInterval": 10,
     "databaseStatusInterval": 5,
+    "steamProfilesInterval": 3600,
     "lastUpdated": ""
+  },
+  "logging": {
+    "serverQueries": "minimal",
+    "backgroundWorkers": true,
+    "statusChangesOnly": true,
+    "lastUpdated": ""
+  },
+  "chatbot": {
+    "enabled": false,
+    "welcomeMessage": "Hi! I'm your TF2 Dodgeball Server assistant. I can help you with commands, donations, gameplay, and more!",
+    "lastUpdated": "2025-07-17T20:43:27.314Z"
   }
 }

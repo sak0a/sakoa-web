@@ -46,7 +46,7 @@ onUnmounted(() => {
 <style scoped>
 .back-to-top-button {
   position: fixed;
-  bottom: 2rem;
+  bottom: 6rem;
   right: 2rem;
   z-index: 1000;
   width: 3rem;
@@ -98,8 +98,8 @@ onUnmounted(() => {
 /* Mobile responsive */
 @media (max-width: 768px) {
   .back-to-top-button {
-    bottom: 1.5rem;
-    right: 1.5rem;
+    bottom: 5rem;
+    right: 1rem;
     width: 2.5rem;
     height: 2.5rem;
   }
