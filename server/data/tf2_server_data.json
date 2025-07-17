@@ -1,0 +1,730 @@
+{
+  "server_info": {
+    "name": "Saka TF2 Server",
+    "website": "https://tf2.sakoa.xyz",
+    "discord": "Available via !discord command in-game",
+    "game_mode": "TF2 Dodgeball",
+    "features": [
+      "100 tick server",
+      "Anti-cheat protection",
+      "Live server stats",
+      "Seasonal statistics",
+      "Donator rewards system",
+      "Public non-whitelisted server"
+    ]
+  },
+  "donation_system": {
+    "description": "Simple donator/non-donator status system without levels",
+    "benefits": [
+      "2x vote weight in all voting systems",
+      "Access to donator-only commands",
+      "Premium features like robot transformation",
+      "Custom chat colors and name tags",
+      "Reserved server slots",
+      "Additional name changes in statistics",
+      "Killstreak effects",
+      "Colored footprints"
+    ],
+    "commands": {
+      "check_status": "Use any donator command to see if you have access"
+    }
+  },
+  "gameplay_mechanics": {
+    "dodgeball": {
+      "description": "TF2 Dodgeball - deflect rockets to eliminate opponents",
+      "commands": {
+        "sm_solo": "Join solo queue for 1v1 matches at round end"
+      },
+      "features": [
+        "Rocket speed tracking",
+        "Deflection statistics",
+        "Solo queue system",
+        "FFA (Free-For-All) mode voting",
+        "Real-time rocket speedometer"
+      ]
+    },
+    "statistics": {
+      "description": "Comprehensive player statistics with seasonal tracking",
+      "tracked_stats": [
+        "Kills and Deaths",
+        "Playtime",
+        "Top rocket speed",
+        "Deflections",
+        "Kills per hour",
+        "Rankings and leaderboards"
+      ],
+      "seasonal_system": {
+        "description": "Monthly seasons from 15th to 14th",
+        "features": [
+          "Automatic season transitions",
+          "Archive of previous seasons",
+          "Season-specific rankings",
+          "Historical statistics preservation"
+        ]
+      }
+    },
+    "voting_systems": {
+      "description": "Weighted voting where donators get 2x vote weight",
+      "types": [
+        "Rock the Vote (RTV) - Change current map",
+        "Next Map voting - Vote for next map",
+        "Map nominations - Nominate maps for voting",
+        "NER (Never Ending Rounds) - Toggle continuous rounds",
+        "PvB (Player vs Bot) - Enable bot opponents",
+        "FFA (Free-For-All) - Toggle team-based gameplay"
+      ]
+    }
+  },
+  "commands": {
+    "general_player_commands": {
+      "sm_help": "Display comprehensive help menu with all available commands",
+      "sm_stats": "View your detailed statistics and rankings",
+      "sm_rank": "Show your current rank in chat",
+      "sm_place": "Display your ranking position",
+      "sm_topspeed": "View top rocket speed statistics",
+      "sm_fov [value]": "Set your Field of View (20-160)",
+      "sm_tp": "Toggle third-person view",
+      "sm_fp": "Switch to first-person view",
+      "sm_solo": "Join solo queue for 1v1 matches",
+      "sm_discord": "Get Discord server information",
+      "sm_nextmap": "Vote for next map change",
+      "sm_nominate [mapname]": "Nominate a map for voting",
+      "sm_rtv": "Rock the Vote - vote to change current map",
+      "sm_votener": "Vote to toggle Never Ending Rounds",
+      "sm_votepvb": "Vote to enable Player vs Bot mode",
+      "sm_season": "View current season information",
+      "sm_seasondetails": "View detailed season statistics",
+      "sm_rename [name]": "Change your display name (limited uses)",
+      "sm_slots": "Check reserved slots information",
+      "listmaps": "List all available maps"
+    },
+    "donator_only_commands": {
+      "sm_cfp": "Toggle colored footprints",
+      "sm_footprints": "Toggle colored footprints",
+      "sm_robot": "Transform into MvM robot model",
+      "sm_scc": "Access custom chat colors menu",
+      "killstreak_commands": "Access to killstreak effects (integrated into other plugins)"
+    },
+    "admin_commands": {
+      "sm_adddonator <steamid> [days]": "Add a donator (ROOT flag required)",
+      "sm_removedonator <steamid>": "Remove a donator (ROOT flag required)",
+      "sm_listdonators": "List all donators (ROOT flag required)",
+      "sm_checkdonator <steamid>": "Check donator status (ROOT flag required)",
+      "sm_warn <player> <reason>": "Warn a player (KICK flag required)",
+      "sm_addwarn <steamid> <reason>": "Add warning to database (KICK flag required)",
+      "sm_listwarns [player]": "List player warnings (KICK flag required)",
+      "sm_respawn <player>": "Respawn a player (KICK flag required)",
+      "sm_god <player>": "Toggle god mode (KICK flag required)",
+      "sm_lp": "List all players with details (KICK flag required)",
+      "sm_forcertv": "Force start Rock the Vote (CHANGEMAP flag required)",
+      "sm_forcenextmap": "Force start next map vote (CHANGEMAP flag required)",
+      "sm_ffa": "Force toggle Free-For-All mode (CONFIG flag required)",
+      "sm_ner": "Force toggle Never Ending Rounds (CONFIG flag required)",
+      "sm_pvb": "Enable Player vs Bot mode (ROOT flag required)",
+      "sm_scary": "Make rockets scared of player (ROOT flag required)",
+      "sm_botmode": "Toggle bot difficulty mode (ROOT flag required)",
+      "sm_robot <player> [1/0]": "Control player robot mode (admin override)",
+      "sm_robotall [1/0]": "Toggle robot mode for all players",
+      "sm_robotreset": "Reset all robot modes",
+      "sm_reserved_slots": "Manage reserved slots settings (CONFIG flag required)",
+      "sm_check_slots": "Check current slot usage (KICK flag required)"
+    }
+  },
+  "detailed_features": {
+    "reserved_slots": {
+      "description": "Reserved server slots for donators",
+      "default_slots": 6,
+      "kick_types": [
+        "Disabled - No kicking",
+        "Kick highest ping non-donator",
+        "Kick random non-donator"
+      ]
+    },
+    "colored_footprints": {
+      "description": "Donator-only feature for colored footprints while walking",
+      "access": "Donators only",
+      "commands": ["sm_cfp", "sm_footprints"],
+      "persistent": "Saved in client preferences"
+    },
+    "robot_transformation": {
+      "description": "Transform into Mann vs Machine robot models",
+      "access": "Donators and admins",
+      "cooldown": "30 seconds (configurable)",
+      "features": [
+        "Authentic MvM robot models for all TF2 classes",
+        "Automatic model switching when changing classes",
+        "Persistent across respawns and map changes",
+        "Admin override controls"
+      ]
+    },
+    "custom_chat_colors": {
+      "description": "Customize chat and name colors via sakaCOLORSv2 plugin",
+      "access": "Donators only",
+      "features": [
+        "Custom name colors (donator selectable)",
+        "Custom chat text colors (donator selectable)",
+        "Group-based color presets (automatic based on donator status)",
+        "Custom name tags (requires support request to admins)",
+        "Toggle between group colors and custom colors",
+        "Persistent color settings across sessions"
+      ],
+      "commands": {
+        "sm_scc": "Open chat colors menu",
+        "sm_colors": "Alternative command for chat colors menu"
+      },
+      "options": {
+        "color_modes": [
+          "Use group-based colors (automatic)",
+          "Use custom selected colors (manual selection)"
+        ],
+        "customizable_elements": [
+          "Name color in chat",
+          "Chat text color",
+          "Name tags (via admin request only)"
+        ]
+      }
+    },
+    "killstreak_effects": {
+      "description": "Visual killstreak effects",
+      "access": "Donators and admins",
+      "integration": "Built into main plugins"
+    },
+    "afk_detection": {
+      "description": "Automatic AFK player detection and management",
+      "features": [
+        "Automatic detection of idle players",
+        "Configurable AFK timeouts",
+        "Team balancing considerations"
+      ]
+    },
+    "hud_display": {
+      "description": "On-screen HUD information",
+      "features": [
+        "Server status display",
+        "Rocket speed information",
+        "Game mode indicators",
+        "Configurable positioning"
+      ]
+    }
+  },
+  "voting_mechanics": {
+    "weighted_voting": {
+      "description": "All voting systems use weighted votes where donators get 2x weight",
+      "vote_weights": {
+        "donators": "2x weight",
+        "regular_players": "1x weight"
+      },
+      "visual_indicators": "Donators shown with ★ symbol in vote messages",
+      "threshold_calculation": "Based on total weighted votes, not player count"
+    },
+    "rock_the_vote": {
+      "command": "sm_rtv",
+      "description": "Vote to change the current map",
+      "threshold": "50% of weighted votes (configurable)",
+      "cooldown": "Map-based cooldown system",
+      "admin_commands": ["sm_forcertv", "sm_resetrtv"]
+    },
+    "next_map_voting": {
+      "command": "sm_nextmap",
+      "description": "Vote for what the next map should be",
+      "threshold": "50% of weighted votes (configurable)",
+      "min_players": "3 players required",
+      "initial_delay": "30 seconds after map start",
+      "interval": "240 seconds between failed votes"
+    },
+    "map_nominations": {
+      "command": "sm_nominate",
+      "description": "Nominate maps for the next vote",
+      "features": [
+        "Search for maps by partial name",
+        "Menu-based nomination system",
+        "Integration with map voting"
+      ]
+    },
+    "ner_voting": {
+      "command": "sm_votener",
+      "description": "Vote to toggle Never Ending Rounds mode",
+      "cooldown": "90 seconds between votes",
+      "min_players": "Minimum player requirement"
+    },
+    "pvb_voting": {
+      "command": "sm_votepvb",
+      "description": "Vote to enable Player vs Bot mode",
+      "features": [
+        "Weighted voting system",
+        "Bot difficulty modes",
+        "Admin override controls"
+      ]
+    }
+  },
+  "statistics_system": {
+    "tracked_statistics": {
+      "kills": "Total player eliminations",
+      "deaths": "Total times eliminated",
+      "playtime": "Total time played on server",
+      "topspeed": "Highest rocket speed achieved",
+      "deflections": "Total rocket deflections",
+      "points": "Overall scoring system",
+      "kills_per_hour": "Calculated efficiency metric"
+    },
+    "ranking_system": {
+      "description": "Global and seasonal player rankings",
+      "features": [
+        "Real-time rank calculations",
+        "Multiple ranking categories",
+        "Historical rank tracking",
+        "Season-specific leaderboards"
+      ]
+    },
+    "name_customization": {
+      "description": "Custom display names in statistics",
+      "default_changes": 2,
+      "donator_bonus": "Additional name changes for donators",
+      "persistence": "Names saved across seasons"
+    },
+    "seasonal_system": {
+      "season_length": "Monthly (15th to 14th)",
+      "transition": "Automatic at season end",
+      "archive": "Previous seasons stored in separate tables",
+      "preservation": [
+        "Custom names carried forward",
+        "Name change limits preserved",
+        "Comments and manual-insert flags maintained"
+      ]
+    }
+  },
+  "server_configuration": {
+    "tick_rate": "100 tick for smooth gameplay",
+    "anti_cheat": "Active anti-cheat protection",
+    "access": "Public, non-whitelisted server",
+    "stats_tracking": "Live server statistics available",
+    "database": "MySQL for optimal performance",
+    "translations": "English language support",
+    "auto_config": "Automatic configuration file generation"
+  },
+  "plugin_implementations": {
+    "sakaSOLO": {
+      "version": "2025.5.1",
+      "description": "Take on the other team solely (Intended for dodgeball)",
+      "commands": {
+        "sm_solo": {
+          "syntax": "sm_solo",
+          "permission": "public",
+          "cooldown": "1 second",
+          "description": "Toggle solo queue participation for 1v1 matches at round end",
+          "restrictions": [
+            "Cannot use during active rounds",
+            "Must be in Red or Blue team",
+            "Cannot be the only player in team",
+            "Cannot join if rest of team already in solo"
+          ]
+        }
+      },
+      "mechanics": {
+        "queue_system": "Array-based player tracking with UserID storage",
+        "round_integration": "Hooks arena_round_start, arena_win_panel, player_death events",
+        "team_balancing": "Automatically switches teams for 1v1 matches",
+        "respawn_system": "Respawns next queued player when team member dies",
+        "damage_protection": "Brief invulnerability after respawn with sound effect",
+        "ner_integration": "Automatically disabled when NER is active"
+      },
+      "behavior": {
+        "joining": "Adds player to queue, shows confirmation message",
+        "leaving": "Removes from queue, resets solo data",
+        "round_end": "Moves solo players to opposing teams for 1v1",
+        "death_handling": "Respawns next queued player if team has only 1 alive"
+      }
+    },
+    "sakaNER": {
+      "version": "2025.07.1",
+      "description": "Never Ending Rounds - continuous rounds without map changes",
+      "commands": {
+        "sm_votener": {
+          "syntax": "sm_votener",
+          "permission": "public",
+          "cooldown": "90 seconds",
+          "description": "Vote to toggle Never Ending Rounds mode",
+          "requirements": [
+            "Dodgeball must be enabled",
+            "Minimum 2 players in Red OR Blue team",
+            "No other vote in progress"
+          ]
+        },
+        "sm_ner": {
+          "syntax": "sm_ner",
+          "permission": "ADMFLAG_CONFIG",
+          "description": "Admin command to forcefully toggle NER"
+        }
+      },
+      "voting_system": {
+        "type": "Weighted voting using donator system",
+        "duration": "10 seconds",
+        "calculation": "Uses Saka_CalculateWeightedMenuVoteResults",
+        "donator_weight": "2x vote value for donators",
+        "tie_handling": "Random selection between tied options"
+      },
+      "integration": {
+        "solo_system": "Calls SakaSolo_ToggleSoloMode() when toggling",
+        "dodgeball": "Destroys rockets with TFDB_DestroyRockets()",
+        "team_switching": "Handles team changes during NER mode"
+      }
+    },
+    "sakaCOLORS": {
+      "version": "2025.4.1",
+      "description": "Chat Color Management Plugin with group and custom color support",
+      "commands": {
+        "sm_scc": {
+          "syntax": "sm_scc [chatcolor|namecolor|tag] [color]",
+          "permission": "donator_or_admin",
+          "description": "Access custom chat colors menu or set colors directly",
+          "access_check": "HasCommandAccess() - checks admin flags OR donator status"
+        },
+        "sm_scca": {
+          "syntax": "sm_scca",
+          "permission": "ADMFLAG_CHEATS",
+          "description": "Admin command for chat colors management"
+        }
+      },
+      "color_system": {
+        "modes": [
+          "Group-based colors (automatic based on donator status)",
+          "Custom selected colors (manual color picker)"
+        ],
+        "groups": {
+          "default": "Standard player colors",
+          "premium": "Donator group with gold colors and Premium tag"
+        },
+        "customizable_elements": [
+          "Name color in chat",
+          "Chat text color",
+          "Name tags (admin approval required)"
+        ],
+        "toggle_options": [
+          "useGroupTag - Use group tag vs custom tag",
+          "useGroupNameColor - Use group name color vs custom",
+          "useGroupChatColor - Use group chat color vs custom"
+        ]
+      },
+      "database": {
+        "tables": [
+          "sakaColors_Groups - Group definitions",
+          "sakaColors_Clients - Individual player settings"
+        ],
+        "persistence": "All settings saved to database and loaded on connect"
+      }
+    },
+    "sakaBASE": {
+      "version": "2025.07.1",
+      "description": "Core utilities with footprints, killstreaks, AFK system, and more",
+      "footprint_system": {
+        "commands": {
+          "sm_cfp": {
+            "syntax": "sm_cfp [footprint_id]",
+            "permission": "donator_only",
+            "description": "Toggle colored footprints or set specific footprint type",
+            "access_check": "SD_IsClientDonator()"
+          },
+          "sm_footprints": {
+            "syntax": "sm_footprints [footprint_id]",
+            "permission": "donator_only",
+            "description": "Alternative command for colored footprints"
+          }
+        },
+        "implementation": {
+          "attribute": "SPELL: set Halloween footstep type",
+          "storage": "Client cookies (sakabase_footprint)",
+          "values": "Float values, 0.0 = disabled, other values = different colors",
+          "persistence": "Saved in client preferences, auto-applied on spawn"
+        },
+        "menu": "DrawFootprintMenu() provides color selection interface"
+      },
+      "killstreak_system": {
+        "commands": {
+          "sm_ks": {
+            "syntax": "sm_ks [amount]",
+            "permission": "donator_or_admin",
+            "cooldown": "5.0 seconds (configurable)",
+            "description": "Set killstreak amount (0-100) or toggle killstreak",
+            "access_check": "Saka_IsDonator() OR Saka_IsAdmin()"
+          },
+          "sm_killstreak": {
+            "syntax": "sm_killstreak [amount]",
+            "permission": "donator_or_admin",
+            "description": "Alternative command for killstreak setting"
+          }
+        },
+        "implementation": {
+          "property": "m_nStreaks entity property",
+          "range": "0-100 (clamped automatically)",
+          "default": "10 (configurable via sakabase_killstreak_amount)",
+          "persistence": "Saved in client cookies, restored on connect",
+          "behavior": "Applied on spawn, toggle on/off functionality"
+        },
+        "admin_bypass": "Admins bypass cooldown restrictions"
+      }
+    }
+  },
+  "plugin_ecosystem": {
+    "core_plugins": [
+      "sakaBASE - Core utilities and player management",
+      "sakaDONATE - Donator system and API",
+      "sakaSTATS - Statistics tracking and rankings",
+      "TF2DodgeballUnified - Main dodgeball gameplay",
+      "sakaRTV - Weighted Rock the Vote system",
+      "sakaNER - Never Ending Rounds toggle",
+      "sakaBOT - Player vs Bot functionality",
+      "sakaSOLO - Solo queue system",
+      "sakaFOV - Field of view customization",
+      "sakaTP - Third-person view toggle",
+      "sakaROBOT - Robot transformation system",
+      "sakaCOLORSv2 - Chat color customization",
+      "sakaWARN - Admin warning system",
+      "sakaNEXTMAP - Next map voting",
+      "sakaNOMINATIONS - Map nomination system",
+      "sakaMAPCHOOSER - Map selection voting",
+      "sakaMBRS - Map-based respawn system"
+    ],
+    "integration": "All plugins use shared utilities and donator system",
+    "consistency": "Unified color schemes and messaging across all plugins"
+  },
+  "common_questions": {
+    "how_to_become_donator": {
+      "question": "How do I become a donator?",
+      "answer": "You can donate via PayPal (https://paypal.me/sakacom) or Buy Me a Coffee (https://www.buymeacoffee.com/sakoa). Visit tf2.sakoa.xyz for all donation options, or use !discord for other methods."
+    },
+    "donation_links": {
+      "question": "What are the donation links?",
+      "answer": "PayPal: https://paypal.me/sakacom | Buy Me a Coffee: https://www.buymeacoffee.com/sakoa | Discord: https://discord.gg/JuxYYVEkzc | Website: tf2.sakoa.xyz"
+    },
+    "server_connection": {
+      "question": "How do I connect to the server?",
+      "answer": "Main server: steam://connect/45.81.234.145:27015 | Advanced server: steam://connect/37.114.54.74:27015 (Coming Soon) | Check tf2.sakoa.xyz for live status!"
+    },
+    "server_ip": {
+      "question": "What is the server IP?",
+      "answer": "Main server: 45.81.234.145:27015 | Advanced server: 37.114.54.74:27015 (Coming Soon) | Both located in Frankfurt, Germany"
+    },
+    "discord_link": {
+      "question": "What is the Discord link?",
+      "answer": "Discord: https://discord.gg/JuxYYVEkzc or use !discord command in-game to get the invite link."
+    },
+    "check_donator_status": {
+      "question": "How do I check if I'm a donator?",
+      "answer": "Try using any donator-only command like !robot or !cfp. If you have access, you're a donator. Admins can also check your status."
+    },
+    "vote_not_working": {
+      "question": "Why isn't my vote counting?",
+      "answer": "Votes use a weighted system. You need enough total weighted votes to reach the threshold. Donators get 2x vote weight. Check if minimum players are online."
+    },
+    "robot_command_cooldown": {
+      "question": "Why can't I use !robot again?",
+      "answer": "The robot command has a 30-second cooldown to prevent spam. Wait for the cooldown to expire before using it again."
+    },
+    "stats_not_updating": {
+      "question": "Why aren't my stats updating?",
+      "answer": "Stats are tracked automatically during gameplay. Make sure you're actively playing (not spectating) and the statistics system is enabled."
+    },
+    "map_voting_failed": {
+      "question": "Why did the map vote fail?",
+      "answer": "Map votes require a certain percentage of weighted votes to pass. Not enough players may have voted, or the threshold wasn't reached."
+    },
+    "fov_not_working": {
+      "question": "Why isn't my FOV changing?",
+      "answer": "FOV must be between 20-160. Make sure you're using the correct syntax: !fov [number]. Your client cookies must also be loaded."
+    },
+    "reserved_slots": {
+      "question": "What are reserved slots?",
+      "answer": "Reserved slots are server slots reserved for donators. When the server is full, non-donators may be kicked to make room for donators."
+    },
+    "season_system": {
+      "question": "How do seasons work?",
+      "answer": "Seasons run monthly from the 15th to 14th. Stats are archived at season end and new seasons start automatically. Your custom name and settings carry over."
+    },
+    "solo_queue": {
+      "question": "How does solo queue work?",
+      "answer": "Use !solo to join the solo queue. At round end, solo players will be moved to teams for 1v1 matches. You can leave the queue anytime."
+    }
+  },
+  "troubleshooting": {
+    "command_not_found": {
+      "issue": "Command not recognized",
+      "solutions": [
+        "Make sure you're using the correct command syntax with sm_ prefix",
+        "Check if the command requires donator status",
+        "Verify the plugin is loaded and functioning",
+        "Use !help to see available commands"
+      ]
+    },
+    "permission_denied": {
+      "issue": "No permission to use command",
+      "solutions": [
+        "Check if you need donator status for the command",
+        "Verify you have the required admin flags",
+        "Contact administrators if you believe you should have access"
+      ]
+    },
+    "voting_issues": {
+      "issue": "Voting not working properly",
+      "solutions": [
+        "Ensure minimum players are online",
+        "Check if there's a cooldown period active",
+        "Verify no other vote is currently in progress",
+        "Remember donators get 2x vote weight"
+      ]
+    },
+    "stats_problems": {
+      "issue": "Statistics not tracking correctly",
+      "solutions": [
+        "Make sure you're not spectating",
+        "Verify you're playing on the correct game mode",
+        "Check if seasonal transition is occurring",
+        "Contact administrators if persistent issues"
+      ]
+    },
+    "connection_issues": {
+      "issue": "Can't connect to server",
+      "solutions": [
+        "Check if server is online at tf2.sakoa.xyz",
+        "Verify you have the latest TF2 updates",
+        "Ensure you're not banned from the server",
+        "Try reconnecting after a few minutes"
+      ]
+    }
+  },
+  "chatbot_implementation_notes": {
+    "data_structure": "This JSON contains comprehensive information about all server features, commands, and mechanics",
+    "search_strategy": "Use keyword matching for commands, features, and common questions",
+    "response_formatting": "Provide clear, concise answers with relevant command syntax",
+    "context_awareness": "Consider user's donator status when providing command information",
+    "update_frequency": "Data should be updated when new plugins are added or features change",
+    "fallback_responses": [
+      "For more detailed help, use the !help command in-game",
+      "Visit tf2.sakoa.xyz for additional information",
+      "Join our Discord server using !discord command for community support"
+    ]
+  },
+
+  "ai_agent_info": {
+    "name": "Augment Agent",
+    "description": "AI assistant powered by Augment Code's world-leading context engine",
+    "base_model": "Claude Sonnet 4 by Anthropic",
+    "capabilities": [
+      "Answer questions about TF2 Dodgeball server features",
+      "Provide donation links and information",
+      "Explain server commands and gameplay mechanics",
+      "Help with troubleshooting common issues",
+      "Give server connection details and status",
+      "Assist with donator features and benefits"
+    ],
+    "knowledge_sources": [
+      "Live website data (tf2.sakoa.xyz)",
+      "Server configuration and settings",
+      "Plugin documentation and commands",
+      "Player statistics and leaderboards",
+      "Donation system and donor information"
+    ],
+    "response_patterns": {
+      "about_ai": [
+        "I'm an AI assistant powered by Augment Agent to help with TF2 Dodgeball server questions!",
+        "I'm Augment Agent - an AI chatbot that can help with server info, commands, and donations!",
+        "I'm here to help with any questions about the TF2 server! I'm powered by Augment Code's AI technology."
+      ],
+      "capabilities": [
+        "I can help with server commands, donation info, gameplay features, and troubleshooting!",
+        "Ask me about footprints, donations, server connection, commands, or any other server features!",
+        "I have access to live server data and can provide current information about the TF2 Dodgeball server."
+      ]
+    }
+  },
+
+  "enhanced_question_patterns": {
+    "typing_variants": {
+      "donate": ["donat", "donation", "donating", "donator", "donor", "dontion", "donaton", "donte", "doante"],
+      "footprints": ["footprint", "foot print", "foot prints", "footstep", "footsteps", "footprnts", "fotprints", "foorprints"],
+      "connect": ["conect", "conectt", "connct", "connet", "join", "enter", "access"],
+      "server": ["servr", "sever", "serv", "srv"],
+      "discord": ["discrd", "discord", "disc", "ds"],
+      "commands": ["command", "cmd", "cmds", "comand", "commnd", "comandos"],
+      "robot": ["robots", "robo", "bot", "robbot", "robto", "robott"],
+      "colors": ["colour", "colors", "colours", "colr", "colur", "clor", "color"]
+    },
+
+    "slang_patterns": {
+      "casual_greetings": ["yo", "hey", "sup", "wassup", "whats up", "yo yo", "ayy", "ey", "yoo", "waddup"],
+      "want_expressions": ["wanna", "want to", "want", "need to", "need", "can i", "how can i", "how do i"],
+      "question_starters": ["how to", "how do", "how can", "where to", "where can", "what is", "what are"],
+      "casual_responses": ["dope", "sick", "fire", "lit", "cool", "awesome", "sweet", "nice", "tight", "fresh"],
+      "affirmative_slang": ["yeah", "yep", "yup", "sure", "bet", "word", "aight", "alright", "ok cool", "sounds good"]
+    },
+
+    "casual_donation_queries": [
+      "yo how to get donator",
+      "hey how to become donator",
+      "sup how to get vip",
+      "yo how to donate",
+      "hey where to donate",
+      "sup donation links",
+      "yo show me donation",
+      "hey i wanna donate",
+      "sup need to donate",
+      "yo can i donate",
+      "hey how much to donate",
+      "sup where donate"
+    ],
+
+    "casual_feature_queries": [
+      "yo what do donators get",
+      "hey what are the perks",
+      "sup what benefits",
+      "yo show me features",
+      "hey what do i get",
+      "sup donator benefits",
+      "yo what perks",
+      "hey what features",
+      "sup what else"
+    ],
+
+    "casual_connection_queries": [
+      "yo how to connect",
+      "hey server ip",
+      "sup how to join",
+      "yo connect to server",
+      "hey join server",
+      "sup server address",
+      "yo wanna play",
+      "hey want to join",
+      "sup how to play"
+    ],
+
+    "follow_up_questions": {
+      "after_donation_info": [
+        "What do I get as a donator?",
+        "How much should I donate?",
+        "Is donator status permanent?",
+        "Show me the donation links",
+        "What are the donator features?"
+      ],
+      "after_server_info": [
+        "How do I connect?",
+        "What's the server IP?",
+        "Is the server online?",
+        "What game mode is it?",
+        "How many players are online?"
+      ],
+      "after_feature_explanation": [
+        "How do I get access to this?",
+        "Do I need to be a donator?",
+        "What other features are there?",
+        "How much does it cost?",
+        "Show me donation options"
+      ],
+      "after_command_info": [
+        "What other commands are there?",
+        "Do I need special permissions?",
+        "How do I become a donator?",
+        "Show me donator commands",
+        "What's the full command list?"
+      ]
+    }
+  }
+}
