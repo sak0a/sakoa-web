@@ -55,17 +55,20 @@ function createServerContext(tf2Data) {
       discord: "Use !discord command in-game or visit https://discord.gg/JuxYYVEkzc",
       currency: "EUR (€)",
       methods: [
-        "PayPal - Direct link: https://paypal.me/sakacom",
+        "PayPal - Direct link: http://paypal.me/sakoacom",
+        "Revolut - Direct link: https://revolut.me/laurinnoel",
         "Buy Me a Coffee - Direct link: https://www.buymeacoffee.com/sakoa",
         "Direct contact via Discord for other methods"
       ],
       links: {
-        paypal: "https://paypal.me/sakacom",
+        paypal: "http://paypal.me/sakoacom",
+        revolut: "https://revolut.me/laurinnoel",
         buymeacoffee: "https://www.buymeacoffee.com/sakoa",
         discord: "https://discord.gg/JuxYYVEkzc",
         website: "tf2.sakoa.xyz - All donation options available here"
       },
-      benefits: "Access to all donator features listed above"
+      benefits: "Access to all donator features listed above",
+      terms: "Payment processing fees may vary between processors. Only net amount received counts toward tiers."
     },
 
     // Server connection info with actual details

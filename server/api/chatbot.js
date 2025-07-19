@@ -430,7 +430,7 @@ function handleDonationQuery(message, tf2Data) {
   // Handle donation links requests
   if (message.includes('link') || message.includes('url') || message.includes('where') || message.includes('show me')) {
     return {
-      response: `**Donation Links:**\n\n• **PayPal**: https://paypal.me/sakacom\n• **Buy Me a Coffee**: https://www.buymeacoffee.com/sakoa\n• **Website**: tf2.sakoa.xyz (all options available)\n• **Discord**: https://discord.gg/JuxYYVEkzc (for other methods)\n\nAll donation options are conveniently located on the main website!`,
+      response: `**Donation Links:**\n\n• **PayPal**: http://paypal.me/sakoacom\n• **Revolut**: https://revolut.me/laurinnoel\n• **Buy Me a Coffee**: https://www.buymeacoffee.com/sakoa\n• **Website**: tf2.sakoa.xyz (all options available)\n• **Discord**: https://discord.gg/JuxYYVEkzc (for other methods)\n\n**Note**: Processing fees vary between payment methods. Only the net amount received counts toward donation tiers.\n\nAll donation options are conveniently located on the main website!`,
       suggestions: ['Donator benefits', 'What do I get?', 'Server connection', 'Commands']
     };
   }
@@ -458,7 +458,7 @@ function handleDonationQuery(message, tf2Data) {
   }
 
   return {
-    response: `**Donation System:**\n${donationSystem.description}\n\n**Quick Links:**\n• PayPal: https://paypal.me/sakacom\n• Buy Me a Coffee: https://www.buymeacoffee.com/sakoa\n• Website: tf2.sakoa.xyz\n\nBenefits include 2x vote weight, premium features, and exclusive commands!`,
+    response: `**Donation System:**\n${donationSystem.description}\n\n**Quick Links:**\n• PayPal: http://paypal.me/sakoacom\n• Revolut: https://revolut.me/laurinnoel\n• Buy Me a Coffee: https://www.buymeacoffee.com/sakoa\n• Website: tf2.sakoa.xyz\n\n**Important**: Processing fees vary between payment methods. Only the net amount received counts toward donation tiers.\n\nBenefits include 2x vote weight, premium features, and exclusive commands!`,
     suggestions: ['Donator benefits', 'What do I get?', 'Donation links', 'Commands']
   };
 }

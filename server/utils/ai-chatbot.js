@@ -167,7 +167,7 @@ ${donationInfo.description}
 ${donationInfo.benefits?.map(benefit => `• ${benefit}`).join('\n') || '• 2x vote weight\n• Premium features\n• Exclusive commands'}
 
 **Donation Options:**
-• **PayPal**: https://paypal.me/sakacom
+• **PayPal**: http://paypal.me/sakoacom
 • **Buy Me a Coffee**: https://www.buymeacoffee.com/sakoa
 • **Website**: tf2.sakoa.xyz (all options available)
 • **Discord**: https://discord.gg/JuxYYVEkzc (for other methods)`,
