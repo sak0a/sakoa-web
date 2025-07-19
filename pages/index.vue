@@ -340,6 +340,11 @@ import ServerStatus from '~/components/ServerStatus.vue';
 import DonorsList from '~/components/DonorsList.vue';
 import SeasonalLeaderboard from '~/components/SeasonalLeaderboard.vue';
 
-// Use donation settings - the composable handles all the complexity
-const { donationSettings } = useDonationSettings();
+// Use donation settings
+const { donationSettings, fetchDonationSettings } = useDonationSettings();
+
+// Fetch donation settings on mount
+onMounted(async () => {
+  await fetchDonationSettings();
+});
 </script>
