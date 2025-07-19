@@ -52,6 +52,14 @@
                 </div>
                 <p class="text-gray-400 text-sm mb-1">Total: €{{ donor.total_amount || donor.amount }}</p>
                 <p class="text-gray-400 text-sm mb-1">Donations: {{ donor.donation_count || (donor.donations ? donor.donations.length : 0) }}</p>
+                <div v-if="donor.expiry_date && donor.expiry_date > 0" class="mb-1">
+                  <p class="text-sm" :class="isExpired(donor.expiry_date) ? 'text-red-400' : isExpiringSoon(donor.expiry_date) ? 'text-yellow-400' : 'text-green-400'">
+                    {{ isExpired(donor.expiry_date) ? '⚠️ Expired' : '⏰ Expires' }}: {{ formatExpiryDate(donor.expiry_date) }}
+                  </p>
+                </div>
+                <div v-else-if="donor.expiry_date === 0" class="mb-1">
+                  <p class="text-green-400 text-sm">✓ Permanent</p>
+                </div>
                 <p v-if="donor.steamid" class="text-gray-400 text-xs font-mono">{{ donor.steamid }}</p>
               </div>
               <div class="flex space-x-2">
@@ -83,10 +91,15 @@
                 <div
                   v-for="(donation, donationIndex) in (donor.donations || [])"
                   :key="donationIndex"
-                  class="flex justify-between items-center py-1 px-2 bg-white/5 rounded text-sm"
+                  class="py-1 px-2 bg-white/5 rounded text-sm"
                 >
-                  <span class="text-white">€{{ donation.amount }}</span>
-                  <span class="text-gray-400">{{ donation.date }}</span>
+                  <div class="flex justify-between items-center">
+                    <span class="text-white">€{{ donation.amount }}</span>
+                    <span class="text-gray-400">{{ donation.date }}</span>
+                  </div>
+                  <div v-if="donation.notes" class="text-xs text-gray-500 mt-1 italic">
+                    "{{ donation.notes }}"
+                  </div>
                 </div>
               </div>
               <div v-if="!donor.donations || donor.donations.length === 0" class="text-gray-500 text-sm italic">
@@ -159,6 +172,51 @@
                       />
                       <span class="ml-2 text-sm text-gray-300">Show on website</span>
                     </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Expiry Date Section -->
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-3">Donation Expiry</label>
+                <div class="space-y-3">
+                  <div class="flex items-center space-x-4">
+                    <label class="flex items-center">
+                      <input
+                        v-model="formData.is_permanent"
+                        type="radio"
+                        :value="true"
+                        name="expiry_type"
+                        class="text-purple-600 focus:ring-purple-500 bg-gray-700 border-gray-600"
+                      />
+                      <span class="ml-2 text-sm text-gray-300">Permanent donation</span>
+                    </label>
+                    <label class="flex items-center">
+                      <input
+                        v-model="formData.is_permanent"
+                        type="radio"
+                        :value="false"
+                        name="expiry_type"
+                        class="text-purple-600 focus:ring-purple-500 bg-gray-700 border-gray-600"
+                      />
+                      <span class="ml-2 text-sm text-gray-300">Temporary donation</span>
+                    </label>
+                  </div>
+
+                  <div v-if="!formData.is_permanent" class="transition-all duration-200">
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Expiry Date *</label>
+                    <input
+                      v-model="formData.expiry_date"
+                      type="date"
+                      :min="new Date().toISOString().split('T')[0]"
+                      required
+                      class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                    <p class="text-xs text-gray-400 mt-1">Select when the donation status should expire</p>
+                  </div>
+
+                  <div v-else class="text-sm text-green-400">
+                    ✓ This donation will never expire
                   </div>
                 </div>
               </div>
@@ -323,6 +381,8 @@ const formData = ref({
   tier: '',
   steamid: '',
   show_on_website: false,
+  expiry_date: null,
+  is_permanent: true,
   donations: []
 });
 const modalError = ref(null);
@@ -367,6 +427,8 @@ const openAddModal = () => {
     tier: '',
     steamid: '',
     show_on_website: false,
+    expiry_date: null,
+    is_permanent: true,
     donations: [{
       amount: 0,
       date: new Date().toISOString().split('T')[0],
@@ -379,11 +441,16 @@ const openAddModal = () => {
 
 const openEditModal = (steamid, donor) => {
   editingSteamId.value = steamid;
+  const isPermanent = !donor.expiry_date || donor.expiry_date === 0;
+  const expiryDate = isPermanent ? null : new Date(donor.expiry_date * 1000).toISOString().split('T')[0];
+
   formData.value = {
     display_name: donor.display_name || donor.name || '',
     tier: donor.tier || '',
     steamid: donor.steamid || '',
     show_on_website: donor.show_on_website || false,
+    expiry_date: expiryDate,
+    is_permanent: isPermanent,
     donations: donor.donations ? donor.donations.map(d => ({
       amount: d.amount,
       date: d.date || d.donation_date,
@@ -423,10 +490,62 @@ const calculateTotal = () => {
   return formData.value.donations.reduce((sum, donation) => sum + (donation.amount || 0), 0).toFixed(2);
 };
 
+// Helper functions for expiry date handling
+const formatExpiryDate = (timestamp) => {
+  if (!timestamp || timestamp === 0) return 'Never';
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+const isExpired = (timestamp) => {
+  if (!timestamp || timestamp === 0) return false;
+  return timestamp * 1000 < Date.now();
+};
+
+const isExpiringSoon = (timestamp) => {
+  if (!timestamp || timestamp === 0) return false;
+  const now = Date.now();
+  const expiry = timestamp * 1000;
+  const daysUntilExpiry = (expiry - now) / (1000 * 60 * 60 * 24);
+  return daysUntilExpiry <= 7 && daysUntilExpiry > 0; // Expiring within 7 days
+};
+
 const saveDonor = async () => {
   try {
     saving.value = true;
     modalError.value = null;
+
+    // Validate expiry date if not permanent
+    if (!formData.value.is_permanent) {
+      if (!formData.value.expiry_date) {
+        modalError.value = 'Please select an expiry date or choose permanent donation';
+        saving.value = false;
+        return;
+      }
+
+      const expiryDate = new Date(formData.value.expiry_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (expiryDate < today) {
+        modalError.value = 'Expiry date cannot be in the past';
+        saving.value = false;
+        return;
+      }
+    }
+
+    // Prepare donor data with expiry date handling
+    const donorData = {
+      ...formData.value,
+      expiry_date: formData.value.is_permanent ? 0 : Math.floor(new Date(formData.value.expiry_date).getTime() / 1000)
+    };
+
+    // Remove the is_permanent field as it's not needed in the API
+    delete donorData.is_permanent;
 
     if (editingSteamId.value !== null) {
       // Update existing donor
@@ -435,7 +554,7 @@ const saveDonor = async () => {
         credentials: 'include',
         body: {
           steamid: editingSteamId.value,
-          donor: formData.value
+          donor: donorData
         }
       });
     } else {
@@ -444,7 +563,7 @@ const saveDonor = async () => {
         method: 'POST',
         credentials: 'include',
         body: {
-          donor: formData.value
+          donor: donorData
         }
       });
     }

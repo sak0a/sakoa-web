@@ -146,12 +146,26 @@ export default defineEventHandler(async (event) => {
   checkAdminAuth(event);
   
   if (method === 'GET') {
-    // Get all donors
+    // Get all donors with full details including donations and notes
     try {
-      const donors = await getAllDonors();
+      const summaryDonors = await getAllDonors();
+      const donorsWithDetails = [];
+
+      // Fetch full details for each donor
+      for (const donor of summaryDonors) {
+        try {
+          const fullDonor = await getDonorWithDonations(donor.steamid);
+          donorsWithDetails.push(fullDonor);
+        } catch (error) {
+          console.error(`Error fetching details for donor ${donor.steamid}:`, error);
+          // Fallback to summary data if detailed fetch fails
+          donorsWithDetails.push(donor);
+        }
+      }
+
       return {
         success: true,
-        donors: donors
+        donors: donorsWithDetails
       };
     } catch (error) {
       throw createError({
@@ -289,15 +303,16 @@ export default defineEventHandler(async (event) => {
       
       // Update user
       const userQuery = `
-        UPDATE sakaDonate_users 
-        SET display_name = ?, tier = ?, show_on_website = ?
+        UPDATE sakaDonate_users
+        SET display_name = ?, tier = ?, show_on_website = ?, expiry_date = ?
         WHERE steamid = ?
       `;
-      
+
       await executeQuery(userQuery, [
         donor.display_name.trim(),
         donor.tier.trim(),
         donor.show_on_website || false,
+        donor.expiry_date || 0,
         steamid
       ]);
       
