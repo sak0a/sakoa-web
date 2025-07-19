@@ -11,10 +11,14 @@ const settingsFilePath = path.join(projectRoot, 'server/data/settings.json');
 // Helper function to read settings data
 async function readSettingsData() {
   try {
+    console.log('Reading settings from:', settingsFilePath);
     const data = await fs.promises.readFile(settingsFilePath, 'utf8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    console.log('Settings data loaded:', parsed);
+    return parsed;
   } catch (error) {
     console.error('Error reading settings data:', error);
+    console.log('Using default settings due to error');
     // Return default settings if file doesn't exist
     return {
       maintenance: {
@@ -34,7 +38,12 @@ async function readSettingsData() {
         inviteUrl: "https://discord.gg/JuxYYVEkzc",
         lastUpdated: ""
       },
-
+      donations: {
+        paypalEnabled: true,
+        revolutEnabled: true,
+        buyMeACoffeeEnabled: true,
+        lastUpdated: ""
+      }
     };
   }
 }
@@ -46,9 +55,8 @@ export default defineEventHandler(async (event) => {
     // Get public settings (non-sensitive data only)
     try {
       const settingsData = await readSettingsData();
-      
-      // Return only public settings
-      return {
+
+      const publicSettings = {
         success: true,
         data: {
           discord: {
@@ -68,6 +76,9 @@ export default defineEventHandler(async (event) => {
           }
         }
       };
+
+      console.log('Returning public settings:', publicSettings);
+      return publicSettings;
     } catch (error) {
       console.error('Failed to get settings:', error);
       
