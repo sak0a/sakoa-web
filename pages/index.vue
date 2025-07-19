@@ -105,9 +105,9 @@
               Your donations help us maintain and improve the server. All contributions go directly toward server costs, development, and new features.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8 animate-on-scroll animate-fade-in">
-              <PayPalButton v-if="safeDonationSettings.paypalEnabled" />
-              <RevolutButton v-if="safeDonationSettings.revolutEnabled" />
-              <a v-if="safeDonationSettings.buyMeACoffeeEnabled" href="https://www.buymeacoffee.com/sakoa" target="_blank" rel="noopener noreferrer" class="inline-block transition-transform hover:scale-105">
+              <PayPalButton v-if="donationSettings.paypalEnabled" />
+              <RevolutButton v-if="donationSettings.revolutEnabled" />
+              <a v-if="donationSettings.buyMeACoffeeEnabled" href="https://www.buymeacoffee.com/sakoa" target="_blank" rel="noopener noreferrer" class="inline-block transition-transform hover:scale-105">
                 <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=sakoa&button_colour=FFDD00&font_colour=000000&font_family=Inter&outline_colour=000000&coffee_colour=ffffff" alt="Buy Me A Coffee" class="h-12 w-auto" />
               </a>
             </div>
@@ -340,25 +340,6 @@ import ServerStatus from '~/components/ServerStatus.vue';
 import DonorsList from '~/components/DonorsList.vue';
 import SeasonalLeaderboard from '~/components/SeasonalLeaderboard.vue';
 
-// Use donation settings
-const { donationSettings, fetchDonationSettings, loading } = useDonationSettings();
-
-// Initialize with safe defaults
-const safeDonationSettings = computed(() => ({
-  paypalEnabled: donationSettings.value?.paypalEnabled !== false,
-  revolutEnabled: donationSettings.value?.revolutEnabled !== false,
-  buyMeACoffeeEnabled: donationSettings.value?.buyMeACoffeeEnabled !== false
-}));
-
-// Fetch donation settings on mount
-onMounted(async () => {
-  console.log('Main page mounted, fetching donation settings...');
-  await fetchDonationSettings();
-  console.log('Donation settings after fetch:', donationSettings.value);
-});
-
-// Also try to fetch on client side
-if (process.client) {
-  fetchDonationSettings();
-}
+// Use donation settings - the composable handles all the complexity
+const { donationSettings } = useDonationSettings();
 </script>

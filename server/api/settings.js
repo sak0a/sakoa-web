@@ -11,14 +11,10 @@ const settingsFilePath = path.join(projectRoot, 'server/data/settings.json');
 // Helper function to read settings data
 async function readSettingsData() {
   try {
-    console.log('Reading settings from:', settingsFilePath);
     const data = await fs.promises.readFile(settingsFilePath, 'utf8');
     const parsed = JSON.parse(data);
-    console.log('Settings data loaded:', parsed);
     return parsed;
   } catch (error) {
-    console.error('Error reading settings data:', error);
-    console.log('Using default settings due to error');
     // Return default settings if file doesn't exist
     return {
       maintenance: {
@@ -77,7 +73,6 @@ export default defineEventHandler(async (event) => {
         }
       };
 
-      console.log('Returning public settings:', publicSettings);
       return publicSettings;
     } catch (error) {
       console.error('Failed to get settings:', error);

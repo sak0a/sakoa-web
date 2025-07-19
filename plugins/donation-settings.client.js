@@ -1,38 +1,49 @@
 export default defineNuxtPlugin(async () => {
   // This plugin runs only on the client side
   // It ensures donation settings are loaded as soon as possible
-  
+
   if (process.client) {
-    console.log('Donation settings plugin: Loading settings on client...');
-    
+    // Set defaults immediately to prevent any undefined state
+    window.__DONATION_SETTINGS__ = {
+      paypalEnabled: true,
+      revolutEnabled: true,
+      buyMeACoffeeEnabled: true
+    };
+
     try {
-      const { $fetch } = useNuxtApp();
-      const response = await $fetch('/api/settings');
-      
-      if (response.success && response.data?.donations) {
-        console.log('Donation settings plugin: Settings loaded successfully', response.data.donations);
-        
-        // Store in a global state that can be accessed immediately
+      // Use a more robust fetch approach
+      const response = await fetch('/api/settings', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.data?.donations) {
+        // Update with actual settings
         window.__DONATION_SETTINGS__ = {
-          paypalEnabled: response.data.donations.paypalEnabled !== false,
-          revolutEnabled: response.data.donations.revolutEnabled !== false,
-          buyMeACoffeeEnabled: response.data.donations.buyMeACoffeeEnabled !== false
+          paypalEnabled: data.data.donations.paypalEnabled !== false,
+          revolutEnabled: data.data.donations.revolutEnabled !== false,
+          buyMeACoffeeEnabled: data.data.donations.buyMeACoffeeEnabled !== false
         };
-      } else {
-        console.warn('Donation settings plugin: No donation settings found, using defaults');
-        window.__DONATION_SETTINGS__ = {
-          paypalEnabled: true,
-          revolutEnabled: true,
-          buyMeACoffeeEnabled: true
-        };
+
+        // Dispatch a custom event to notify components that settings are loaded
+        window.dispatchEvent(new CustomEvent('donationSettingsLoaded', {
+          detail: window.__DONATION_SETTINGS__
+        }));
       }
     } catch (error) {
-      console.error('Donation settings plugin: Failed to load settings', error);
-      window.__DONATION_SETTINGS__ = {
-        paypalEnabled: true,
-        revolutEnabled: true,
-        buyMeACoffeeEnabled: true
-      };
+      // Silently fail and keep defaults - no need to spam console in production
+      if (process.dev) {
+        console.warn('Could not load donation settings, using defaults:', error.message);
+      }
     }
   }
 });
