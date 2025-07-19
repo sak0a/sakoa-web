@@ -51,6 +51,12 @@ async function readSettingsData() {
         welcomeMessage: "Hi! I'm your TF2 Dodgeball Server assistant. I can help you with commands, donations, gameplay, and more!",
         lastUpdated: ""
       },
+      donations: {
+        paypalEnabled: true,
+        revolutEnabled: true,
+        buyMeACoffeeEnabled: true,
+        lastUpdated: ""
+      },
       cache: {
         serverStatusInterval: 30,
         leaderboardInterval: 10,
@@ -131,6 +137,15 @@ export default defineEventHandler(async (event) => {
         settingsData.chatbot = {
           ...settingsData.chatbot,
           ...settings.chatbot,
+          lastUpdated: new Date().toISOString()
+        };
+      }
+
+      // Update donations settings
+      if (settings.donations) {
+        settingsData.donations = {
+          ...settingsData.donations,
+          ...settings.donations,
           lastUpdated: new Date().toISOString()
         };
       }

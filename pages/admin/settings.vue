@@ -470,6 +470,99 @@
           </div>
         </div>
 
+        <!-- Donation Settings -->
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+          <div class="mb-6">
+            <h2 class="text-xl font-semibold text-white mb-1">Donation Settings</h2>
+            <p class="text-gray-400 text-sm">Control which donation methods are available on your website</p>
+          </div>
+
+          <form @submit.prevent="saveDonationSettings" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <!-- PayPal Toggle -->
+              <div class="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
+                <div>
+                  <h3 class="text-sm font-medium text-white">PayPal</h3>
+                  <p class="text-xs text-gray-400">Enable PayPal donation button</p>
+                </div>
+                <button
+                  type="button"
+                  @click="donationForm.paypalEnabled = !donationForm.paypalEnabled"
+                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                  :class="donationForm.paypalEnabled ? 'bg-purple-600' : 'bg-gray-600'"
+                >
+                  <span
+                    class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                    :class="donationForm.paypalEnabled ? 'translate-x-6' : 'translate-x-1'"
+                  ></span>
+                </button>
+              </div>
+
+              <!-- Revolut Toggle -->
+              <div class="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
+                <div>
+                  <h3 class="text-sm font-medium text-white">Revolut</h3>
+                  <p class="text-xs text-gray-400">Enable Revolut donation button</p>
+                </div>
+                <button
+                  type="button"
+                  @click="donationForm.revolutEnabled = !donationForm.revolutEnabled"
+                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                  :class="donationForm.revolutEnabled ? 'bg-purple-600' : 'bg-gray-600'"
+                >
+                  <span
+                    class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                    :class="donationForm.revolutEnabled ? 'translate-x-6' : 'translate-x-1'"
+                  ></span>
+                </button>
+              </div>
+
+              <!-- Buy Me a Coffee Toggle -->
+              <div class="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
+                <div>
+                  <h3 class="text-sm font-medium text-white">Buy Me a Coffee</h3>
+                  <p class="text-xs text-gray-400">Enable Buy Me a Coffee button</p>
+                </div>
+                <button
+                  type="button"
+                  @click="donationForm.buyMeACoffeeEnabled = !donationForm.buyMeACoffeeEnabled"
+                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                  :class="donationForm.buyMeACoffeeEnabled ? 'bg-purple-600' : 'bg-gray-600'"
+                >
+                  <span
+                    class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                    :class="donationForm.buyMeACoffeeEnabled ? 'translate-x-6' : 'translate-x-1'"
+                  ></span>
+                </button>
+              </div>
+            </div>
+
+            <div class="flex gap-4">
+              <button
+                type="submit"
+                :disabled="isLoading"
+                class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                <span v-if="isLoading">Saving...</span>
+                <span v-else>Save Donation Settings</span>
+              </button>
+              <button
+                type="button"
+                @click="resetDonationForm"
+                :disabled="isLoading"
+                class="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+
+            <!-- Last Updated -->
+            <div v-if="settings?.donations?.lastUpdated" class="text-xs text-gray-500">
+              Last updated: {{ formatDate(settings.donations.lastUpdated) }}
+            </div>
+          </form>
+        </div>
+
         <!-- Cache Management -->
         <CacheManagement />
 
@@ -535,6 +628,12 @@ const chatbotForm = ref({
   welcomeMessage: 'Hi! I\'m your TF2 Dodgeball Server assistant. I can help you with commands, donations, gameplay, and more!'
 });
 
+const donationForm = ref({
+  paypalEnabled: true,
+  revolutEnabled: true,
+  buyMeACoffeeEnabled: true
+});
+
 // Load settings
 const loadSettings = async () => {
   try {
@@ -587,6 +686,14 @@ const loadSettings = async () => {
     if (settingsData.chatbot) {
       chatbotForm.value = {
         welcomeMessage: settingsData.chatbot.welcomeMessage || 'Hi! I\'m your TF2 Dodgeball Server assistant. I can help you with commands, donations, gameplay, and more!'
+      };
+    }
+
+    if (settingsData.donations) {
+      donationForm.value = {
+        paypalEnabled: settingsData.donations.paypalEnabled !== false,
+        revolutEnabled: settingsData.donations.revolutEnabled !== false,
+        buyMeACoffeeEnabled: settingsData.donations.buyMeACoffeeEnabled !== false
       };
     }
   } catch (error) {
@@ -842,6 +949,43 @@ const resetLoggingForm = () => {
       backgroundWorkers: settings.value.logging.backgroundWorkers !== false,
       statusChangesOnly: settings.value.logging.statusChangesOnly !== false,
       serverQueries: settings.value.logging.serverQueries || 'minimal'
+    };
+  }
+};
+
+// Save donation settings
+const saveDonationSettings = async () => {
+  try {
+    isLoading.value = true;
+
+    const response = await updateSettings({
+      donations: {
+        paypalEnabled: donationForm.value.paypalEnabled,
+        revolutEnabled: donationForm.value.revolutEnabled,
+        buyMeACoffeeEnabled: donationForm.value.buyMeACoffeeEnabled,
+        lastUpdated: new Date().toISOString()
+      }
+    });
+
+    if (response.success) {
+      settings.value = response.settings;
+      showMessage('Donation settings saved successfully', 'success');
+    }
+  } catch (error) {
+    console.error('Failed to save donation settings:', error);
+    showMessage('Failed to save donation settings', 'error');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Reset donation form
+const resetDonationForm = () => {
+  if (settings.value?.donations) {
+    donationForm.value = {
+      paypalEnabled: settings.value.donations.paypalEnabled !== false,
+      revolutEnabled: settings.value.donations.revolutEnabled !== false,
+      buyMeACoffeeEnabled: settings.value.donations.buyMeACoffeeEnabled !== false
     };
   }
 };

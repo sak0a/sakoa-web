@@ -60,6 +60,11 @@ export default defineEventHandler(async (event) => {
           },
           chatbot: {
             enabled: settingsData.chatbot?.enabled !== false
+          },
+          donations: {
+            paypalEnabled: settingsData.donations?.paypalEnabled !== false,
+            revolutEnabled: settingsData.donations?.revolutEnabled !== false,
+            buyMeACoffeeEnabled: settingsData.donations?.buyMeACoffeeEnabled !== false
           }
         }
       };
@@ -79,6 +84,11 @@ export default defineEventHandler(async (event) => {
           },
           chatbot: {
             enabled: true
+          },
+          donations: {
+            paypalEnabled: true,
+            revolutEnabled: true,
+            buyMeACoffeeEnabled: true
           }
         }
       };

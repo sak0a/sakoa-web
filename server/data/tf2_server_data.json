@@ -490,11 +490,11 @@
   "common_questions": {
     "how_to_become_donator": {
       "question": "How do I become a donator?",
-      "answer": "You can donate via PayPal (https://paypal.me/sakacom) or Buy Me a Coffee (https://www.buymeacoffee.com/sakoa). Visit tf2.sakoa.xyz for all donation options, or use !discord for other methods."
+      "answer": "You can donate via PayPal (http://paypal.me/sakoacom) or Buy Me a Coffee (https://www.buymeacoffee.com/sakoa). Visit tf2.sakoa.xyz for all donation options, or use !discord for other methods."
     },
     "donation_links": {
       "question": "What are the donation links?",
-      "answer": "PayPal: https://paypal.me/sakacom | Buy Me a Coffee: https://www.buymeacoffee.com/sakoa | Discord: https://discord.gg/JuxYYVEkzc | Website: tf2.sakoa.xyz"
+      "answer": "PayPal: http://paypal.me/sakoacom | Buy Me a Coffee: https://www.buymeacoffee.com/sakoa | Discord: https://discord.gg/JuxYYVEkzc | Website: tf2.sakoa.xyz"
     },
     "server_connection": {
       "question": "How do I connect to the server?",
