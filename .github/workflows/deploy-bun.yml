@@ -1,8 +1,8 @@
 name: Deploy to Plesk (Bun)
 
 on:
-  push:
-    branches: [ main, master ]  # Deploy when pushing to main/master branch
+  #push:
+    #branches: [ main, master ]  # Deploy when pushing to main/master branch
   workflow_dispatch:  # Allow manual deployment
 
 jobs:

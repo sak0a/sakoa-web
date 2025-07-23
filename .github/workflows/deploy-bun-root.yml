@@ -1,0 +1,210 @@
+name: Deploy to Ubuntu Root Server (Bun)
+
+on:
+  push:
+    branches: [ main, master ]  # Deploy when pushing to main/master branch
+  workflow_dispatch:  # Allow manual deployment
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+        
+    - name: Install dependencies
+      run: bun install
+      
+    - name: Build project
+      run: bun run build
+      env:
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_PORT: ${{ secrets.DB_PORT }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
+        HUGGINGFACE_API_KEY: ${{ secrets.HUGGINGFACE_API_KEY }}
+        
+    - name: Stop application service
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.ROOT_SERVER_HOST }}
+        username: ${{ secrets.ROOT_SERVER_USER }}
+        password: ${{ secrets.ROOT_SERVER_PASSWORD }}
+        script: |
+          echo "🛑 Stopping dodgeball application service..."
+          sudo systemctl stop dodgeball-app || echo "Service was not running"
+          
+    - name: Backup current deployment
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.ROOT_SERVER_HOST }}
+        username: ${{ secrets.ROOT_SERVER_USER }}
+        password: ${{ secrets.ROOT_SERVER_PASSWORD }}
+        script: |
+          echo "💾 Creating backup of current deployment..."
+          sudo -u dodgeball-user bash -c "
+            cd /home/dodgeball-user
+            if [ -d 'app' ]; then
+              rm -rf app-backup 2>/dev/null || true
+              cp -r app app-backup
+              echo '✅ Backup created successfully'
+            else
+              echo 'ℹ️ No existing deployment to backup'
+            fi
+          "
+          
+    - name: Clear current deployment
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.ROOT_SERVER_HOST }}
+        username: ${{ secrets.ROOT_SERVER_USER }}
+        password: ${{ secrets.ROOT_SERVER_PASSWORD }}
+        script: |
+          echo "🧹 Clearing current deployment files..."
+          sudo -u dodgeball-user bash -c "
+            cd /home/dodgeball-user
+            rm -rf app/.output app/server 2>/dev/null || true
+            mkdir -p app
+            echo '✅ Deployment directory cleared'
+          "
+          
+    - name: Upload built files
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.ROOT_SERVER_HOST }}
+        username: ${{ secrets.ROOT_SERVER_USER }}
+        password: ${{ secrets.ROOT_SERVER_PASSWORD }}
+        source: ".output/*,server/*"
+        target: "/home/dodgeball-user/app"
+        strip_components: 0
+        
+    - name: Set file ownership and permissions
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.ROOT_SERVER_HOST }}
+        username: ${{ secrets.ROOT_SERVER_USER }}
+        password: ${{ secrets.ROOT_SERVER_PASSWORD }}
+        script: |
+          echo "🔐 Setting file ownership and permissions..."
+          sudo chown -R dodgeball-user:dodgeball-user /home/dodgeball-user/app
+          sudo -u dodgeball-user bash -c "
+            cd /home/dodgeball-user/app
+            find .output -type f -exec chmod 644 {} \; 2>/dev/null || true
+            find .output -type d -exec chmod 755 {} \; 2>/dev/null || true
+            find server -type f -exec chmod 644 {} \; 2>/dev/null || true
+            find server -type d -exec chmod 755 {} \; 2>/dev/null || true
+            chmod +x .output/server/index.mjs 2>/dev/null || true
+            echo '✅ File permissions set successfully'
+          "
+          
+    - name: Create environment file
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.ROOT_SERVER_HOST }}
+        username: ${{ secrets.ROOT_SERVER_USER }}
+        key: ${{ secrets.ROOT_SERVER_SSH_KEY }}
+        script: |
+          echo "📝 Creating environment configuration..."
+          sudo -u dodgeball-user bash -c "
+            cd /home/dodgeball-user/app/.output/server
+            cat > .env << 'EOF'
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          STEAM_API_KEY=${{ secrets.STEAM_API_KEY }}
+          HUGGINGFACE_API_KEY=${{ secrets.HUGGINGFACE_API_KEY }}
+          PORT=3000
+          HOST=127.0.0.1
+          EOF
+            chmod 600 .env
+            echo '✅ Environment file created successfully'
+          "
+          
+    - name: Install Bun dependencies on server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.ROOT_SERVER_HOST }}
+        username: ${{ secrets.ROOT_SERVER_USER }}
+        password: ${{ secrets.ROOT_SERVER_PASSWORD }}
+        script: |
+          echo "📦 Installing Bun dependencies on server..."
+          sudo -u dodgeball-user bash -c "
+            cd /home/dodgeball-user/app/.output/server
+            /home/dodgeball-user/.bun/bin/bun install --production 2>/dev/null || echo 'No package.json found or dependencies already satisfied'
+            echo '✅ Server dependencies ready'
+          "
+          
+    - name: Start application service
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.ROOT_SERVER_HOST }}
+        username: ${{ secrets.ROOT_SERVER_USER }}
+        password: ${{ secrets.ROOT_SERVER_PASSWORD }}
+        script: |
+          echo "🚀 Starting dodgeball application service..."
+          sudo systemctl start dodgeball-app
+          sudo systemctl enable dodgeball-app
+          
+          # Wait a moment for service to start
+          sleep 3
+          
+          # Check service status
+          if sudo systemctl is-active --quiet dodgeball-app; then
+            echo "✅ Application service started successfully"
+            sudo systemctl status dodgeball-app --no-pager -l
+          else
+            echo "❌ Application service failed to start"
+            sudo systemctl status dodgeball-app --no-pager -l
+            sudo journalctl -u dodgeball-app --no-pager -l -n 20
+            exit 1
+          fi
+          
+    - name: Verify deployment
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.ROOT_SERVER_HOST }}
+        username: ${{ secrets.ROOT_SERVER_USER }}
+        password: ${{ secrets.ROOT_SERVER_PASSWORD }}
+        script: |
+          echo "🔍 Verifying deployment..."
+          
+          # Check if application is responding
+          sleep 5
+          if curl -f -s http://127.0.0.1:3000 > /dev/null; then
+            echo "✅ Application is responding on port 3000"
+          else
+            echo "❌ Application is not responding on port 3000"
+            sudo journalctl -u dodgeball-app --no-pager -l -n 10
+          fi
+          
+          # Check nginx status
+          if sudo systemctl is-active --quiet nginx; then
+            echo "✅ Nginx is running"
+          else
+            echo "❌ Nginx is not running"
+            sudo systemctl status nginx --no-pager
+          fi
+          
+          # Test external access (if domain is configured)
+          echo "🌐 Testing external access..."
+          curl -I -s https://sakoa.xyz || echo "External access test failed (may be normal during initial setup)"
+          
+    - name: Deployment notification
+      run: |
+        echo "🚀 Deployment completed successfully!"
+        echo "🌐 Site should be available at: https://sakoa.xyz"
+        echo "🔧 Server: Ubuntu 24 with Bun runtime"
+        echo "👤 User: dodgeball-user"
+        echo "🔄 Service: dodgeball-app (systemd)"
