@@ -111,7 +111,7 @@ jobs:
       with:
         host: ${{ secrets.ROOT_SERVER_HOST }}
         username: ${{ secrets.ROOT_SERVER_USER }}
-        key: ${{ secrets.ROOT_SERVER_SSH_KEY }}
+        password: ${{ secrets.ROOT_SERVER_PASSWORD }}
         script: |
           echo "📝 Creating environment configuration..."
           sudo -u dodgeball-user bash -c "
