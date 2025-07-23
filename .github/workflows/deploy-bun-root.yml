@@ -163,14 +163,17 @@ jobs:
         script: |
           echo "🚀 Starting dodgeball application service..."
 
-          # First, let's check if the service file exists and is valid
-          if sudo -n systemctl cat dodgeball-app >/dev/null 2>&1; then
-            echo "✅ Service file found"
+          # Check if the service file exists (using a simpler method)
+          if [ -f "/etc/systemd/system/dodgeball-app.service" ]; then
+            echo "✅ Service file found at /etc/systemd/system/dodgeball-app.service"
           else
-            echo "❌ Service file not found or invalid"
-            echo "Please create /etc/systemd/system/dodgeball-app.service"
-            exit 1
+            echo "❌ Service file not found at /etc/systemd/system/dodgeball-app.service"
+            echo "Please create the service file with proper content"
+            # Don't exit - continue to try starting anyway in case it's a permission issue
           fi
+
+          # Reload systemd to pick up any changes
+          sudo -n systemctl daemon-reload 2>/dev/null || echo "⚠️ Could not reload systemd daemon"
 
           # Try to start and enable service with sudo
           if sudo -n systemctl start dodgeball-app 2>/dev/null; then
