@@ -163,45 +163,87 @@ jobs:
         script: |
           echo "🚀 Starting dodgeball application service..."
 
+          # First, let's check if the service file exists and is valid
+          if sudo -n systemctl cat dodgeball-app >/dev/null 2>&1; then
+            echo "✅ Service file found"
+          else
+            echo "❌ Service file not found or invalid"
+            echo "Please create /etc/systemd/system/dodgeball-app.service"
+            exit 1
+          fi
+
           # Try to start and enable service with sudo
           if sudo -n systemctl start dodgeball-app 2>/dev/null; then
-            echo "✅ Service started successfully"
+            echo "✅ Service start command executed"
             sudo -n systemctl enable dodgeball-app 2>/dev/null || echo "⚠️ Could not enable service"
 
-            # Wait a moment for service to start
-            sleep 3
+            # Wait longer for service to stabilize
+            echo "⏳ Waiting for service to stabilize..."
+            sleep 10
 
-            # Check service status
+            # Check service status with detailed output
+            echo "🔍 Checking service status..."
             if sudo -n systemctl is-active --quiet dodgeball-app 2>/dev/null; then
               echo "✅ Application service is running"
               sudo -n systemctl status dodgeball-app --no-pager -l 2>/dev/null || echo "Status check completed"
             else
-              echo "❌ Application service failed to start"
-              sudo -n systemctl status dodgeball-app --no-pager -l 2>/dev/null || echo "Could not get status"
-              sudo -n journalctl -u dodgeball-app --no-pager -l -n 20 2>/dev/null || echo "Could not get logs"
-              exit 1
+              echo "❌ Application service is not active"
+              echo "📋 Service status:"
+              sudo -n systemctl status dodgeball-app --no-pager -l 2>/dev/null || echo "Could not get detailed status"
+              echo "📋 Recent logs:"
+              sudo -n journalctl -u dodgeball-app --no-pager -l -n 30 2>/dev/null || echo "Could not get logs"
+              echo "📋 Application files check:"
+              ls -la /home/dodgeball-user/app/.output/server/ 2>/dev/null || echo "Could not list app files"
+              echo "📋 Environment file check:"
+              ls -la /home/dodgeball-user/app/.output/server/.env 2>/dev/null || echo "Environment file not found"
+              echo "⚠️ Service failed to stay running - continuing deployment for manual debugging"
             fi
           else
             echo "⚠️ Could not start service automatically - manual restart required"
             echo "Please manually start the service: sudo systemctl start dodgeball-app"
           fi
           
-    - name: Verify deployment
+    - name: Verify deployment and debug
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.ROOT_SERVER_HOST }}
         username: ${{ secrets.ROOT_SERVER_USER }}
         password: ${{ secrets.ROOT_SERVER_PASSWORD }}
         script: |
-          echo "🔍 Verifying deployment..."
+          echo "🔍 Verifying deployment and gathering debug info..."
+
+          # Check deployment files
+          echo "📁 Checking deployment files:"
+          ls -la /home/dodgeball-user/app/ 2>/dev/null || echo "App directory not found"
+          ls -la /home/dodgeball-user/app/.output/ 2>/dev/null || echo ".output directory not found"
+          ls -la /home/dodgeball-user/app/.output/server/ 2>/dev/null || echo "Server directory not found"
+
+          # Check if main application file exists
+          if [ -f "/home/dodgeball-user/app/.output/server/index.mjs" ]; then
+            echo "✅ Main application file exists"
+            ls -la /home/dodgeball-user/app/.output/server/index.mjs
+          else
+            echo "❌ Main application file missing"
+          fi
+
+          # Check environment file
+          if [ -f "/home/dodgeball-user/app/.output/server/.env" ]; then
+            echo "✅ Environment file exists"
+            echo "📋 Environment file permissions:"
+            ls -la /home/dodgeball-user/app/.output/server/.env
+          else
+            echo "❌ Environment file missing"
+          fi
 
           # Check if application is responding
-          sleep 5
+          echo "🌐 Testing application response:"
           if curl -f -s http://127.0.0.1:3000 > /dev/null; then
             echo "✅ Application is responding on port 3000"
           else
             echo "❌ Application is not responding on port 3000"
-            sudo -n journalctl -u dodgeball-app --no-pager -l -n 10 2>/dev/null || echo "Could not get application logs"
+            echo "📋 Trying to start application manually for testing:"
+            cd /home/dodgeball-user/app/.output/server
+            timeout 10s /home/dodgeball-user/.bun/bin/bun run index.mjs 2>&1 || echo "Manual start failed or timed out"
           fi
 
           # Check nginx status
@@ -211,6 +253,10 @@ jobs:
             echo "❌ Nginx is not running"
             sudo -n systemctl status nginx --no-pager 2>/dev/null || echo "Could not get nginx status"
           fi
+
+          # Final service status check
+          echo "🔧 Final service status:"
+          sudo -n systemctl status dodgeball-app --no-pager -l 2>/dev/null || echo "Could not get service status"
 
           # Test external access (if domain is configured)
           echo "🌐 Testing external access..."
