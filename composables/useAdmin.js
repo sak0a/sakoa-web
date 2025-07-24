@@ -438,6 +438,28 @@ export const useAdmin = () => {
     }
   };
 
+  // Get system information
+  const getSystemInfo = async () => {
+    try {
+      isLoading.value = true;
+      error.value = null;
+
+      const response = await $fetch('/api/admin/system-info');
+
+      if (response.success) {
+        return response.data;
+      } else {
+        throw new Error(response.error?.message || 'Failed to get system information');
+      }
+    } catch (err) {
+      console.error('Get system info error:', err);
+      error.value = err.message || 'Failed to get system information';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
   return {
     isAuthenticated: readonly(isAuthenticated),
     isLoading: readonly(isLoading),
@@ -463,6 +485,7 @@ export const useAdmin = () => {
     getCacheStats,
     clearCache,
     forceRefreshCache,
-    cleanupCache
+    cleanupCache,
+    getSystemInfo
   };
 };
