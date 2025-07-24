@@ -16,9 +16,9 @@ function checkAdminAuth(event) {
 // Helper function to get disk usage (cross-platform)
 async function getDiskUsage() {
   try {
-    const stats = await promisify(fs.statvfs || fs.stat)('.');
-    if (stats.bavail !== undefined) {
-      // Unix-like systems
+    // Try to use statvfs if available (Unix-like systems)
+    if (fs.statvfs) {
+      const stats = await promisify(fs.statvfs)('.');
       const free = stats.bavail * stats.frsize;
       const total = stats.blocks * stats.frsize;
       const used = total - free;
@@ -28,9 +28,18 @@ async function getDiskUsage() {
         free: Math.round(free / (1024 * 1024 * 1024) * 100) / 100, // GB
         percentage: Math.round((used / total) * 100)
       };
+    } else {
+      // Fallback for systems where statvfs is not available
+      return {
+        total: 'N/A',
+        used: 'N/A',
+        free: 'N/A',
+        percentage: 'N/A'
+      };
     }
   } catch (error) {
-    // Fallback for systems where statvfs is not available
+    console.log('Disk usage error:', error.message);
+    // Fallback for any errors
     return {
       total: 'N/A',
       used: 'N/A',
