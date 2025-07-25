@@ -63,7 +63,6 @@ export default defineNuxtConfig({
     // Enhanced route rules for performance and caching
     routeRules: {
       '/_nuxt/builds/**': { prerender: false },
-      '/': { prerender: true },
       '/admin/**': { ssr: false },
       '/api/leaderboard': {
         headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=600' }
@@ -78,6 +77,7 @@ export default defineNuxtConfig({
         headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=600' }
       }
     }
+    
   },
   // Additional SSR configuration for better stability
   ssr: true,
