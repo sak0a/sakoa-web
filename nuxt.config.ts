@@ -3,8 +3,52 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
   modules: [
-    '@nuxtjs/tailwindcss'
+    '@nuxtjs/tailwindcss',
+    '@nuxt/image'
   ],
+
+  // Image optimization configuration
+  image: {
+    // Default format for all images
+    format: ['webp', 'png'],
+    // Quality settings
+    quality: 80,
+    // Enable responsive images
+    screens: {
+      xs: 320,
+      sm: 640,
+      md: 768,
+      lg: 1024,
+      xl: 1280,
+      xxl: 1536,
+    },
+    // Provider configuration
+    provider: 'ipx',
+    ipx: {
+      // Enable WebP conversion
+      modifiers: {
+        format: 'webp',
+        quality: 80
+      }
+    },
+    // Presets for common use cases
+    presets: {
+      avatar: {
+        modifiers: {
+          format: 'webp',
+          quality: 80,
+          fit: 'cover'
+        }
+      },
+      logo: {
+        modifiers: {
+          format: 'webp',
+          quality: 90,
+          fit: 'contain'
+        }
+      }
+    }
+  },
   experimental: {
     // Minimal experimental features to avoid build issues
     payloadExtraction: false
@@ -57,6 +101,16 @@ export default defineNuxtConfig({
         headers: {
           'Cache-Control': 'public, max-age=31536000, immutable',
           'X-Content-Type-Options': 'nosniff'
+        }
+      },
+      '/favicon.*': {
+        headers: {
+          'Cache-Control': 'public, max-age=31536000, immutable'
+        }
+      },
+      '/site.webmanifest': {
+        headers: {
+          'Cache-Control': 'public, max-age=86400'
         }
       },
       '/api/leaderboard': {
@@ -132,8 +186,11 @@ export default defineNuxtConfig({
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' }
       ],
       link: [
-        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
-        { rel: 'apple-touch-icon', href: '/favicon.png' },
+        // Optimal favicon setup for performance
+        { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
+        { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+        { rel: 'apple-touch-icon', href: '/favicon.png', sizes: '180x180' },
+        { rel: 'manifest', href: '/site.webmanifest' },
         { rel: 'canonical', href: 'https://sakoa-web.vercel.app/' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }

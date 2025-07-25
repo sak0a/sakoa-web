@@ -1,0 +1,23 @@
+{
+  "name": "saka's Dodgeball Server",
+  "short_name": "saka's DB",
+  "description": "Premium TF2 Dodgeball Gaming Experience",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#23104D",
+  "theme_color": "#734C96",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/default-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
