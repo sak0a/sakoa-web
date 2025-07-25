@@ -1080,5 +1080,4 @@ function generateSuggestions(userMessage, botResponse, tf2Data, conversationHist
   return ['What are footprints?', 'How to donate?', 'Solo system', 'Commands'];
 }
 
-// Initialize on startup
-initializeHuggingFace();
+// Initialization removed - using lightweight conversational AI without Hugging Face dependencies
