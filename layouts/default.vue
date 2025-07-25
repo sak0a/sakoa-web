@@ -5,20 +5,20 @@
 
     <header
       ref="navigation"
-      class="navigation fixed left-0 w-full z-50 transition-all duration-1000 ease-out admin-aware"
+      class="navigation fixed left-0 w-full z-50 transition-all duration-500 ease-out admin-aware"
       :class="{ 'scrolled': scrolled }"
     >
-      <div class="nav-container">
+      <div class="nav-container backdrop-blur-xl bg-gray-950/80 border-b border-gray-800/50">
         <div class="nav-parent">
           <!-- Logo and title section -->
           <div class="nav-logo">
             <img
               src="/assets/img/default-512x512.png"
               alt="saka's Dodgeball Server Logo"
-              class="nav-logo-img"
+              class="nav-logo-img w-10 h-10 rounded-lg"
             />
             <span
-              class="nav-title transition-all duration-1000 ease-out"
+              class="nav-title transition-all duration-500 ease-out font-semibold text-white"
               :class="{ 'nav-title-hidden': scrolled }"
             >
               saka's dodgeball server
@@ -59,10 +59,10 @@
 
           <!-- Right-side buttons (desktop only) -->
           <div class="nav-buttons-right">
-            <a href="#donate" rel="noopener noreferrer" class="nav-button outline">
+            <a href="#donate" rel="noopener noreferrer" class="btn btn-primary text-sm px-4 py-2 group">
               <span>Donate</span>
-              <svg class="nav-button-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12H19M19 12L12 5M19 12L12 19"/>
               </svg>
             </a>
           </div>

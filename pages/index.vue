@@ -1,75 +1,170 @@
 <template>
   <div>
     <!-- Hero Section -->
-    <section class="py-44" style="background: linear-gradient(135deg, #23104D, #734C96); color: #000000;">
-      <div class="container-custom">
-        <div class="max-w-3xl mx-auto text-center">
-          <h1 class="text-4xl md:text-5xl font-bold mb-6 animate-fade-in text-white">saka's Dodgeball Server</h1>
-          <p class="text-xl mb-8 animate-slide-down text-white">Support our Team Fortress 2 dodgeball server and help us keep the rockets flying!</p>
-          <div class="flex flex-wrap justify-center gap-4">
-            <a href="#donate" class="btn btn-primary text-lg px-6 py-3 animate-fade-in-delay-1">Donate Now</a>
-            <a href="https://discord.gg/JuxYYVEkzc" target="_blank" rel="noopener noreferrer" class="btn bg-[#5865F2] text-white hover:bg-[#4752C4] transition-colors duration-300 text-lg px-6 py-3 flex items-center animate-fade-in-delay-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2">
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <!-- Background Gradient -->
+      <div class="absolute inset-0 bg-gradient-to-br from-primary-950 via-gray-900 to-gray-950"></div>
+
+      <!-- Animated Background Elements -->
+      <div class="absolute inset-0 opacity-30">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-600/20 rounded-full blur-3xl animate-float"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-primary-500/15 rounded-full blur-3xl animate-float" style="animation-delay: -1s;"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-primary-400/10 rounded-full blur-3xl animate-pulse-slow"></div>
+      </div>
+
+      <!-- Content -->
+      <div class="relative z-10 container-custom">
+        <div class="max-w-4xl mx-auto text-center">
+          <!-- Main Heading -->
+          <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 animate-fade-in-up">
+            <span class="bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+              saka's Dodgeball Server
+            </span>
+          </h1>
+
+          <!-- Subtitle -->
+          <p class="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed animate-fade-in-up" style="animation-delay: 0.2s;">
+            Support our Team Fortress 2 dodgeball server and help us keep the rockets flying with style and precision.
+          </p>
+
+          <!-- CTA Buttons -->
+          <div class="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up" style="animation-delay: 0.4s;">
+            <a href="#donate" class="btn btn-primary text-lg px-8 py-4 group">
+              <span>Donate Now</span>
+              <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+              </svg>
+            </a>
+            <a href="https://discord.gg/JuxYYVEkzc" target="_blank" rel="noopener noreferrer" class="btn bg-[#5865F2] hover:bg-[#4752C4] text-white text-lg px-8 py-4 group">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="transition-transform group-hover:scale-110">
                 <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
               </svg>
-              Join our Discord
+              <span>Join Discord</span>
             </a>
           </div>
+
+          <!-- Stats Preview -->
+          <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-in-up" style="animation-delay: 0.6s;">
+            <div class="text-center">
+              <div class="text-3xl md:text-4xl font-bold text-white mb-2">24/7</div>
+              <div class="text-gray-400 text-sm uppercase tracking-wider">Server Uptime</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl md:text-4xl font-bold text-white mb-2">1000+</div>
+              <div class="text-gray-400 text-sm uppercase tracking-wider">Active Players</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl md:text-4xl font-bold text-white mb-2">€2.5K</div>
+              <div class="text-gray-400 text-sm uppercase tracking-wider">Donated This Year</div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <!-- Scroll Indicator -->
+      <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+        </svg>
       </div>
     </section>
 
     <!-- About Section -->
-    <section id="about" class="section" style="background: linear-gradient(135deg, #1a1a1a 0%, #242424 100%);">
+    <section id="about" class="section bg-gray-900">
       <div class="container-custom">
         <div class="max-w-4xl mx-auto">
-          <h2 class="text-3xl font-bold mb-6 text-center animate-on-scroll animate-fade-in" style="color: #734C96;">About Our Server</h2>
-          <p class="text-lg mb-6 animate-on-scroll animate-slide-up" style="color: #d4d4d4;">
-            saka's Dodgeball Server is a dedicated Team Fortress 2 server focused on providing the best dodgeball experience for players. Our server features custom maps, plugins, and configurations to enhance gameplay and create a fun, competitive environment.
-          </p>
-          <p class="text-lg mb-6 animate-on-scroll animate-slide-up" style="color: #d4d4d4;">
-            We're committed to maintaining a friendly community and high-quality server performance. Your donations help us cover server costs, develop new features, and continue providing a great gaming experience.
-          </p>
-          <div class="p-6 rounded-lg mt-8 border animate-on-scroll animate-fade-in" style="background-color: #242424; border-color: #333333;">
-            <h3 class="text-xl font-bold mb-4" style="color: #ffffff;">Server Features:</h3>
-            <ul class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <li class="flex items-start animate-on-scroll animate-slide-in-right">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #734C96;">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <span style="color: #d4d4d4;">Custom dodgeball maps</span>
-              </li>
-              <li class="flex items-start animate-on-scroll animate-slide-in-left">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #734C96;">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <span style="color: #d4d4d4;">Optimized server performance</span>
-              </li>
-              <li class="flex items-start animate-on-scroll animate-slide-in-right">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #734C96;">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <span style="color: #d4d4d4;">Active admin moderation</span>
-              </li>
-              <li class="flex items-start animate-on-scroll animate-slide-in-left">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #734C96;">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <span style="color: #d4d4d4;">Regular events and competitions</span>
-              </li>
-              <li class="flex items-start animate-on-scroll animate-slide-in-right">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #734C96;">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <span style="color: #d4d4d4;">Custom plugins and features</span>
-              </li>
-              <li class="flex items-start animate-on-scroll animate-slide-in-left">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #734C96;">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <span style="color: #d4d4d4;">Friendly community</span>
-              </li>
-            </ul>
+          <!-- Section Header -->
+          <div class="text-center mb-16 animate-on-scroll animate-fade-in">
+            <h2 class="text-4xl md:text-5xl font-bold mb-6 text-white">About Our Server</h2>
+            <div class="w-24 h-1 bg-gradient-to-r from-primary-500 to-primary-600 mx-auto rounded-full"></div>
+          </div>
+
+          <!-- Description -->
+          <div class="space-y-6 mb-12 animate-on-scroll animate-slide-up">
+            <p class="text-lg leading-relaxed text-gray-300">
+              saka's Dodgeball Server is a dedicated Team Fortress 2 server focused on providing the best dodgeball experience for players. Our server features custom maps, plugins, and configurations to enhance gameplay and create a fun, competitive environment.
+            </p>
+            <p class="text-lg leading-relaxed text-gray-300">
+              We're committed to maintaining a friendly community and high-quality server performance. Your donations help us cover server costs, develop new features, and continue providing a great gaming experience.
+            </p>
+          </div>
+
+          <!-- Features Grid -->
+          <div class="card card-elevated animate-on-scroll animate-fade-in">
+            <h3 class="text-2xl font-bold mb-8 text-white text-center">Server Features</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="flex items-start space-x-4 animate-on-scroll animate-slide-in-right">
+                <div class="flex-shrink-0 w-10 h-10 bg-primary-600/20 rounded-xl flex items-center justify-center">
+                  <svg class="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-white mb-1">Custom Dodgeball Maps</h4>
+                  <p class="text-gray-400 text-sm">Unique and challenging map rotations</p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-4 animate-on-scroll animate-slide-in-left">
+                <div class="flex-shrink-0 w-10 h-10 bg-primary-600/20 rounded-xl flex items-center justify-center">
+                  <svg class="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-white mb-1">Optimized Performance</h4>
+                  <p class="text-gray-400 text-sm">Low latency and smooth gameplay</p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-4 animate-on-scroll animate-slide-in-right">
+                <div class="flex-shrink-0 w-10 h-10 bg-primary-600/20 rounded-xl flex items-center justify-center">
+                  <svg class="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-white mb-1">Active Moderation</h4>
+                  <p class="text-gray-400 text-sm">Fair play and friendly environment</p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-4 animate-on-scroll animate-slide-in-left">
+                <div class="flex-shrink-0 w-10 h-10 bg-primary-600/20 rounded-xl flex items-center justify-center">
+                  <svg class="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-white mb-1">Community Events</h4>
+                  <p class="text-gray-400 text-sm">Tournaments and special competitions</p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-4 animate-on-scroll animate-slide-in-right">
+                <div class="flex-shrink-0 w-10 h-10 bg-primary-600/20 rounded-xl flex items-center justify-center">
+                  <svg class="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-white mb-1">Custom Plugins</h4>
+                  <p class="text-gray-400 text-sm">Enhanced features and gameplay mechanics</p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-4 animate-on-scroll animate-slide-in-left">
+                <div class="flex-shrink-0 w-10 h-10 bg-primary-600/20 rounded-xl flex items-center justify-center">
+                  <svg class="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-white mb-1">Friendly Community</h4>
+                  <p class="text-gray-400 text-sm">Welcoming players of all skill levels</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
