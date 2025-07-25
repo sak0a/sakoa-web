@@ -3,15 +3,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "nuxt build && tsx scripts/copy-data-files.js",
+    "build": "nuxt build && bun run scripts/copy-data-files.js",
     "dev": "nuxt dev",
-    "generate": "nuxt generate && tsx scripts/copy-data-files.js",
+    "generate": "nuxt generate && bun run scripts/copy-data-files.js",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "prepare-nuxt": "nuxt prepare",
-    "ci-build": "tsx scripts/ci-build.ts",
+    "ci-build": "bun run scripts/ci-build.ts",
     "type-check": "nuxt typecheck",
-    "copy-data": "tsx scripts/copy-data-files.js"
+    "copy-data": "bun run scripts/copy-data-files.js"
   },
   "dependencies": {
     "@huggingface/inference": "^4.5.1",
