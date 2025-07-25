@@ -59,7 +59,7 @@ export default defineNuxtConfig({
   // Optimized Vite configuration for smaller bundles
   vite: {
     optimizeDeps: {
-      include: ['gsap']
+      include: ['gsap', 'ofetch', 'ufo', 'defu']
     },
     build: {
       rollupOptions: {
@@ -139,7 +139,12 @@ export default defineNuxtConfig({
     externals: {
       inline: [
         // Keep essential modules inline
-        'gsap'
+        'gsap',
+        // IPX dependencies required for image processing
+        'ofetch',
+        'ufo',
+        'defu',
+        'ipx'
       ]
     }
   },
