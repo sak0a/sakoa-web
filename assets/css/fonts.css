@@ -1,5 +1,4 @@
-/* Non-critical font loading - loaded asynchronously */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap') layer(fonts);
+/* Fonts are now loaded via optimized preload strategy in nuxt.config.ts */
 
 /* Font fallbacks for better performance */
 @font-face {

@@ -70,7 +70,14 @@ export default defineNuxtConfig({
             'gsap': ['gsap']
           }
         }
-      }
+      },
+      // CSS optimization
+      cssCodeSplit: true,
+      cssMinify: 'esbuild'
+    },
+    css: {
+      // Optimize CSS processing
+      devSourcemap: false
     }
   },
 
@@ -192,6 +199,27 @@ export default defineNuxtConfig({
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' }
       ],
+      style: [
+        {
+          innerHTML: `
+            /* Critical CSS - Inline for immediate rendering */
+            :root{--font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--font-mono:'JetBrains Mono','SF Mono',Monaco,'Cascadia Code',monospace}
+            html{font-family:var(--font-sans);scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+            body{background:linear-gradient(135deg,#0f0f23 0%,#1a1a2e 50%,#16213e 100%);color:#f3f4f6;min-height:100vh;margin:0;padding:0}
+            .navigation{position:fixed;left:0;width:100%;z-index:50;transition:all 0.5s ease-out}
+            .min-h-screen{min-height:100vh}
+            .flex{display:flex}
+            .items-center{align-items:center}
+            .justify-center{justify-content:center}
+            .text-center{text-align:center}
+            .font-bold{font-weight:700}
+            .text-white{color:#fff}
+            .bg-gradient-to-r{background-image:linear-gradient(to right,var(--tw-gradient-stops))}
+            .bg-clip-text{background-clip:text;-webkit-background-clip:text}
+            .text-transparent{color:transparent}
+          `
+        }
+      ],
       link: [
         // Optimal favicon setup for performance
         { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
@@ -199,8 +227,29 @@ export default defineNuxtConfig({
         { rel: 'apple-touch-icon', href: '/favicon.png', sizes: '180x180' },
         { rel: 'manifest', href: '/site.webmanifest' },
         { rel: 'canonical', href: 'https://sakoa.xyz/' },
+
+        // Optimized font loading strategy - eliminates render-blocking
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        { rel: 'dns-prefetch', href: 'https://fonts.googleapis.com' },
+        { rel: 'dns-prefetch', href: 'https://fonts.gstatic.com' },
+        {
+          rel: 'preload',
+          href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap',
+          as: 'style',
+          onload: "this.onload=null;this.rel='stylesheet'"
+        },
+        // Fallback for browsers that don't support preload
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap',
+          media: 'print',
+          onload: "this.media='all'"
+        }
+      ],
+      noscript: [
+        // Fallback for users with JavaScript disabled
+        { innerHTML: '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">' }
       ],
       script: [
         {
