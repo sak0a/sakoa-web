@@ -42,30 +42,16 @@ export default defineNuxtConfig({
   // Enhanced Vite optimizations
   vite: {
     build: {
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            'gsap': ['gsap'],
-            'vendor': ['vue', 'vue-router'],
-            'composables': ['~/composables/useAdmin.js', '~/composables/useHeroStats.js'],
-            'components': ['~/components/SearchModal.vue', '~/components/StatsCounter.vue']
-          }
-        }
-      },
-      cssCodeSplit: true,
-      minify: 'terser',
-      terserOptions: {
-        compress: {
-          drop_console: true,
-          drop_debugger: true
-        }
-      }
+      target: 'es2020'
     },
     optimizeDeps: {
       include: ['gsap', 'gsap/ScrollTrigger']
     },
     css: {
       devSourcemap: false
+    },
+    esbuild: {
+      target: 'es2020'
     }
   },
 
@@ -86,12 +72,6 @@ export default defineNuxtConfig({
   nitro: {
     compressPublicAssets: true,
     minify: true,
-    storage: {
-      redis: {
-        driver: 'redis',
-        // Add Redis configuration if available
-      }
-    },
     publicAssets: [
       {
         baseURL: '/data',
@@ -104,10 +84,6 @@ export default defineNuxtConfig({
     },
     // Ensure proper static file serving
     serveStatic: true,
-    // Fix unenv polyfill issues
-    unenv: {
-      polyfill: []
-    },
     // Enhanced route rules for performance and caching
     routeRules: {
       '/_nuxt/builds/**': { prerender: false },
