@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "nuxt build && bun run scripts/copy-data-files.js",
+    "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate && bun run scripts/copy-data-files.js",
     "preview": "nuxt preview",
