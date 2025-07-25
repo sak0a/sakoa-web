@@ -9,8 +9,6 @@ export const useAdmin = () => {
       isLoading.value = true;
       error.value = null;
 
-      console.log('Checking admin authentication...');
-
       const response = await $fetch('/api/admin/auth', {
         method: 'GET'
       });
@@ -18,23 +16,19 @@ export const useAdmin = () => {
       const authenticated = response?.authenticated || false;
       isAuthenticated.value = authenticated;
 
-      console.log('Auth check result:', { authenticated, response });
-
       // If authenticated, refresh the session
       if (authenticated) {
         try {
           await $fetch('/api/admin/auth', {
             method: 'PATCH'
           });
-          console.log('Session refreshed successfully');
         } catch (refreshErr) {
-          console.warn('Failed to refresh session:', refreshErr);
+          // Silently handle refresh errors
         }
       }
 
       return authenticated;
     } catch (err) {
-      console.error('Auth check failed:', err);
       error.value = err.data?.message || 'Authentication check failed';
       isAuthenticated.value = false;
       return false;

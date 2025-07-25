@@ -42,16 +42,11 @@ export const useServerStatus = () => {
     }
   };
 
-  // Get cache settings from admin settings
+  // Use default cache settings for public site
   const loadCacheSettings = async () => {
-    try {
-      const response = await $fetch('/api/admin/settings');
-      if (response.success && response.settings.cache) {
-        cacheSettings.value.serverStatusInterval = response.settings.cache.serverStatusInterval || 30;
-      }
-    } catch (error) {
-      console.warn('Failed to load cache settings, using defaults:', error);
-    }
+    // For the public site, we'll use sensible defaults
+    // Admin can configure these through the admin panel, but public site doesn't need to fetch them
+    cacheSettings.value.serverStatusInterval = 30; // 30 seconds default
   };
 
   // Query individual server

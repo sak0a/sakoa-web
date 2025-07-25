@@ -33,8 +33,18 @@
 const { checkAuth, logout } = useAdmin();
 const isAdmin = ref(false);
 
-// Check admin status on mount
+// Check admin status on mount (only in development or admin pages)
 onMounted(async () => {
+  // Only check admin status if we're in development or on admin pages
+  const route = useRoute();
+  const isDevelopment = process.dev;
+  const isAdminPage = route.path.startsWith('/admin');
+
+  if (!isDevelopment && !isAdminPage) {
+    // Skip admin check on production main site
+    return;
+  }
+
   try {
     isAdmin.value = await checkAuth();
 
@@ -43,7 +53,10 @@ onMounted(async () => {
       adjustNavigationPosition();
     }
   } catch (error) {
-    console.error('Failed to check admin status:', error);
+    // Silently fail in production to avoid console spam
+    if (isDevelopment) {
+      console.error('Failed to check admin status:', error);
+    }
     isAdmin.value = false;
   }
 });
