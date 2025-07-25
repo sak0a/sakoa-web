@@ -7,19 +7,24 @@
     
     <!-- Avatar image -->
     <div v-else class="steam-avatar-wrapper" :style="{ width: size, height: size }">
-      <img
+      <NuxtImg
         :src="avatarUrl"
         :alt="`${personaName}'s Steam Avatar`"
         :title="showTooltip ? `${personaName} - Click to view Steam profile` : undefined"
         class="steam-avatar-image"
         :class="imageClass"
+        :width="parseInt(size)"
+        :height="parseInt(size)"
+        format="webp"
+        quality="85"
+        loading="lazy"
         @error="onImageError"
         @click="onAvatarClick"
       />
-      
+
       <!-- Online status indicator (if enabled) -->
-      <div 
-        v-if="showStatus && profile && profile.personastate !== undefined" 
+      <div
+        v-if="showStatus && profile && profile.personastate !== undefined"
         class="steam-status-indicator"
         :class="getStatusClass(profile.personastate)"
         :title="getStatusText(profile.personastate)"

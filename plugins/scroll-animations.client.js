@@ -6,10 +6,16 @@ export default defineNuxtPlugin((nuxtApp) => {
     // Register GSAP plugins
     gsap.registerPlugin(ScrollTrigger)
 
-    // Performance optimization
+    // Performance optimization - prevent layout thrashing
     gsap.config({
       force3D: true,
-      nullTargetWarn: false
+      nullTargetWarn: false,
+      autoSleep: 60,
+      units: {
+        left: "px",
+        top: "px",
+        rotation: "deg"
+      }
     })
 
     // Check if user prefers reduced motion
@@ -30,17 +36,21 @@ export default defineNuxtPlugin((nuxtApp) => {
         // Set initial state
         gsap.set(element, animation.from)
 
-        // Create scroll trigger animation
+        // Create scroll trigger animation with performance optimizations
         gsap.to(element, {
           ...animation.to,
           duration: animation.duration || 0.8,
           ease: animation.ease || 'power2.out',
           delay: (options.stagger || 0) * index,
+          force3D: true,
+          willChange: 'transform, opacity',
           scrollTrigger: {
             trigger: element,
             start: options.start || 'top 85%',
             end: options.end || 'bottom 15%',
             toggleActions: 'play none none reverse',
+            fastScrollEnd: true,
+            preventOverlaps: true,
             ...options.scrollTrigger
           }
         })

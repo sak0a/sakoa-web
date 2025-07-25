@@ -3,33 +3,14 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
   modules: [
-    '@nuxtjs/tailwindcss'
+    '@nuxtjs/tailwindcss',
+    '@nuxt/image'
   ],
   experimental: {
     // Minimal experimental features to avoid build issues
     payloadExtraction: false
   },
 
-  // Performance optimizations (moved to main nitro config below)
-
-  // Image optimization
-  image: {
-    format: ['webp', 'avif', 'png', 'jpg'],
-    quality: 80,
-    screens: {
-      xs: 320,
-      sm: 640,
-      md: 768,
-      lg: 1024,
-      xl: 1280,
-      xxl: 1536,
-    }
-  },
-  unhead: {
-    renderSSRHeadOptions: {
-      omitLineBreaks: false
-    }
-  },
   css: ['~/assets/css/main.css'],
 
   // Simplified Vite configuration
@@ -64,6 +45,12 @@ export default defineNuxtConfig({
     routeRules: {
       '/_nuxt/builds/**': { prerender: false },
       '/admin/**': { ssr: false },
+      '/assets/**': {
+        headers: {
+          'Cache-Control': 'public, max-age=31536000, immutable',
+          'X-Content-Type-Options': 'nosniff'
+        }
+      },
       '/api/leaderboard': {
         headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=600' }
       },
@@ -76,8 +63,10 @@ export default defineNuxtConfig({
       '/api/settings': {
         headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=600' }
       }
-    }
-    
+    },
+    // Performance optimizations
+    minify: true,
+    compressPublicAssets: true
   },
   // Additional SSR configuration for better stability
   ssr: true,
@@ -133,7 +122,7 @@ export default defineNuxtConfig({
       script: [
         {
           type: 'application/ld+json',
-          children: JSON.stringify({
+          innerHTML: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'Organization',
             name: 'saka\'s Dodgeball Server',

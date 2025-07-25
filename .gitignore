@@ -6,7 +6,8 @@
 .cache
 dist
 
-server/plugins
+server/plugins/
+composables/server/plugins/
 # Node dependencies
 node_modules
 

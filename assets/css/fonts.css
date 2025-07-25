@@ -1,0 +1,23 @@
+/* Non-critical font loading - loaded asynchronously */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap') layer(fonts);
+
+/* Font fallbacks for better performance */
+@font-face {
+  font-family: 'Inter-fallback';
+  src: local('Arial'), local('Helvetica'), local('sans-serif');
+  font-display: swap;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+  size-adjust: 107%;
+}
+
+@font-face {
+  font-family: 'JetBrains-Mono-fallback';
+  src: local('Courier New'), local('Monaco'), local('monospace');
+  font-display: swap;
+  ascent-override: 85%;
+  descent-override: 20%;
+  line-gap-override: 0%;
+  size-adjust: 110%;
+}

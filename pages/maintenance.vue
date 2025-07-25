@@ -4,10 +4,14 @@
       <div class="bg-white/10 backdrop-blur-lg rounded-lg p-8 shadow-2xl border border-white/20">
         <!-- Logo -->
         <div class="mb-8">
-          <img
+          <NuxtImg
             src="/assets/img/default-512x512.png"
             alt="Saka's Dodgeball Server Logo"
             class="w-24 h-24 mx-auto mb-6 rounded-lg"
+            width="96"
+            height="96"
+            format="webp"
+            quality="85"
           />
         </div>
 
