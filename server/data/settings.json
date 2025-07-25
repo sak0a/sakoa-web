@@ -4,17 +4,17 @@
     "title": "Maintenance Mode",
     "message": "We're currently performing maintenance on our website. Please check back soon!",
     "estimatedTime": "1 Day",
-    "lastUpdated": "2025-07-17T18:24:39.273Z"
+    "lastUpdated": "2025-07-25T05:31:14.638Z"
   },
   "seasons": {
     "startYear": 2025,
     "startMonth": 6,
     "startDay": 17,
-    "lastUpdated": "2025-07-13T22:52:14.078Z"
+    "lastUpdated": "2025-07-25T05:31:14.638Z"
   },
   "discord": {
     "inviteUrl": "https://discord.gg/JuxYYVEkzc",
-    "lastUpdated": ""
+    "lastUpdated": "2025-07-25T05:31:14.638Z"
   },
   "cache": {
     "serverStatusInterval": 30,
@@ -22,8 +22,8 @@
     "playerSearchInterval": 10,
     "seasonalLeaderboardInterval": 10,
     "databaseStatusInterval": 5,
-    "steamProfilesInterval": 3600,
-    "lastUpdated": ""
+    "steamProfilesInterval": 1200,
+    "lastUpdated": "2025-07-25T05:31:14.638Z"
   },
   "logging": {
     "serverQueries": "minimal",
@@ -34,12 +34,12 @@
   "chatbot": {
     "enabled": false,
     "welcomeMessage": "Hi! I'm your TF2 Dodgeball Server assistant. I can help you with commands, donations, gameplay, and more!",
-    "lastUpdated": "2025-07-17T20:43:27.314Z"
+    "lastUpdated": "2025-07-25T05:39:46.282Z"
   },
   "donations": {
     "paypalEnabled": true,
-    "revolutEnabled": true,
+    "revolutEnabled": false,
     "buyMeACoffeeEnabled": true,
-    "lastUpdated": "2025-07-19T18:41:16.026Z"
+    "lastUpdated": "2025-07-25T05:31:14.638Z"
   }
 }

@@ -36,18 +36,25 @@
               Servers
             </NuxtLink>
             <NuxtLink
+              to="/admin/hero-stats"
+              class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              :class="{ 'bg-gray-700 text-white': $route.path === '/admin/hero-stats' }"
+            >
+              Hero Stats
+            </NuxtLink>
+            <NuxtLink
+              to="/admin/performance"
+              class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              :class="{ 'bg-gray-700 text-white': $route.path === '/admin/performance' }"
+            >
+              Performance
+            </NuxtLink>
+            <NuxtLink
               to="/admin/settings"
               class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
               :class="{ 'bg-gray-700 text-white': $route.path === '/admin/settings' }"
             >
               Settings
-            </NuxtLink>
-            <NuxtLink
-              to="/admin/database"
-              class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              :class="{ 'bg-gray-700 text-white': $route.path === '/admin/database' }"
-            >
-              Database
             </NuxtLink>
             <NuxtLink
               to="/admin/cache"

@@ -5,7 +5,7 @@
       "name": "𝘴𝘢𝘬𝘢 Dodgeball Server - Advanced",
       "host": "45.81.234.145",
       "port": 27015,
-      "location": "🇩🇪 Frankfurt",
+      "location": "Frankfurt",
       "connectUrl": "steam://connect/45.81.234.145:27015",
       "comingSoon": false
     },
@@ -14,7 +14,7 @@
       "name": "𝘴𝘢𝘬𝘢 Dodgeball Server - Public",
       "host": "37.114.54.74",
       "port": 27015,
-      "location": "🇩🇪 Frankfurt",
+      "location": "Frankfurt",
       "connectUrl": "steam://connect/37.114.54.74:27015",
       "comingSoon": false
     }

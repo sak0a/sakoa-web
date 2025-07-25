@@ -64,6 +64,15 @@ async function readSettingsData() {
         seasonalLeaderboardInterval: 10,
         databaseStatusInterval: 5,
         lastUpdated: ""
+      },
+      heroStats: {
+        uptime: "24/7",
+        activePlayers: 1247,
+        monthlyDonations: 17.5,
+        monthlyGoal: 30,
+        autoUpdateDonations: false,
+        autoUpdatePlayers: false,
+        lastUpdated: ""
       }
     };
   }
@@ -155,6 +164,15 @@ export default defineEventHandler(async (event) => {
         settingsData.cache = {
           ...settingsData.cache,
           ...settings.cache,
+          lastUpdated: new Date().toISOString()
+        };
+      }
+
+      // Update hero statistics
+      if (settings.heroStats) {
+        settingsData.heroStats = {
+          ...settingsData.heroStats,
+          ...settings.heroStats,
           lastUpdated: new Date().toISOString()
         };
       }

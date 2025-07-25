@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-lg p-8 shadow-md border" style="background-color: #242424; border-color: #333333;">
+  <div class="leaderboard-glass-container rounded-lg p-8 shadow-md border" style="border-color: #333333;">
     <!-- Header with Filter Controls -->
     <div class="flex flex-col md:flex-row justify-between items-center mb-8">
       <h3 class="text-2xl font-bold mb-4 md:mb-0" style="color: #734C96;">Player Leaderboard</h3>
@@ -370,6 +370,18 @@ watch([selectedSort, selectedOrder], () => {
 </script>
 
 <style scoped>
+/* Glass Effect for Leaderboard Container */
+.leaderboard-glass-container {
+  background: rgba(36, 36, 36, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(115, 76, 150, 0.15);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(115, 76, 150, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
 .text-shadow-sm {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }

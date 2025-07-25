@@ -1,2 +1,19 @@
 User-Agent: *
-Disallow:
+Allow: /
+
+# Disallow admin areas
+Disallow: /admin/
+Disallow: /api/admin/
+
+# Allow important pages
+Allow: /#about
+Allow: /#server-status
+Allow: /#leaderboard
+Allow: /#donate
+Allow: /#donors
+
+# Sitemap
+Sitemap: https://sakoa-web.vercel.app/api/sitemap.xml
+
+# Crawl delay
+Crawl-delay: 1

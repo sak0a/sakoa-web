@@ -8,7 +8,7 @@
       class="navigation fixed left-0 w-full z-50 transition-all duration-500 ease-out admin-aware"
       :class="{ 'scrolled': scrolled }"
     >
-      <div class="nav-container backdrop-blur-xl bg-gray-950/80 border-b border-gray-800/50">
+      <div class="nav-container" :class="navContainerClasses">
         <div class="nav-parent">
           <!-- Logo and title section -->
           <div class="nav-logo">
@@ -59,6 +59,15 @@
 
           <!-- Right-side buttons (desktop only) -->
           <div class="nav-buttons-right">
+            <button
+              @click="showSearchModal = true"
+              class="btn btn-ghost text-sm px-3 py-2 mr-2 group"
+              title="Search"
+            >
+              <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </button>
             <a href="#donate" rel="noopener noreferrer" class="btn btn-primary text-sm px-4 py-2 group">
               <span>Donate</span>
               <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,6 +89,13 @@
     <!-- Chatbot -->
     <Chatbot />
 
+    <!-- Search Modal -->
+    <SearchModal
+      :is-open="showSearchModal"
+      @close="showSearchModal = false"
+      @select="handleSearchSelect"
+    />
+
     <footer class="py-8" style="background-color: #0a0a0a; color: var(--text-primary);">
       <div class=" text-center text-sm animate-on-scroll animate-fade-in animate-delay-3" style="border-color: var(--border-color); color: var(--text-tertiary);">
         <p>&copy; {{ new Date().getFullYear() }} saka's dodgeball server. All rights reserved.</p>
@@ -95,10 +111,28 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import BackToTop from '~/components/BackToTop.vue';
 import AdminNotice from '~/components/AdminNotice.vue';
 import Chatbot from '~/components/Chatbot.vue';
+import SearchModal from '~/components/SearchModal.vue';
 
 const navigation = ref(null);
 const scrolled = ref(false);
 const mobileMenuOpen = ref(false);
+const showSearchModal = ref(false);
+const currentScrollY = ref(0);
+
+// Dynamic navbar background based on scroll position and section
+const navContainerClasses = computed(() => {
+  const isInHero = currentScrollY.value < (typeof window !== 'undefined' ? window.innerHeight * 0.8 : 600);
+  const isCompact = currentScrollY.value > 100;
+
+  return {
+    'backdrop-blur-xl': isCompact,
+    'bg-gray-950/80': isCompact && !isInHero,
+    'bg-gray-950/20': isCompact && isInHero,
+    'border-b': isCompact,
+    'border-gray-800/50': isCompact && !isInHero,
+    'border-gray-700/30': isCompact && isInHero,
+  };
+});
 
 // Mobile menu functions
 const toggleMobileMenu = () => {
@@ -115,6 +149,13 @@ const toggleMobileMenu = () => {
 const closeMobileMenu = () => {
   mobileMenuOpen.value = false;
   document.body.style.overflow = '';
+};
+
+// Search functionality
+const handleSearchSelect = (result) => {
+  console.log('Selected search result:', result);
+  // Handle search result selection
+  // You can implement navigation or other actions here
 };
 
 // Close mobile menu when clicking outside
@@ -138,14 +179,32 @@ const handleResize = () => {
   }
 };
 
+// Search keyboard shortcut (Cmd/Ctrl + K)
+const handleSearchShortcut = (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+    event.preventDefault();
+    showSearchModal.value = true;
+  }
+};
+
+// Track scroll position for navbar styling
+const updateScrollPosition = () => {
+  currentScrollY.value = window.scrollY;
+};
+
 onMounted(() => {
   // Register ScrollTrigger plugin
   gsap.registerPlugin(ScrollTrigger);
 
-  // Add event listeners for mobile menu
+  // Add event listeners for mobile menu and search
   document.addEventListener('click', handleClickOutside);
   document.addEventListener('keydown', handleEscapeKey);
+  document.addEventListener('keydown', handleSearchShortcut);
   window.addEventListener('resize', handleResize);
+
+  // Add scroll listener for navbar styling
+  window.addEventListener('scroll', updateScrollPosition);
+  updateScrollPosition(); // Initial call
 
   // Wait for DOM to be ready
   setTimeout(() => {
@@ -175,6 +234,8 @@ onUnmounted(() => {
   // Remove event listeners
   document.removeEventListener('click', handleClickOutside);
   document.removeEventListener('keydown', handleEscapeKey);
+  document.removeEventListener('keydown', handleSearchShortcut);
   window.removeEventListener('resize', handleResize);
+  window.removeEventListener('scroll', updateScrollPosition);
 });
 </script>

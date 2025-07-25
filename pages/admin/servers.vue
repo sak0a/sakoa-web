@@ -240,9 +240,6 @@
           <!-- Cache Management -->
           <AdminCacheManagement />
 
-          <!-- Database Status -->
-          <DatabaseStatus />
-
           <!-- Server Query Statistics -->
           <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <div class="flex items-center justify-between mb-6">
@@ -350,18 +347,6 @@
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-2">Database Status Interval (seconds)</label>
-                  <input
-                    v-model.number="workerSettings.databaseStatusInterval"
-                    type="number"
-                    min="5"
-                    max="60"
-                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
-                  <p class="text-xs text-gray-400 mt-1">How often to check database connection (5-60 seconds)</p>
-                </div>
-
-                <div>
                   <label class="block text-sm font-medium text-gray-300 mb-2">Steam Profiles Cache (seconds)</label>
                   <input
                     v-model.number="workerSettings.steamProfilesInterval"
@@ -446,7 +431,6 @@ const loadingStats = ref(false);
 // Server cache settings
 const workerSettings = ref({
   serverStatusInterval: 30,
-  databaseStatusInterval: 5,
   steamProfilesInterval: 3600
 });
 const savingWorkerSettings = ref(false);
@@ -636,7 +620,6 @@ const saveWorkerSettings = async () => {
       cache: {
         ...currentSettings.cache,
         serverStatusInterval: workerSettings.value.serverStatusInterval,
-        databaseStatusInterval: workerSettings.value.databaseStatusInterval,
         steamProfilesInterval: workerSettings.value.steamProfilesInterval,
         lastUpdated: new Date().toISOString()
       }
@@ -690,7 +673,6 @@ onMounted(async () => {
       const settings = await getSettings();
       if (settings.cache) {
         workerSettings.value.serverStatusInterval = settings.cache.serverStatusInterval || 30;
-        workerSettings.value.databaseStatusInterval = settings.cache.databaseStatusInterval || 5;
         workerSettings.value.steamProfilesInterval = settings.cache.steamProfilesInterval || 3600;
       }
     } catch (settingsError) {

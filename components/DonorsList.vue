@@ -1,55 +1,53 @@
 <template>
-  <div class="rounded-lg p-8 shadow-md border" style="background-color: #242424; border-color: #333333;">
-    <p class="text-center text-lg mb-8" style="color: #d4d4d4;">
+  <div class="glass-card p-8">
+    <p class="text-center text-lg mb-8 text-gray-300">
       We'd like to thank the following individuals for their generous support of our server.
     </p>
 
 
 
-    <div v-if="loading" class="flex justify-center">
-      <div class="animate-pulse space-y-4 w-full max-w-md">
-        <div class="h-12 rounded" style="background-color: #1a1a1a;"></div>
-        <div class="h-12 rounded" style="background-color: #1a1a1a;"></div>
-        <div class="h-12 rounded" style="background-color: #1a1a1a;"></div>
-        <div class="h-12 rounded" style="background-color: #1a1a1a;"></div>
+    <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-for="i in 6" :key="i" class="glass-card p-6 animate-pulse" style="background: rgba(255, 255, 255, 0.02);">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-gray-700 rounded-full mr-3"></div>
+          <div class="flex-1">
+            <div class="h-4 bg-gray-700 rounded mb-2"></div>
+            <div class="h-3 bg-gray-800 rounded w-2/3"></div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div v-else-if="displayDonors.length === 0" class="text-center py-8">
-      <p style="color: #a3a3a3;">No donors yet. Be the first to support our server!</p>
-      <a href="#donate" class="btn bg-[#0070BA] text-white hover:bg-[#005ea6] transition-colors mt-4 inline-block">Donate Now</a>
-      <div v-if="error" class="mt-4">
-        <p style="color: #ff6b6b;" class="text-sm">Error loading donor data</p>
+    <div v-else-if="displayDonors.length === 0" class="glass-card p-8 text-center" style="background: rgba(255, 255, 255, 0.02);">
+      <p class="text-gray-400 mb-4">No donors yet. Be the first to support our server!</p>
+      <a href="#donate" class="btn btn-primary">Donate Now</a>
+      <div v-if="error" class="mt-6 glass-card p-4" style="background: rgba(239, 68, 68, 0.1);">
+        <p class="text-red-400 text-sm mb-3">Error loading donor data</p>
         <button
           @click="refresh()"
-          class="mt-2 px-4 py-2 rounded text-sm transition-colors"
-          style="background-color: #734C96; color: white;"
+          class="btn btn-outline btn-sm"
         >
           Try Again
         </button>
       </div>
     </div>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div v-for="(donor, index) in displayDonors" :key="index" class="p-4 rounded shadow-sm border animate-on-scroll animate-fade-in" style="background-color: #1e1e1e; border-color: #333333;">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-for="(donor, index) in displayDonors" :key="index" class="donor-card p-6 animate-on-scroll animate-fade-in">
         <div class="flex items-center">
-          <div
-            class="rounded-full w-10 h-10 flex items-center justify-center font-bold mr-3 text-white text-xs bg-primary"
-          >
+          <div class="rounded-full w-12 h-12 flex items-center justify-center font-bold mr-4 text-white text-sm bg-gradient-to-br from-primary-500 to-primary-700 shadow-lg">
             {{ donor.tier }}
           </div>
           <div class="flex-1">
-            <div class="flex items-center">
-              <h4 class="font-bold mr-2" style="color: #ffffff;">{{ donor.display_name || donor.name }}</h4>
-            </div>
-            <p class="text-sm" style="color: #a3a3a3;">€{{ donor.amount }} total contribution</p>
+            <h4 class="font-bold text-white mb-1">{{ donor.display_name || donor.name }}</h4>
+            <p class="text-sm text-gray-300">€{{ donor.amount }} total contribution</p>
           </div>
         </div>
       </div>
     </div>
 
     <div class="text-center mt-8">
-      <p style="color: #a3a3a3;">Want to see your name here? <a href="#donate" class="text-primary hover:underline">Make a donation today!</a></p>
+      <p class="text-gray-400">Want to see your name here? <a href="#donate" class="text-primary-400 hover:text-primary-300 hover:underline transition-colors">Make a donation today!</a></p>
     </div>
   </div>
 </template>
