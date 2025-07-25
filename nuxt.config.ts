@@ -6,15 +6,8 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss'
   ],
   experimental: {
-    headNext: false,
-    // Disable features that cause issues in Plesk/Passenger
-    payloadExtraction: false,
-    clientFallback: false,
-    // Performance optimizations
-    inlineSSRStyles: false,
-    viewTransition: true,
-    // Fix unenv polyfill issues
-    polyfillVueUseHead: false
+    // Minimal experimental features to avoid build issues
+    payloadExtraction: false
   },
 
   // Performance optimizations (moved to main nitro config below)
@@ -39,19 +32,10 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/main.css'],
 
-  // Enhanced Vite optimizations
+  // Simplified Vite configuration
   vite: {
-    build: {
-      target: 'es2020'
-    },
     optimizeDeps: {
-      include: ['gsap', 'gsap/ScrollTrigger']
-    },
-    css: {
-      devSourcemap: false
-    },
-    esbuild: {
-      target: 'es2020'
+      include: ['gsap']
     }
   },
 
@@ -70,20 +54,12 @@ export default defineNuxtConfig({
     }
   },
   nitro: {
-    compressPublicAssets: true,
-    minify: true,
     publicAssets: [
       {
         baseURL: '/data',
         dir: 'server/data'
       }
     ],
-    // Better Plesk/Passenger compatibility
-    experimental: {
-      wasm: false
-    },
-    // Ensure proper static file serving
-    serveStatic: true,
     // Enhanced route rules for performance and caching
     routeRules: {
       '/_nuxt/builds/**': { prerender: false },
