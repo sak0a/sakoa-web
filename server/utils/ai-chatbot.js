@@ -1,37 +1,21 @@
-import { pipeline } from '@xenova/transformers';
+// Lightweight AI chatbot without heavy dependencies
+// Removed @xenova/transformers dependency to reduce bundle size by ~294KB
 
-// Initialize the AI model (lightweight sentence transformer)
-let sentenceEmbedder = null;
-let isModelLoading = false;
+// Simple text similarity using basic string matching algorithms
+function calculateTextSimilarity(text1, text2) {
+  const words1 = text1.toLowerCase().split(/\s+/);
+  const words2 = text2.toLowerCase().split(/\s+/);
 
-// Initialize the model
-async function initializeModel() {
-  if (sentenceEmbedder || isModelLoading) return sentenceEmbedder;
-  
-  try {
-    isModelLoading = true;
-    console.log('Loading AI model for chatbot...');
-    
-    // Use a lightweight sentence transformer model
-    sentenceEmbedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
-    
-    console.log('AI model loaded successfully');
-    return sentenceEmbedder;
-  } catch (error) {
-    console.error('Failed to load AI model:', error);
-    return null;
-  } finally {
-    isModelLoading = false;
-  }
+  // Calculate Jaccard similarity
+  const set1 = new Set(words1);
+  const set2 = new Set(words2);
+  const intersection = new Set([...set1].filter(x => set2.has(x)));
+  const union = new Set([...set1, ...set2]);
+
+  return intersection.size / union.size;
 }
 
-// Calculate cosine similarity between two vectors
-function cosineSimilarity(vecA, vecB) {
-  const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
-  const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
-  const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
-  return dotProduct / (magnitudeA * magnitudeB);
-}
+
 
 // Create knowledge base from TF2 data
 function createKnowledgeBase(tf2Data) {
@@ -257,55 +241,40 @@ ${Object.entries(commands.general_player_commands || {})
   return [...systems, ...knowledgeBase];
 }
 
-// Find best matching response using AI
+// Find best matching response using lightweight text similarity
 export async function getAIResponse(userMessage, tf2Data) {
   try {
-    const model = await initializeModel();
-    if (!model) {
-      // Fallback to pattern matching if AI model fails
-      return null;
-    }
-    
     const knowledgeBase = createKnowledgeBase(tf2Data);
     const userQuery = userMessage.toLowerCase().trim();
-    
-    // Get embedding for user query
-    const userEmbedding = await model(userQuery);
-    const userVector = Array.from(userEmbedding.data);
-    
+
     let bestMatch = null;
     let bestScore = 0;
-    
-    // Compare with each knowledge base entry
+
+    // Compare with each knowledge base entry using text similarity
     for (const entry of knowledgeBase) {
       for (const question of entry.questions) {
-        const questionEmbedding = await model(question);
-        const questionVector = Array.from(questionEmbedding.data);
-        
-        const similarity = cosineSimilarity(userVector, questionVector);
-        
+        const similarity = calculateTextSimilarity(userQuery, question);
+
         if (similarity > bestScore) {
           bestScore = similarity;
           bestMatch = entry;
         }
       }
     }
-    
+
     // Return best match if similarity is above threshold
-    if (bestMatch && bestScore > 0.7) {
+    if (bestMatch && bestScore > 0.3) { // Lower threshold for text similarity
       return {
         response: bestMatch.content,
         suggestions: bestMatch.suggestions || [],
-        confidence: bestScore
+        confidence: bestScore,
+        source: 'lightweight_ai'
       };
     }
-    
+
     return null;
   } catch (error) {
     console.error('AI response generation failed:', error);
     return null;
   }
 }
-
-// Initialize model on startup
-initializeModel().catch(console.error);

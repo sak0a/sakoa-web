@@ -1,22 +1,7 @@
-import { HfInference } from '@huggingface/inference';
 import { getOllamaResponse, isOllamaAvailable } from './ollama-ai.js';
 
-// Initialize Hugging Face client
-let hfClient = null;
-
-function initializeHuggingFace() {
-  if (!process.env.HUGGINGFACE_API_KEY) {
-    console.warn('HUGGINGFACE_API_KEY not found in environment variables');
-    return null;
-  }
-  
-  if (!hfClient) {
-    hfClient = new HfInference(process.env.HUGGINGFACE_API_KEY);
-    console.log('Hugging Face client initialized');
-  }
-  
-  return hfClient;
-}
+// Lightweight conversational AI without heavy dependencies
+// Removed Hugging Face dependency to reduce bundle size by ~100KB
 
 // Create comprehensive context from TF2 data
 function createServerContext(tf2Data) {
@@ -145,7 +130,7 @@ User: "how do I become a donator?"
 You: "Visit tf2.sakoa.xyz or contact admins through Discord (!discord command) for donation info and benefits!"`;
 }
 
-// Smart context-aware response system
+// Smart context-aware response system (lightweight, no heavy AI dependencies)
 export async function getConversationalResponse(userMessage, conversationHistory = [], tf2Data = {}) {
   try {
     // First, try smart pattern matching with context for known queries
@@ -154,7 +139,7 @@ export async function getConversationalResponse(userMessage, conversationHistory
       return smartResponse;
     }
 
-    // For unknown queries, try Ollama first (local AI), then Hugging Face
+    // Try Ollama for local AI if available (optional, lightweight)
     if (await isOllamaAvailable()) {
       try {
         console.log('Trying Ollama for query:', userMessage);
@@ -165,103 +150,82 @@ export async function getConversationalResponse(userMessage, conversationHistory
         }
         console.log('Ollama returned null response');
       } catch (ollamaError) {
-        console.warn('Ollama failed, trying Hugging Face:', ollamaError.message);
+        console.warn('Ollama failed, using enhanced pattern matching:', ollamaError.message);
       }
     }
 
-    // Fallback to Hugging Face if Ollama not available
-    const hf = initializeHuggingFace();
-    if (hf && process.env.HUGGINGFACE_API_KEY) {
-      try {
-        console.log('Trying Hugging Face for query:', userMessage);
-        const aiResponse = await tryHuggingFaceResponse(userMessage, conversationHistory, tf2Data, hf);
-        if (aiResponse) {
-          console.log('Hugging Face response successful');
-          return aiResponse;
-        }
-        console.log('Hugging Face returned null response');
-      } catch (hfError) {
-        console.warn('Hugging Face failed, using fallback:', hfError.message);
-      }
-    }
-
-    // Final fallback to enhanced pattern matching
-    return getFallbackResponse(userMessage, tf2Data, conversationHistory);
+    // Enhanced fallback with intelligent pattern matching
+    return getEnhancedFallbackResponse(userMessage, tf2Data, conversationHistory);
 
   } catch (error) {
     console.error('Conversational AI error:', error);
 
-    // Fallback to smart pattern matching
+    // Final fallback to basic pattern matching
     return getFallbackResponse(userMessage, tf2Data, conversationHistory);
   }
 }
 
-// Try Hugging Face for unknown queries
-async function tryHuggingFaceResponse(userMessage, conversationHistory, tf2Data, hf) {
+// Enhanced fallback response with intelligent pattern matching
+function getEnhancedFallbackResponse(userMessage, tf2Data, conversationHistory) {
+  const message = userMessage.toLowerCase().trim();
   const serverContext = createServerContext(tf2Data);
 
-  // Build a more focused prompt for better results
-  let prompt = `You are a helpful TF2 Dodgeball Server assistant. Be concise and friendly.
+  // Advanced pattern matching for complex queries
+  const patterns = [
+    // Help and guidance patterns
+    {
+      patterns: ['help', 'how do i', 'how to', 'guide', 'tutorial', 'explain'],
+      response: `I'm here to help! Here are some common things I can assist with:
 
-Server: ${serverContext.serverName}
-Donator Features: Footprints (!cfp), Chat Colors (!scc), Robot Mode (!robot), Killstreaks (!ks), 2x Vote Weight
-Donation: Visit tf2.sakoa.xyz for PayPal/Buy Me a Coffee, or use !discord for other methods
+**Server Commands**: Type !help in-game for a full list
+**Donations**: Visit tf2.sakoa.xyz for PayPal/Buy Me a Coffee
+**Donator Features**: Footprints (!cfp), Chat Colors (!scc), Robot Mode (!robot)
+**Server Info**: ${serverContext.serverName} - ${serverContext.gameMode}
 
-Recent conversation:`;
+What specific topic would you like help with?`,
+      suggestions: ['Server commands', 'Donation info', 'Donator features', 'Connection help']
+    },
+    // General questions
+    {
+      patterns: ['what', 'why', 'when', 'where', 'who'],
+      response: `I'd be happy to help answer your question! For the most accurate information about ${serverContext.serverName}, you can:
 
-  // Add recent context
-  const recentHistory = conversationHistory.slice(-3);
-  for (const msg of recentHistory) {
-    if (msg.isUser) {
-      prompt += `\nUser: ${msg.message}`;
-    } else {
-      prompt += `\nAssistant: ${msg.response}`;
+• Check our server info and stats
+• Visit tf2.sakoa.xyz for donation details
+• Use !discord in-game to join our community
+• Type !help for available commands
+
+Could you be more specific about what you'd like to know?`,
+      suggestions: ['Server commands', 'Donation benefits', 'Discord community', 'Game rules']
+    }
+  ];
+
+  // Check for pattern matches
+  for (const pattern of patterns) {
+    if (pattern.patterns.some(p => message.includes(p))) {
+      return {
+        response: pattern.response,
+        suggestions: pattern.suggestions,
+        confidence: 0.8,
+        source: 'enhanced_pattern_matching'
+      };
     }
   }
 
-  prompt += `\nUser: ${userMessage}\nAssistant:`;
+  // Default enhanced response
+  return {
+    response: `Thanks for your message! While I don't have a specific answer for that, I can help you with:
 
-  // Try text generation with a simple approach
-  const response = await hf.textGeneration({
-    model: 'HuggingFaceH4/zephyr-7b-beta',
-    inputs: `You are a helpful TF2 Dodgeball Server assistant. Keep responses under 100 words.
+• **Server Commands**: Type !help in-game
+• **Donations**: Visit tf2.sakoa.xyz
+• **Community**: Use !discord to join our Discord
+• **Support**: Contact admins through Discord
 
-User: ${userMessage}
-Assistant:`,
-    parameters: {
-      max_new_tokens: 80,
-      temperature: 0.7,
-      do_sample: true,
-      top_p: 0.9,
-      return_full_text: false
-    }
-  });
-
-  let botResponse = response.generated_text?.trim() || '';
-
-  // Clean up response and make it server-focused
-  botResponse = botResponse
-    .replace(/^Assistant:\s*/i, '')
-    .replace(/User:\s*.*$/gm, '')
-    .replace(/Human:\s*.*$/gm, '')
-    .trim();
-
-  // If the response is too generic, add server context
-  if (botResponse && !botResponse.toLowerCase().includes('tf2') && !botResponse.toLowerCase().includes('server')) {
-    botResponse = `${botResponse}\n\nFor TF2 server help, try asking about footprints, donations, or commands!`;
-  }
-
-  // Only return if we got a decent response
-  if (botResponse && botResponse.length > 15 && botResponse.length < 300) {
-    return {
-      response: botResponse,
-      suggestions: generateSuggestions(userMessage, botResponse, tf2Data, conversationHistory),
-      confidence: 0.7,
-      source: 'huggingface'
-    };
-  }
-
-  return null;
+Is there something specific about ${serverContext.serverName} I can help you with?`,
+    suggestions: ['Server commands', 'Donation info', 'Discord community', 'Admin contact'],
+    confidence: 0.6,
+    source: 'enhanced_fallback'
+  };
 }
 
 // Fuzzy matching for common typos and variations

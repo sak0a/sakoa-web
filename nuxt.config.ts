@@ -63,11 +63,13 @@ export default defineNuxtConfig({
     },
     build: {
       rollupOptions: {
-        external: [
-          // Externalize heavy dependencies that aren't needed on server
-          '@huggingface/inference',
-          '@xenova/transformers'
-        ]
+        // Removed heavy AI dependencies to reduce bundle size
+        output: {
+          manualChunks: {
+            'vendor': ['vue', 'vue-router'],
+            'gsap': ['gsap']
+          }
+        }
       }
     }
   },
@@ -164,7 +166,7 @@ export default defineNuxtConfig({
 
         // Open Graph / Facebook
         { property: 'og:type', content: 'website' },
-        { property: 'og:url', content: 'https://sakoa-web.vercel.app/' },
+        { property: 'og:url', content: 'https://sakoa.xyz/' },
         { property: 'og:title', content: 'saka\'s Dodgeball Server - Premium TF2 Gaming' },
         { property: 'og:description', content: 'Join our premium Team Fortress 2 dodgeball server with 24/7 uptime, custom maps, and active community.' },
         { property: 'og:image', content: '/assets/img/og-image.png' },
@@ -174,7 +176,7 @@ export default defineNuxtConfig({
 
         // Twitter
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:url', content: 'https://sakoa-web.vercel.app/' },
+        { name: 'twitter:url', content: 'https://sakoa.xyz/' },
         { name: 'twitter:title', content: 'saka\'s Dodgeball Server - Premium TF2 Gaming' },
         { name: 'twitter:description', content: 'Join our premium Team Fortress 2 dodgeball server with 24/7 uptime, custom maps, and active community.' },
         { name: 'twitter:image', content: '/assets/img/og-image.png' },
@@ -191,7 +193,7 @@ export default defineNuxtConfig({
         { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
         { rel: 'apple-touch-icon', href: '/favicon.png', sizes: '180x180' },
         { rel: 'manifest', href: '/site.webmanifest' },
-        { rel: 'canonical', href: 'https://sakoa-web.vercel.app/' },
+        { rel: 'canonical', href: 'https://sakoa.xyz/' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }
       ],
@@ -203,8 +205,8 @@ export default defineNuxtConfig({
             '@type': 'Organization',
             name: 'saka\'s Dodgeball Server',
             description: 'Premium Team Fortress 2 dodgeball gaming server with 24/7 uptime and active community.',
-            url: 'https://sakoa-web.vercel.app/',
-            logo: 'https://sakoa-web.vercel.app/assets/img/default-512x512.png',
+            url: 'https://sakoa.xyz/',
+            logo: 'https://sakoa.xyz/assets/img/default-512x512.png',
             sameAs: [
               'https://discord.gg/JuxYYVEkzc'
             ],
