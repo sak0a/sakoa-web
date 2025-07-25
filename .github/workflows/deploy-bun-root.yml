@@ -32,7 +32,8 @@ jobs:
         ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
         HUGGINGFACE_API_KEY: ${{ secrets.HUGGINGFACE_API_KEY }}
-        
+    - name: Copy data files
+      run: bun run copy-data
     - name: Stop application service
       uses: appleboy/ssh-action@v1.0.3
       with:
