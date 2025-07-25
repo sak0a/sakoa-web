@@ -16,6 +16,9 @@
               src="/assets/img/default-512x512.png"
               alt="saka's Dodgeball Server Logo"
               class="nav-logo-img w-10 h-10 rounded-lg"
+              width="40"
+              height="40"
+              loading="eager"
             />
             <span
               class="nav-title transition-all duration-500 ease-out font-semibold text-white"

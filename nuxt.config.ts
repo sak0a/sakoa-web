@@ -3,8 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
   modules: [
-    '@nuxtjs/tailwindcss',
-    '@nuxt/image'
+    '@nuxtjs/tailwindcss'
   ],
   experimental: {
     // Minimal experimental features to avoid build issues
@@ -13,10 +12,19 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
-  // Simplified Vite configuration
+  // Optimized Vite configuration for smaller bundles
   vite: {
     optimizeDeps: {
       include: ['gsap']
+    },
+    build: {
+      rollupOptions: {
+        external: [
+          // Externalize heavy dependencies that aren't needed on server
+          '@huggingface/inference',
+          '@xenova/transformers'
+        ]
+      }
     }
   },
 
@@ -66,7 +74,18 @@ export default defineNuxtConfig({
     },
     // Performance optimizations
     minify: true,
-    compressPublicAssets: true
+    compressPublicAssets: true,
+    // Reduce bundle size
+    experimental: {
+      wasm: false
+    },
+    // Exclude heavy dependencies from server bundle
+    externals: {
+      inline: [
+        // Keep essential modules inline
+        'gsap'
+      ]
+    }
   },
   // Additional SSR configuration for better stability
   ssr: true,

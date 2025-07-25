@@ -7,7 +7,7 @@
     
     <!-- Avatar image -->
     <div v-else class="steam-avatar-wrapper" :style="{ width: size, height: size }">
-      <NuxtImg
+      <OptimizedImage
         :src="avatarUrl"
         :alt="`${personaName}'s Steam Avatar`"
         :title="showTooltip ? `${personaName} - Click to view Steam profile` : undefined"
@@ -15,9 +15,8 @@
         :class="imageClass"
         :width="parseInt(size)"
         :height="parseInt(size)"
-        format="webp"
-        quality="85"
         loading="lazy"
+        :webp="false"
         @error="onImageError"
         @click="onAvatarClick"
       />
