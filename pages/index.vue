@@ -291,7 +291,14 @@
               <PayPalButton v-if="donationSettings.paypalEnabled" />
               <RevolutButton v-if="donationSettings.revolutEnabled" />
               <a v-if="donationSettings.buyMeACoffeeEnabled" href="https://www.buymeacoffee.com/sakoa" target="_blank" rel="noopener noreferrer" class="inline-block transition-transform hover:scale-105">
-                <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=sakoa&button_colour=FFDD00&font_colour=000000&font_family=Inter&outline_colour=000000&coffee_colour=ffffff" alt="Buy Me A Coffee" class="h-12 w-auto rounded-lg" />
+                <NuxtImg
+                  src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=sakoa&button_colour=FFDD00&font_colour=000000&font_family=Inter&outline_colour=000000&coffee_colour=ffffff"
+                  alt="Buy Me A Coffee"
+                  class="h-12 w-auto rounded-lg"
+                  height="48"
+                  loading="lazy"
+                  format="webp"
+                />
               </a>
             </div>
 
