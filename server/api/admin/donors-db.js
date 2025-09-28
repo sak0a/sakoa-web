@@ -87,10 +87,10 @@ async function getDonorWithDonations(steamid) {
       added_by: user.added_by,
       donations: donations.map(d => ({
         amount: parseFloat(d.amount),
-        date: d.donation_date,
+        date: d.donation_date ? new Date(d.donation_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         added_date: d.added_date,
         added_by: d.added_by,
-        notes: d.notes
+        notes: d.notes || ''
       })),
       total_amount: donations.reduce((sum, d) => sum + parseFloat(d.amount), 0)
     };

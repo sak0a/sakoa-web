@@ -453,7 +453,7 @@ const openEditModal = (steamid, donor) => {
     is_permanent: isPermanent,
     donations: donor.donations ? donor.donations.map(d => ({
       amount: d.amount,
-      date: d.date || d.donation_date,
+      date: d.date || new Date().toISOString().split('T')[0],
       notes: d.notes || ''
     })) : [{
       amount: donor.total_amount || donor.amount || 0,
