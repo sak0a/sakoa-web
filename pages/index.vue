@@ -605,11 +605,11 @@ const { donationSettings, fetchDonationSettings } = useDonationSettings();
 // Terms & Conditions expansion state
 const termsExpanded = ref(false);
 
-// Load hero statistics and donation settings on mount
-onMounted(async () => {
-  await fetchHeroStats();
-  await fetchDonationSettings();
+// Load hero statistics and donation settings during SSR and on mount
+await fetchHeroStats();
+await fetchDonationSettings();
 
+onMounted(async () => {
   // Start auto-refresh if enabled
   if (heroStats.value.autoUpdateDonations || heroStats.value.autoUpdatePlayers) {
     startAutoRefresh(5); // Refresh every 5 minutes

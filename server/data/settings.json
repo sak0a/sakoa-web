@@ -34,12 +34,21 @@
   "chatbot": {
     "enabled": false,
     "welcomeMessage": "Hi! I'm your TF2 Dodgeball Server assistant. I can help you with commands, donations, gameplay, and more!",
-    "lastUpdated": "2025-07-25T05:39:46.282Z"
+    "lastUpdated": "2025-09-28T02:30:33.398Z"
   },
   "donations": {
     "paypalEnabled": true,
     "revolutEnabled": false,
     "buyMeACoffeeEnabled": true,
     "lastUpdated": "2025-07-25T05:31:14.638Z"
+  },
+  "heroStats": {
+    "uptime": "24/7",
+    "activePlayers": 1243,
+    "monthlyDonations": 50.25,
+    "monthlyGoal": 30,
+    "autoUpdateDonations": false,
+    "autoUpdatePlayers": false,
+    "lastUpdated": "2025-09-28T02:34:34.698Z"
   }
 }

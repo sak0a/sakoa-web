@@ -69,6 +69,14 @@ export default defineEventHandler(async (event) => {
             paypalEnabled: settingsData.donations?.paypalEnabled !== false,
             revolutEnabled: settingsData.donations?.revolutEnabled !== false,
             buyMeACoffeeEnabled: settingsData.donations?.buyMeACoffeeEnabled !== false
+          },
+          heroStats: {
+            uptime: settingsData.heroStats?.uptime || "24/7",
+            activePlayers: settingsData.heroStats?.activePlayers || 1247,
+            monthlyDonations: settingsData.heroStats?.monthlyDonations || 17.5,
+            monthlyGoal: settingsData.heroStats?.monthlyGoal || 30,
+            autoUpdateDonations: settingsData.heroStats?.autoUpdateDonations || false,
+            autoUpdatePlayers: settingsData.heroStats?.autoUpdatePlayers || false
           }
         }
       };
@@ -95,6 +103,14 @@ export default defineEventHandler(async (event) => {
             paypalEnabled: true,
             revolutEnabled: true,
             buyMeACoffeeEnabled: true
+          },
+          heroStats: {
+            uptime: "24/7",
+            activePlayers: 1247,
+            monthlyDonations: 17.5,
+            monthlyGoal: 30,
+            autoUpdateDonations: false,
+            autoUpdatePlayers: false
           }
         }
       };

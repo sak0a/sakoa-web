@@ -18,23 +18,23 @@ export const useHeroStats = () => {
       error.value = null;
 
       const response = await $fetch('/api/settings');
-      
-      if (response.heroStats) {
+
+      if (response.success && response.data?.heroStats) {
         heroStats.value = {
-          uptime: response.heroStats.uptime || '24/7',
-          activePlayers: response.heroStats.activePlayers || 1247,
-          monthlyDonations: response.heroStats.monthlyDonations || 17.5,
-          monthlyGoal: response.heroStats.monthlyGoal || 30,
-          autoUpdateDonations: response.heroStats.autoUpdateDonations || false,
-          autoUpdatePlayers: response.heroStats.autoUpdatePlayers || false
+          uptime: response.data.heroStats.uptime || '24/7',
+          activePlayers: response.data.heroStats.activePlayers || 1247,
+          monthlyDonations: response.data.heroStats.monthlyDonations || 17.5,
+          monthlyGoal: response.data.heroStats.monthlyGoal || 30,
+          autoUpdateDonations: response.data.heroStats.autoUpdateDonations || false,
+          autoUpdatePlayers: response.data.heroStats.autoUpdatePlayers || false
         };
 
         // If auto-update is enabled, fetch real-time data
-        if (response.heroStats.autoUpdateDonations) {
+        if (response.data.heroStats.autoUpdateDonations) {
           await updateDonationAmount();
         }
 
-        if (response.heroStats.autoUpdatePlayers) {
+        if (response.data.heroStats.autoUpdatePlayers) {
           await updatePlayerCount();
         }
       }
