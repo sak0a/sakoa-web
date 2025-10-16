@@ -22,8 +22,8 @@ export default defineNuxtConfig({
       xl: 1280,
       xxl: 1536,
     },
-    // Provider configuration
-    provider: 'ipx',
+    // Provider configuration - disable in production to avoid IPX issues
+    provider: process.env.NODE_ENV === 'production' ? 'none' : 'ipx',
     ipx: {
       // Enable WebP conversion
       modifiers: {

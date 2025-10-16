@@ -3,14 +3,12 @@
     <div class="max-w-md w-full mx-4">
       <div class="bg-white/10 backdrop-blur-lg rounded-lg p-8 shadow-2xl border border-white/20">
         <div class="text-center mb-8">
-          <NuxtImg
+          <img
             src="/default-512x512.png"
             alt="Admin Logo"
             class="w-16 h-16 mx-auto mb-4 rounded-lg"
             width="64"
             height="64"
-            format="webp"
-            preset="logo"
           />
           <h1 class="text-2xl font-bold text-white mb-2">Admin Panel</h1>
           <p class="text-white/80">Enter your password to access the admin dashboard</p>

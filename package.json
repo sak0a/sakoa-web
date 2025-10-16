@@ -9,32 +9,32 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "prepare-nuxt": "nuxt prepare",
-    "ci-build": "bun run scripts/ci-build.ts",
+    "ci-build": "bun run scripts/ci-build.js",
     "type-check": "nuxt typecheck",
     "copy-data": "bun run scripts/copy-data-files.js"
   },
   "dependencies": {
-    "@nuxt/image": "^1.10.0",
+    "@nuxt/image": "^1.11.0",
     "defu": "^6.1.4",
     "gsap": "^3.13.0",
     "ipx": "^3.1.1",
-    "mysql2": "^3.14.1",
-    "nuxt": "3.16.0",
+    "mysql2": "^3.15.1",
+    "nuxt": "4.1.0",
     "ofetch": "^1.4.1",
     "ufo": "^1.6.1",
-    "vue": "^3.5.17",
+    "vue": "^3.5.22",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
     "@nuxt/typescript-build": "^3.0.2",
     "@nuxtjs/tailwindcss": "^6.14.0",
     "@types/gamedig": "^5.0.3",
-    "@types/node": "^24.0.7",
+    "@types/node": "^24.5.2",
     "autoprefixer": "^10.4.21",
-    "gamedig": "^5.3.1",
+    "gamedig": "^5.3.2",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
-    "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.2"
   }
 }

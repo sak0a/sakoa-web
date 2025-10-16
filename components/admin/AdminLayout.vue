@@ -5,14 +5,12 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <div class="flex items-center">
-            <NuxtImg
+            <img
               src="/default-512x512.png"
               alt="Admin Logo"
               class="w-8 h-8 rounded mr-3"
               width="32"
               height="32"
-              format="webp"
-              preset="logo"
             />
             <h1 class="text-xl font-semibold text-white">Admin Panel</h1>
           </div>
