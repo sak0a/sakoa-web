@@ -1,0 +1,22 @@
+[Unit]
+Description=Saka's Dodgeball Server Web Application
+After=network.target
+
+[Service]
+Type=simple
+User=dodgeball-user
+Group=dodgeball-user
+WorkingDirectory=/home/dodgeball-user/app/.output/server
+ExecStart=/usr/bin/node index.mjs
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOST=127.0.0.1
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dodgeball-app
+
+[Install]
+WantedBy=multi-user.target
