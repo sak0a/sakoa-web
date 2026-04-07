@@ -80,9 +80,9 @@ export default defineEventHandler(async (event) => {
         ...p,
         rank: rankResult[0]?.rank || 1,
         playtimeHours: Math.round(p.playtime / 3600 * 100) / 100,
-        lastLoginDate: p.lastLogin ? new Date(p.lastLogin * 1000).toLocaleDateString() : 'Never',
-        firstLoginDate: p.firstLogin ? new Date(p.firstLogin * 1000).toLocaleDateString() : 'Unknown',
-        lastLogoutDate: p.lastLogout ? new Date(p.lastLogout * 1000).toLocaleDateString() : 'Never'
+        lastLoginDate: p.lastLogin ? new Date(p.lastLogin * 1000).toLocaleDateString('de-DE') : 'Never',
+        firstLoginDate: p.firstLogin ? new Date(p.firstLogin * 1000).toLocaleDateString('de-DE') : 'Unknown',
+        lastLogoutDate: p.lastLogout ? new Date(p.lastLogout * 1000).toLocaleDateString('de-DE') : 'Never'
       };
     };
 

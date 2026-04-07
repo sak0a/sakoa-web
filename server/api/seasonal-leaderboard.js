@@ -83,8 +83,8 @@ export default defineEventHandler(async (event) => {
       // Format playtime to hours
       playtimeHours: Math.round(player.playtime / 3600 * 100) / 100,
       // Convert timestamps to readable dates
-      lastLoginDate: player.lastLogin ? new Date(player.lastLogin * 1000).toLocaleDateString() : 'Never',
-      firstLoginDate: player.firstLogin ? new Date(player.firstLogin * 1000).toLocaleDateString() : 'Unknown'
+      lastLoginDate: player.lastLogin ? new Date(player.lastLogin * 1000).toLocaleDateString('de-DE') : 'Never',
+      firstLoginDate: player.firstLogin ? new Date(player.firstLogin * 1000).toLocaleDateString('de-DE') : 'Unknown'
     }));
 
     return {
