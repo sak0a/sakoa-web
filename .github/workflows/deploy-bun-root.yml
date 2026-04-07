@@ -2,25 +2,25 @@ name: Deploy to Ubuntu Root Server (Bun)
 
 on:
   push:
-    branches: [ main, master ]  # Deploy when pushing to main/master branch
-  workflow_dispatch:  # Allow manual deployment
+    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Setup Bun
       uses: oven-sh/setup-bun@v1
       with:
         bun-version: latest
-        
+
     - name: Install dependencies
       run: bun install
-      
+
     - name: Build project
       run: bun run build
       env:
@@ -31,9 +31,10 @@ jobs:
         DB_NAME: ${{ secrets.DB_NAME }}
         ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
-        HUGGINGFACE_API_KEY: ${{ secrets.HUGGINGFACE_API_KEY }}
+
     - name: Copy data files
       run: bun run copy-data
+
     - name: Stop application service
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -41,76 +42,93 @@ jobs:
         username: ${{ secrets.ROOT_SERVER_USER }}
         password: ${{ secrets.ROOT_SERVER_PASSWORD }}
         script: |
-          echo "🛑 Stopping dodgeball application service..."
-          # Try to stop service - if user has sudo access, use it; otherwise skip
+          echo "Stopping dodgeball application service..."
           if sudo -n systemctl stop dodgeball-app 2>/dev/null; then
-            echo "✅ Service stopped successfully"
+            echo "Service stopped successfully"
           else
-            echo "⚠️ Could not stop service (may require manual stop or service not running)"
+            echo "Could not stop service (may not be running)"
           fi
 
-    - name: Backup and prepare deployment directory
+    - name: Prepare deployment directory
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.ROOT_SERVER_HOST }}
         username: ${{ secrets.ROOT_SERVER_USER }}
         password: ${{ secrets.ROOT_SERVER_PASSWORD }}
         script: |
-          echo "💾 Preparing deployment directory..."
-
-          # Create deployment directory if it doesn't exist
+          echo "Preparing deployment directory..."
           mkdir -p /home/dodgeball-user/app
 
-          # Create backup if previous deployment exists
-          if [ -d "/home/dodgeball-user/app/.output" ] || [ -d "/home/dodgeball-user/app/server" ]; then
-            echo "📦 Creating backup of current deployment..."
+          # Backup current deployment (excluding data files)
+          if [ -d "/home/dodgeball-user/app/.output" ]; then
+            echo "Creating backup of current deployment..."
             rm -rf /home/dodgeball-user/app-backup 2>/dev/null || true
             cp -r /home/dodgeball-user/app /home/dodgeball-user/app-backup 2>/dev/null || true
-            echo "✅ Backup created successfully"
-          else
-            echo "ℹ️ No existing deployment to backup"
           fi
 
-          # Clear current deployment files
-          echo "🧹 Clearing current deployment files..."
-          rm -rf /home/dodgeball-user/app/.output /home/dodgeball-user/app/server 2>/dev/null || true
-          echo "✅ Deployment directory prepared"
-          
+          # Clear built output only — preserve server/data for admin GUI persistence
+          echo "Clearing built output..."
+          rm -rf /home/dodgeball-user/app/.output 2>/dev/null || true
+
+          # Ensure the persistent data directory exists
+          mkdir -p /home/dodgeball-user/app/server/data
+          echo "Deployment directory prepared"
+
     - name: Upload built files
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.ROOT_SERVER_HOST }}
         username: ${{ secrets.ROOT_SERVER_USER }}
         password: ${{ secrets.ROOT_SERVER_PASSWORD }}
-        source: ".output/*,server/*"
+        source: ".output/*"
         target: "/home/dodgeball-user/app"
         strip_components: 0
-        
-    - name: Set file ownership and permissions
+
+    - name: Seed data files (only new files, never overwrite)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.ROOT_SERVER_HOST }}
+        username: ${{ secrets.ROOT_SERVER_USER }}
+        password: ${{ secrets.ROOT_SERVER_PASSWORD }}
+        source: "server/data/*"
+        target: "/home/dodgeball-user/app-data-seed"
+        strip_components: 0
+
+    - name: Merge seed data and set permissions
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.ROOT_SERVER_HOST }}
         username: ${{ secrets.ROOT_SERVER_USER }}
         password: ${{ secrets.ROOT_SERVER_PASSWORD }}
         script: |
-          echo "🔐 Setting file ownership and permissions..."
+          echo "Seeding missing data files (preserving existing)..."
+          SEED_DIR="/home/dodgeball-user/app-data-seed/server/data"
+          DATA_DIR="/home/dodgeball-user/app/server/data"
 
-          # Try to set ownership if we have sudo access
-          if sudo -n chown -R dodgeball-user:dodgeball-user /home/dodgeball-user/app 2>/dev/null; then
-            echo "✅ File ownership set to dodgeball-user"
-          else
-            echo "⚠️ Could not change ownership (files owned by current user)"
+          if [ -d "$SEED_DIR" ]; then
+            for file in "$SEED_DIR"/*.json; do
+              filename=$(basename "$file")
+              if [ ! -f "$DATA_DIR/$filename" ]; then
+                echo "Seeding $filename (new file)"
+                cp "$file" "$DATA_DIR/$filename"
+              else
+                echo "Keeping existing $filename"
+              fi
+            done
+            rm -rf /home/dodgeball-user/app-data-seed
           fi
 
-          # Set file permissions
-          cd /home/dodgeball-user/app
-          find .output -type f -exec chmod 644 {} \; 2>/dev/null || true
-          find .output -type d -exec chmod 755 {} \; 2>/dev/null || true
-          find server -type f -exec chmod 644 {} \; 2>/dev/null || true
-          find server -type d -exec chmod 755 {} \; 2>/dev/null || true
-          chmod +x .output/server/index.mjs 2>/dev/null || true
-          echo "✅ File permissions set successfully"
-          
+          echo "Setting file permissions..."
+          if sudo -n chown -R dodgeball-user:dodgeball-user /home/dodgeball-user/app 2>/dev/null; then
+            echo "File ownership set"
+          fi
+          find /home/dodgeball-user/app/.output -type f -exec chmod 644 {} \; 2>/dev/null || true
+          find /home/dodgeball-user/app/.output -type d -exec chmod 755 {} \; 2>/dev/null || true
+          find /home/dodgeball-user/app/server -type f -exec chmod 644 {} \; 2>/dev/null || true
+          find /home/dodgeball-user/app/server -type d -exec chmod 755 {} \; 2>/dev/null || true
+          chmod +x /home/dodgeball-user/app/.output/server/index.mjs 2>/dev/null || true
+          echo "Permissions set"
+
     - name: Create environment file
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -118,9 +136,7 @@ jobs:
         username: ${{ secrets.ROOT_SERVER_USER }}
         password: ${{ secrets.ROOT_SERVER_PASSWORD }}
         script: |
-          echo "📝 Creating environment configuration..."
-          cd /home/dodgeball-user/app/.output/server
-          cat > .env << 'EOF'
+          cat > /home/dodgeball-user/app/.output/server/.env << 'ENVEOF'
           DB_HOST=${{ secrets.DB_HOST }}
           DB_PORT=${{ secrets.DB_PORT }}
           DB_USER=${{ secrets.DB_USER }}
@@ -128,33 +144,41 @@ jobs:
           DB_NAME=${{ secrets.DB_NAME }}
           ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
           STEAM_API_KEY=${{ secrets.STEAM_API_KEY }}
-          HUGGINGFACE_API_KEY=${{ secrets.HUGGINGFACE_API_KEY }}
           PORT=3000
           HOST=127.0.0.1
-          EOF
-          chmod 600 .env
-          echo "✅ Environment file created successfully"
-          
-    - name: Install Bun dependencies on server
+          ENVEOF
+          # Strip leading whitespace from heredoc
+          sed -i 's/^[[:space:]]*//' /home/dodgeball-user/app/.output/server/.env
+          chmod 600 /home/dodgeball-user/app/.output/server/.env
+          echo "Environment file created"
+
+    - name: Upload and install systemd service
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.ROOT_SERVER_HOST }}
+        username: ${{ secrets.ROOT_SERVER_USER }}
+        password: ${{ secrets.ROOT_SERVER_PASSWORD }}
+        source: "deployment/dodgeball-app.service"
+        target: "/tmp/"
+        strip_components: 1
+
+    - name: Install systemd service file
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.ROOT_SERVER_HOST }}
         username: ${{ secrets.ROOT_SERVER_USER }}
         password: ${{ secrets.ROOT_SERVER_PASSWORD }}
         script: |
-          echo "📦 Installing Bun dependencies on server..."
-          cd /home/dodgeball-user/app/.output/server
-
-          # Try to use dodgeball-user's Bun installation, fallback to system Bun
-          if [ -f "/home/dodgeball-user/.bun/bin/bun" ]; then
-            /home/dodgeball-user/.bun/bin/bun install --production 2>/dev/null || echo "No package.json found or dependencies already satisfied"
-          elif command -v bun >/dev/null 2>&1; then
-            bun install --production 2>/dev/null || echo "No package.json found or dependencies already satisfied"
+          if sudo -n cp /tmp/dodgeball-app.service /etc/systemd/system/dodgeball-app.service 2>/dev/null; then
+            sudo -n chmod 644 /etc/systemd/system/dodgeball-app.service 2>/dev/null || true
+            sudo -n chown root:root /etc/systemd/system/dodgeball-app.service 2>/dev/null || true
+            sudo -n systemctl daemon-reload 2>/dev/null || true
+            echo "Systemd service file installed"
           else
-            echo "⚠️ Bun not found, skipping dependency installation"
+            echo "Failed to install service file - requires sudo"
           fi
-          echo "✅ Server dependencies ready"
-          
+          rm -f /tmp/dodgeball-app.service 2>/dev/null || true
+
     - name: Start application service
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -162,114 +186,47 @@ jobs:
         username: ${{ secrets.ROOT_SERVER_USER }}
         password: ${{ secrets.ROOT_SERVER_PASSWORD }}
         script: |
-          echo "🚀 Starting dodgeball application service..."
+          sudo -n systemctl daemon-reload 2>/dev/null || true
 
-          # Check if the service file exists (using a simpler method)
-          if [ -f "/etc/systemd/system/dodgeball-app.service" ]; then
-            echo "✅ Service file found at /etc/systemd/system/dodgeball-app.service"
-          else
-            echo "❌ Service file not found at /etc/systemd/system/dodgeball-app.service"
-            echo "Please create the service file with proper content"
-            # Don't exit - continue to try starting anyway in case it's a permission issue
-          fi
-
-          # Reload systemd to pick up any changes
-          sudo -n systemctl daemon-reload 2>/dev/null || echo "⚠️ Could not reload systemd daemon"
-
-          # Try to start and enable service with sudo
           if sudo -n systemctl start dodgeball-app 2>/dev/null; then
-            echo "✅ Service start command executed"
-            sudo -n systemctl enable dodgeball-app 2>/dev/null || echo "⚠️ Could not enable service"
-
-            # Wait longer for service to stabilize
-            echo "⏳ Waiting for service to stabilize..."
+            sudo -n systemctl enable dodgeball-app 2>/dev/null || true
             sleep 10
 
-            # Check service status with detailed output
-            echo "🔍 Checking service status..."
             if sudo -n systemctl is-active --quiet dodgeball-app 2>/dev/null; then
-              echo "✅ Application service is running"
-              sudo -n systemctl status dodgeball-app --no-pager -l 2>/dev/null || echo "Status check completed"
+              echo "Application service is running"
             else
-              echo "❌ Application service is not active"
-              echo "📋 Service status:"
-              sudo -n systemctl status dodgeball-app --no-pager -l 2>/dev/null || echo "Could not get detailed status"
-              echo "📋 Recent logs:"
-              sudo -n journalctl -u dodgeball-app --no-pager -l -n 30 2>/dev/null || echo "Could not get logs"
-              echo "📋 Application files check:"
-              ls -la /home/dodgeball-user/app/.output/server/ 2>/dev/null || echo "Could not list app files"
-              echo "📋 Environment file check:"
-              ls -la /home/dodgeball-user/app/.output/server/.env 2>/dev/null || echo "Environment file not found"
-              echo "⚠️ Service failed to stay running - continuing deployment for manual debugging"
+              echo "Service failed to start"
+              sudo -n journalctl -u dodgeball-app --no-pager -n 30 2>/dev/null || true
             fi
           else
-            echo "⚠️ Could not start service automatically - manual restart required"
-            echo "Please manually start the service: sudo systemctl start dodgeball-app"
+            echo "Could not start service - manual restart required"
           fi
-          
-    - name: Verify deployment and debug
+
+    - name: Verify deployment
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.ROOT_SERVER_HOST }}
         username: ${{ secrets.ROOT_SERVER_USER }}
         password: ${{ secrets.ROOT_SERVER_PASSWORD }}
         script: |
-          echo "🔍 Verifying deployment and gathering debug info..."
+          echo "=== Deployment verification ==="
 
-          # Check deployment files
-          echo "📁 Checking deployment files:"
-          ls -la /home/dodgeball-user/app/ 2>/dev/null || echo "App directory not found"
-          ls -la /home/dodgeball-user/app/.output/ 2>/dev/null || echo ".output directory not found"
-          ls -la /home/dodgeball-user/app/.output/server/ 2>/dev/null || echo "Server directory not found"
+          # Check main app file
+          test -f /home/dodgeball-user/app/.output/server/index.mjs && echo "App file: OK" || echo "App file: MISSING"
 
-          # Check if main application file exists
-          if [ -f "/home/dodgeball-user/app/.output/server/index.mjs" ]; then
-            echo "✅ Main application file exists"
-            ls -la /home/dodgeball-user/app/.output/server/index.mjs
-          else
-            echo "❌ Main application file missing"
-          fi
+          # Check env file
+          test -f /home/dodgeball-user/app/.output/server/.env && echo "Env file: OK" || echo "Env file: MISSING"
 
-          # Check environment file
-          if [ -f "/home/dodgeball-user/app/.output/server/.env" ]; then
-            echo "✅ Environment file exists"
-            echo "📋 Environment file permissions:"
-            ls -la /home/dodgeball-user/app/.output/server/.env
-          else
-            echo "❌ Environment file missing"
-          fi
+          # Check data files
+          echo "Data files:"
+          ls -la /home/dodgeball-user/app/server/data/ 2>/dev/null || echo "  Data directory missing"
 
-          # Check if application is responding
-          echo "🌐 Testing application response:"
+          # Check app responding
           if curl -f -s http://127.0.0.1:3000 > /dev/null; then
-            echo "✅ Application is responding on port 3000"
+            echo "App health: OK (port 3000)"
           else
-            echo "❌ Application is not responding on port 3000"
-            echo "📋 Trying to start application manually for testing:"
-            cd /home/dodgeball-user/app/.output/server
-            timeout 10s /home/dodgeball-user/.bun/bin/bun run index.mjs 2>&1 || echo "Manual start failed or timed out"
+            echo "App health: NOT RESPONDING"
           fi
 
-          # Check nginx status
-          if sudo -n systemctl is-active --quiet nginx 2>/dev/null; then
-            echo "✅ Nginx is running"
-          else
-            echo "❌ Nginx is not running"
-            sudo -n systemctl status nginx --no-pager 2>/dev/null || echo "Could not get nginx status"
-          fi
-
-          # Final service status check
-          echo "🔧 Final service status:"
-          sudo -n systemctl status dodgeball-app --no-pager -l 2>/dev/null || echo "Could not get service status"
-
-          # Test external access (if domain is configured)
-          echo "🌐 Testing external access..."
-          curl -I -s https://sakoa.xyz || echo "External access test failed (may be normal during initial setup)"
-          
-    - name: Deployment notification
-      run: |
-        echo "🚀 Deployment completed successfully!"
-        echo "🌐 Site should be available at: https://sakoa.xyz"
-        echo "🔧 Server: Ubuntu 24 with Bun runtime"
-        echo "👤 User: dodgeball-user"
-        echo "🔄 Service: dodgeball-app (systemd)"
+          # Service status
+          sudo -n systemctl status dodgeball-app --no-pager -l 2>/dev/null || true
