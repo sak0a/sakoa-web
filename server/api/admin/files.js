@@ -66,10 +66,10 @@ export default defineEventHandler(async (event) => {
         let defaultData
 
         if (fileType === 'donors') {
-          filePath = path.join(process.cwd(), 'server/data/donors.json')
+          filePath = path.join(projectRoot, 'server/data/donors.json')
           defaultData = { donors: [] }
         } else if (fileType === 'servers') {
-          filePath = path.join(process.cwd(), 'server/data/servers.json')
+          filePath = path.join(projectRoot, 'server/data/servers.json')
           defaultData = { servers: [] }
         } else {
           throw createError({
