@@ -9,7 +9,7 @@
             @keyup.enter="searchPlayer"
             @input="clearMessages"
             type="text"
-            placeholder="Enter SteamID (any format)"
+            placeholder="Search by player name or SteamID"
             class="w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 transition-colors"
             style="background-color: #242424; border-color: #333333; color: #ffffff;"
             :disabled="loading"
@@ -23,7 +23,7 @@
         
         <!-- Help Text -->
         <div class="mt-2 text-xs" style="color: #a3a3a3;">
-          <p>Supported formats: SteamID3 ([U:1:XXXXXXXX]), Legacy (STEAM_0:X:XXXXXXXX)</p>
+          <p>Search by player name or SteamID (SteamID3, Legacy format)</p>
         </div>
       </div>
 
@@ -88,7 +88,7 @@ const successMessage = ref(null);
 
 const searchPlayer = async () => {
   if (!searchInput.value.trim()) {
-    error.value = 'Please enter a SteamID';
+    error.value = 'Please enter a player name or SteamID';
     return;
   }
 

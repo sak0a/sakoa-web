@@ -85,6 +85,8 @@
                 :key="player.steamid"
                 class="podium-card"
                 :class="getPodiumClass(player.rank)"
+                @click="openPlayerModal(player.steamid)"
+                :title="`Click to view ${player.name}'s stats`"
             >
               <!-- Enhanced Rank Badge -->
               <div class="podium-rank-badge">
@@ -96,7 +98,7 @@
               <!-- Enhanced Player Info -->
               <div class="podium-player-info">
                 <!-- Steam Avatar -->
-                <div class="podium-avatar-container">
+                <div class="podium-avatar-container" @click.stop>
                   <SteamAvatar
                     :steam-id="player.steamid"
                     size="120px"
@@ -110,8 +112,6 @@
                 <h5
                     class="podium-player-name"
                     :style="{ color: getPlayerNameColor(player.rank) }"
-                    @click="openPlayerModal(player.steamid)"
-                    :title="`Click to view ${player.name}'s detailed stats`"
                 >
                   {{ player.name }}
                 </h5>
@@ -148,6 +148,8 @@
                 v-for="player in standardList.slice(0, 3)"
                 :key="player.steamid"
                 class="standard-card"
+                @click="openPlayerModal(player.steamid)"
+                :title="`Click to view ${player.name}'s stats`"
             >
               <!-- Enhanced Rank Badge - Top Left Corner -->
               <div class="standard-rank-badge-corner">
@@ -155,7 +157,7 @@
               </div>
 
               <!-- Steam Avatar - Larger Size -->
-              <div class="standard-avatar-container">
+              <div class="standard-avatar-container" @click.stop>
                 <SteamAvatar
                   :steam-id="player.steamid"
                   size="60px"
@@ -170,8 +172,6 @@
               <div class="standard-player-info">
                 <h5
                     class="standard-player-name"
-                    :title="`Click to view ${player.name}'s detailed stats`"
-                    @click="openPlayerModal(player.steamid)"
                 >
                   {{ player.name }}
                 </h5>
@@ -199,6 +199,8 @@
                 v-for="player in standardList.slice(3, 7)"
                 :key="player.steamid"
                 class="standard-card"
+                @click="openPlayerModal(player.steamid)"
+                :title="`Click to view ${player.name}'s stats`"
             >
               <!-- Enhanced Rank Badge - Top Left Corner -->
               <div class="standard-rank-badge-corner">
@@ -206,7 +208,7 @@
               </div>
 
               <!-- Steam Avatar - Larger Size -->
-              <div class="standard-avatar-container">
+              <div class="standard-avatar-container" @click.stop>
                 <SteamAvatar
                   :steam-id="player.steamid"
                   size="60px"
@@ -221,8 +223,6 @@
               <div class="standard-player-info">
                 <h5
                     class="standard-player-name"
-                    :title="`Click to view ${player.name}'s detailed stats`"
-                    @click="openPlayerModal(player.steamid)"
                 >
                   {{ player.name }}
                 </h5>
@@ -266,13 +266,17 @@
                   v-for="player in scrollableList"
                   :key="player.steamid"
                   class="table-row"
+                  @click="openPlayerModal(player.steamid)"
+                  :title="`Click to view ${player.name}'s stats`"
               >
                 <td class="table-cell table-cell-rank">{{ player.rank }}</td>
-                <td class="table-cell table-cell-player"
-                    @click="openPlayerModal(player.steamid)"
-                    :title="`Click to view ${player.name}'s detailed stats`"
-                >
-                  {{ player.name }}
+                <td class="table-cell table-cell-player">
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div @click.stop>
+                      <SteamAvatar :steam-id="player.steamid" size="28px" avatar-size="small" :clickable="true" :show-status="false" />
+                    </div>
+                    <span>{{ player.name }}</span>
+                  </div>
                 </td>
                 <td class="table-cell">{{ formatStatValue(player[selectedSort], selectedSort) }}</td>
                 <td class="table-cell">{{ player.kd_ratio }}</td>
@@ -860,17 +864,14 @@ const getStatLabelColor = (rank) => {
   margin-bottom: 0.375rem;
 }
 
+.podium-card {
+  cursor: pointer;
+}
+
 .podium-player-name {
   font-size: 1.125rem;
   font-weight: 700;
   margin-bottom: 0.125rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.podium-player-name:hover {
-  text-decoration: underline;
-  transform: scale(1.02);
 }
 
 .podium-stat-value {
@@ -943,6 +944,7 @@ const getStatLabelColor = (rank) => {
   position: relative;
   overflow: visible;
   min-height: 120px;
+  cursor: pointer;
 }
 
 .standard-avatar-container {
@@ -1006,15 +1008,9 @@ const getStatLabelColor = (rank) => {
   font-weight: 700;
   color: #ffffff;
   margin-bottom: 0.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.standard-player-name:hover {
-  text-decoration: underline;
   color: #9B6BC7;
 }
 
@@ -1077,12 +1073,12 @@ const getStatLabelColor = (rank) => {
 
 .table-row {
   border-bottom: 1px solid rgba(115, 76, 150, 0.1);
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .table-row:hover {
   background: rgba(115, 76, 150, 0.1);
-  backdrop-filter: blur(5px);
 }
 
 .table-cell {
@@ -1099,13 +1095,6 @@ const getStatLabelColor = (rank) => {
 .table-cell-player {
   font-weight: 600;
   color: #ffffff;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.table-cell-player:hover {
-  text-decoration: underline;
-  color: #9B6BC7;
 }
 
 /* Enhanced Footer */

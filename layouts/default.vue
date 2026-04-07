@@ -62,15 +62,6 @@
 
           <!-- Right-side buttons (desktop only) -->
           <div class="nav-buttons-right">
-            <button
-              @click="showSearchModal = true"
-              class="btn btn-ghost text-sm px-3 py-2 mr-2 group"
-              title="Search"
-            >
-              <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-              </svg>
-            </button>
             <a href="#donate" rel="noopener noreferrer" class="btn btn-primary text-sm px-4 py-2 group">
               <span>Donate</span>
               <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,13 +83,6 @@
     <!-- Chatbot -->
     <Chatbot />
 
-    <!-- Search Modal -->
-    <SearchModal
-      :is-open="showSearchModal"
-      @close="showSearchModal = false"
-      @select="handleSearchSelect"
-    />
-
     <!-- Performance Monitor (dev only) -->
     <!-- <PerformanceMonitor /> -->
 
@@ -117,13 +101,11 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import BackToTop from '~/components/BackToTop.vue';
 import AdminNotice from '~/components/AdminNotice.vue';
 import Chatbot from '~/components/Chatbot.vue';
-import SearchModal from '~/components/SearchModal.vue';
 // import PerformanceMonitor from '~/components/PerformanceMonitor.vue';
 
 const navigation = ref(null);
 const scrolled = ref(false);
 const mobileMenuOpen = ref(false);
-const showSearchModal = ref(false);
 const currentScrollY = ref(0);
 
 // Dynamic navbar background based on scroll position and section
@@ -158,13 +140,6 @@ const closeMobileMenu = () => {
   document.body.style.overflow = '';
 };
 
-// Search functionality
-const handleSearchSelect = (result) => {
-  console.log('Selected search result:', result);
-  // Handle search result selection
-  // You can implement navigation or other actions here
-};
-
 // Close mobile menu when clicking outside
 const handleClickOutside = (event) => {
   if (mobileMenuOpen.value && navigation.value && !navigation.value.contains(event.target)) {
@@ -186,14 +161,6 @@ const handleResize = () => {
   }
 };
 
-// Search keyboard shortcut (Cmd/Ctrl + K)
-const handleSearchShortcut = (event) => {
-  if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
-    event.preventDefault();
-    showSearchModal.value = true;
-  }
-};
-
 // Track scroll position for navbar styling
 const updateScrollPosition = () => {
   currentScrollY.value = window.scrollY;
@@ -206,7 +173,6 @@ onMounted(() => {
   // Add event listeners for mobile menu and search
   document.addEventListener('click', handleClickOutside);
   document.addEventListener('keydown', handleEscapeKey);
-  document.addEventListener('keydown', handleSearchShortcut);
   window.addEventListener('resize', handleResize);
 
   // Add scroll listener for navbar styling
@@ -241,7 +207,6 @@ onUnmounted(() => {
   // Remove event listeners
   document.removeEventListener('click', handleClickOutside);
   document.removeEventListener('keydown', handleEscapeKey);
-  document.removeEventListener('keydown', handleSearchShortcut);
   window.removeEventListener('resize', handleResize);
   window.removeEventListener('scroll', updateScrollPosition);
 });

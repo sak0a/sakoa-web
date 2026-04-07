@@ -13,21 +13,9 @@ export default defineEventHandler(async (event) => {
     if (!steamidInput) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'SteamID parameter is required'
+        statusMessage: 'Please enter a player name or SteamID'
       });
     }
-
-    // Validate and convert SteamID
-    const steamidValidation = validateAndConvertSteamID(steamidInput);
-    if (!steamidValidation.valid) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: steamidValidation.error
-      });
-    }
-
-    // Use the normalized Steam3 format for database search
-    const searchSteamID = steamidValidation.steamId;
 
     // Validate season number
     if (!(await isValidSeason(seasonNumber))) {
@@ -41,32 +29,34 @@ export default defineEventHandler(async (event) => {
     const tableName = await getSeasonTableName(seasonNumber);
     const seasonInfo = await getSeasonInfo(seasonNumber);
 
-    // Build the SQL query to find the player
-    const sql = `
-      SELECT
-        steamid,
-        name,
-        kills,
-        deaths,
-        CASE
-          WHEN deaths = 0 THEN kills
-          ELSE ROUND(kills / deaths, 2)
-        END as kd_ratio,
-        lastLogout,
-        firstLogin,
-        lastLogin,
-        playtime,
-        points,
-        topspeed,
-        deflections
-      FROM ${tableName}
-      WHERE steamid = ?
-      LIMIT 1
+    const selectCols = `
+      steamid, name, kills, deaths,
+      CASE WHEN deaths = 0 THEN kills ELSE ROUND(kills / deaths, 2) END as kd_ratio,
+      lastLogout, firstLogin, lastLogin, playtime, points, topspeed, deflections
     `;
 
-    console.log(`Searching for player: steamid=${searchSteamID}, season=${seasonNumber}, table=${tableName}`);
+    // Try SteamID first, fall back to name search
+    const steamidValidation = validateAndConvertSteamID(steamidInput);
+    let players;
 
-    const players = await executeQuery(sql, [searchSteamID]);
+    if (steamidValidation.valid) {
+      const searchSteamID = steamidValidation.steamId;
+      console.log(`Searching by steamid: ${searchSteamID}, season=${seasonNumber}`);
+      players = await executeQuery(
+        `SELECT ${selectCols} FROM ${tableName} WHERE steamid = ? LIMIT 1`,
+        [searchSteamID]
+      );
+    }
+
+    // If no SteamID match (or invalid format), search by name
+    if (!players || players.length === 0) {
+      const searchName = steamidInput.trim();
+      console.log(`Searching by name: "${searchName}", season=${seasonNumber}`);
+      players = await executeQuery(
+        `SELECT ${selectCols} FROM ${tableName} WHERE name LIKE ? ORDER BY points DESC LIMIT 1`,
+        [`%${searchName}%`]
+      );
+    }
 
     if (players.length === 0) {
       return {
@@ -75,7 +65,7 @@ export default defineEventHandler(async (event) => {
         data: {
           player: null,
           season: seasonInfo,
-          searchedSteamID: searchSteamID
+          searchedSteamID: steamidInput
         }
       };
     }
@@ -111,7 +101,7 @@ export default defineEventHandler(async (event) => {
       data: {
         player: formattedPlayer,
         season: seasonInfo,
-        searchedSteamID: searchSteamID
+        searchedSteamID: player.steamid
       }
     };
 
