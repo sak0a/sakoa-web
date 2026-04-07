@@ -38,22 +38,22 @@ export default defineEventHandler(async (event) => {
     // Try SteamID first, fall back to name search
     const steamidValidation = validateAndConvertSteamID(steamidInput);
     let players;
+    let isNameSearch = false;
 
     if (steamidValidation.valid) {
       const searchSteamID = steamidValidation.steamId;
-      console.log(`Searching by steamid: ${searchSteamID}, season=${seasonNumber}`);
       players = await executeQuery(
         `SELECT ${selectCols} FROM ${tableName} WHERE steamid = ? LIMIT 1`,
         [searchSteamID]
       );
     }
 
-    // If no SteamID match (or invalid format), search by name
+    // If no SteamID match (or invalid format), search by name — return up to 10
     if (!players || players.length === 0) {
       const searchName = steamidInput.trim();
-      console.log(`Searching by name: "${searchName}", season=${seasonNumber}`);
+      isNameSearch = true;
       players = await executeQuery(
-        `SELECT ${selectCols} FROM ${tableName} WHERE name LIKE ? ORDER BY points DESC LIMIT 1`,
+        `SELECT ${selectCols} FROM ${tableName} WHERE name LIKE ? AND name IS NOT NULL AND name != '' ORDER BY points DESC LIMIT 10`,
         [`%${searchName}%`]
       );
     }
@@ -64,44 +64,52 @@ export default defineEventHandler(async (event) => {
         error: `Player not found in ${seasonInfo.displayName}`,
         data: {
           player: null,
-          season: seasonInfo,
-          searchedSteamID: steamidInput
+          players: [],
+          season: seasonInfo
         }
       };
     }
 
-    const player = players[0];
-
-    // Get player's rank by counting players with better stats
-    // We'll use points as the default ranking metric
-    const rankSql = `
-      SELECT COUNT(*) + 1 as rank
-      FROM ${tableName}
-      WHERE points > ?
-        AND name IS NOT NULL
-        AND name != ''
-        AND points > 0
-    `;
-
-    const rankResult = await executeQuery(rankSql, [player.points]);
-    const rank = rankResult[0]?.rank || 1;
-
-    // Format the player data
-    const formattedPlayer = {
-      ...player,
-      rank,
-      playtimeHours: Math.round(player.playtime / 3600 * 100) / 100,
-      lastLoginDate: player.lastLogin ? new Date(player.lastLogin * 1000).toLocaleDateString() : 'Never',
-      firstLoginDate: player.firstLogin ? new Date(player.firstLogin * 1000).toLocaleDateString() : 'Unknown',
-      lastLogoutDate: player.lastLogout ? new Date(player.lastLogout * 1000).toLocaleDateString() : 'Never'
+    // Helper to format a player row
+    const formatPlayer = async (p) => {
+      const rankResult = await executeQuery(
+        `SELECT COUNT(*) + 1 as \`rank\` FROM ${tableName} WHERE points > ? AND name IS NOT NULL AND name != '' AND points > 0`,
+        [p.points]
+      );
+      return {
+        ...p,
+        rank: rankResult[0]?.rank || 1,
+        playtimeHours: Math.round(p.playtime / 3600 * 100) / 100,
+        lastLoginDate: p.lastLogin ? new Date(p.lastLogin * 1000).toLocaleDateString() : 'Never',
+        firstLoginDate: p.firstLogin ? new Date(p.firstLogin * 1000).toLocaleDateString() : 'Unknown',
+        lastLogoutDate: p.lastLogout ? new Date(p.lastLogout * 1000).toLocaleDateString() : 'Never'
+      };
     };
+
+    // For name search with multiple results, return the list for the user to pick
+    if (isNameSearch && players.length > 1) {
+      const formatted = await Promise.all(players.map(formatPlayer));
+      return {
+        success: true,
+        data: {
+          player: null,
+          players: formatted,
+          season: seasonInfo,
+          multiple: true
+        }
+      };
+    }
+
+    // Single result (exact steamid or single name match)
+    const formattedPlayer = await formatPlayer(players[0]);
 
     return {
       success: true,
       data: {
         player: formattedPlayer,
+        players: [],
         season: seasonInfo,
-        searchedSteamID: player.steamid
+        searchedSteamID: formattedPlayer.steamid
       }
     };
 
