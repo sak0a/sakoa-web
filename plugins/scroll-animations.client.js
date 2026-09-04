@@ -2,7 +2,14 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 export default defineNuxtPlugin((nuxtApp) => {
-  nuxtApp.hook('app:mounted', () => {
+  const initializeAnimations = () => {
+    // Async page data can outlive app:mounted in Nuxt 4. Never let GSAP write
+    // inline styles until Vue has finished hydrating the server markup.
+    if (nuxtApp.isHydrating) {
+      requestAnimationFrame(initializeAnimations)
+      return
+    }
+
     // Register GSAP plugins
     gsap.registerPlugin(ScrollTrigger)
 
@@ -288,5 +295,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 
     // Initialize page transition
     pageTransition()
-  });
-});
+  }
+
+  nuxtApp.hook('app:mounted', () => requestAnimationFrame(initializeAnimations))
+})

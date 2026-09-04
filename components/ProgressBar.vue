@@ -1,62 +1,183 @@
 <template>
   <div class="progress-bar-container">
-    <div class="progress-copy">
-      <div><span>{{ label }}</span><strong>{{ formatCurrency(current) }} raised</strong></div>
-      <div class="progress-target"><span>Target</span><strong>{{ formatCurrency(target) }}</strong></div>
+    <div class="flex justify-between items-center mb-3">
+      <span class="text-sm font-medium text-gray-300">{{ label }}</span>
+      <span class="text-sm font-bold text-white">{{ displayProgress }}%</span>
     </div>
-    <div
-      class="progress-track"
-      role="progressbar"
-      :aria-label="label"
-      aria-valuemin="0"
-      :aria-valuemax="target"
-      :aria-valuenow="Math.min(current, target)"
-      :aria-valuetext="`${formatCurrency(current)} of ${formatCurrency(target)}, ${displayProgress}%`"
-    >
-      <div class="progress-fill" :style="{ width: `${animatedProgress}%` }" />
-      <span
+
+    <div class="progress-bar-track">
+      <div
+        ref="progressRef"
+        class="progress-bar-fill"
+        :style="{ width: `${animatedProgress}%` }"
+      >
+        <div class="progress-bar-shine"></div>
+      </div>
+
+      <!-- Milestone markers -->
+      <div
         v-for="milestone in milestones"
         :key="milestone.value"
-        class="milestone"
-        :class="{ 'is-reached': actualProgress >= milestone.value }"
-        :style="{ left: `${Math.min(100, Math.max(0, milestone.value))}%` }"
-        aria-hidden="true"
-      />
+        class="milestone-marker"
+        :style="{ left: `${milestone.value}%` }"
+        :class="{ 'reached': animatedProgress >= milestone.value }"
+      >
+        <div class="milestone-dot"></div>
+        <div class="milestone-label">{{ milestone.label }}</div>
+      </div>
     </div>
-    <div class="progress-foot"><span>0%</span><strong>{{ displayProgress }}% funded</strong><span>100%</span></div>
+
+    <div class="flex justify-between items-center mt-2 text-xs text-gray-400">
+      <span>{{ formatCurrency(current) }}</span>
+      <span>{{ formatCurrency(target) }}</span>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 const props = defineProps({
-  current: { type: Number, required: true },
-  target: { type: Number, required: true },
-  label: { type: String, default: 'Progress' },
-  currency: { type: String, default: '€' },
-  milestones: { type: Array, default: () => [{ value: 25 }, { value: 50 }, { value: 75 }] },
-  animated: { type: Boolean, default: true },
-  duration: { type: Number, default: 1.2 },
+  current: {
+    type: Number,
+    required: true
+  },
+  target: {
+    type: Number,
+    required: true
+  },
+  label: {
+    type: String,
+    default: 'Progress'
+  },
+  currency: {
+    type: String,
+    default: '€'
+  },
+  milestones: {
+    type: Array,
+    default: () => [
+      { value: 25, label: '25%' },
+      { value: 50, label: '50%' },
+      { value: 75, label: '75%' }
+    ]
+  },
+  animated: {
+    type: Boolean,
+    default: true
+  },
+  duration: {
+    type: Number,
+    default: 2
+  }
 })
 
+const progressRef = ref(null)
 const animatedProgress = ref(0)
-const actualProgress = computed(() => props.target > 0 ? Math.min(Math.max((props.current / props.target) * 100, 0), 100) : 0)
-const displayProgress = computed(() => Math.round(actualProgress.value))
-const formatCurrency = value => `${props.currency}${(Number(value) || 0).toLocaleString('en-GB', { maximumFractionDigits: 2 })}`
 
-const updateProgress = () => {
-  const reduceMotion = import.meta.client && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  animatedProgress.value = (!props.animated || reduceMotion) ? actualProgress.value : 0
-  if (props.animated && !reduceMotion) requestAnimationFrame(() => { animatedProgress.value = actualProgress.value })
+const actualProgress = computed(() => {
+  if (!Number.isFinite(props.current) || !Number.isFinite(props.target) || props.target <= 0) {
+    return 0
+  }
+
+  return Math.min(Math.max((props.current / props.target) * 100, 0), 100)
+})
+
+const displayProgress = computed(() => {
+  return Math.round(animatedProgress.value)
+})
+
+const formatCurrency = (value) => {
+  if (value >= 1000) {
+    return `${props.currency}${(value / 1000).toFixed(1)}K`
+  }
+  return `${props.currency}${value}`
 }
 
-onMounted(updateProgress)
-watch(actualProgress, updateProgress)
+const animateProgress = () => {
+  if (!props.animated) {
+    animatedProgress.value = actualProgress.value
+    return
+  }
+
+  gsap.to(animatedProgress, {
+    value: actualProgress.value,
+    duration: props.duration,
+    ease: 'power2.out',
+    scrollTrigger: {
+      trigger: progressRef.value,
+      start: 'top 80%',
+      once: true
+    }
+  })
+}
+
+onMounted(() => {
+  gsap.registerPlugin(ScrollTrigger)
+  animateProgress()
+})
+
+watch([() => props.current, () => props.target], () => {
+  animateProgress()
+})
 </script>
 
 <style scoped>
-.progress-copy { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }.progress-copy > div { display: grid; gap: .35rem; }.progress-copy span { color: var(--arena-dim); font: 600 .6rem var(--font-mono); letter-spacing: .09em; text-transform: uppercase; }.progress-copy strong { color: var(--arena-text); font: 650 1rem var(--font-mono); font-variant-numeric: tabular-nums; }.progress-target { text-align: right; }
-.progress-track { position: relative; height: .8rem; background: #211e26; border: 1px solid var(--arena-line-strong); }.progress-fill { height: 100%; background: var(--arena-violet); transition: width 1.2s cubic-bezier(.22,1,.36,1); }.milestone { position: absolute; top: -4px; width: 1px; height: 1.2rem; background: #50495a; }.milestone.is-reached { background: var(--arena-violet-soft); }.progress-foot { display: flex; justify-content: space-between; margin-top: .7rem; color: var(--arena-dim); font: 550 .6rem var(--font-mono); }.progress-foot strong { color: var(--arena-violet-soft); font-weight: 600; }
-@media (prefers-reduced-motion: reduce) { .progress-fill { transition: none; } }
+@reference "../assets/css/main.css";
+
+.progress-bar-container {
+  @apply w-full;
+  padding-top: 4px; /* Prevent milestone dots from being cut off */
+  padding-bottom: 8px; /* Space for milestone labels */
+}
+
+.progress-bar-track {
+  @apply relative w-full h-3 bg-gray-800 rounded-full overflow-hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.progress-bar-fill {
+  @apply h-full bg-gradient-to-r from-primary-500 to-primary-400 rounded-full relative transition-all duration-300;
+  box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3);
+}
+
+.progress-bar-shine {
+  @apply absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 rounded-full;
+  animation: shine 2s ease-in-out infinite;
+}
+
+.milestone-marker {
+  @apply absolute top-0 transform -translate-x-1/2;
+  height: 100%;
+  padding-top: 2px; /* Add padding to prevent overflow */
+}
+
+.milestone-dot {
+  @apply w-3 h-3 bg-gray-600 rounded-full border-2 border-gray-800 transition-all duration-300;
+  transform: translateY(-1px); /* Reduce the negative offset */
+}
+
+.milestone-marker.reached .milestone-dot {
+  @apply bg-primary-400 border-primary-300 shadow-lg;
+  box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
+}
+
+.milestone-label {
+  @apply absolute top-5 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 whitespace-nowrap;
+}
+
+.milestone-marker.reached .milestone-label {
+  @apply text-primary-300 font-medium;
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
 </style>

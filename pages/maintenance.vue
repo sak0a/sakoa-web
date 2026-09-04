@@ -1,77 +1,147 @@
 <template>
-  <main class="maintenance-page">
-    <div class="maintenance-frame">
-      <header>
-        <img src="/default-512x512.png" alt="" width="40" height="40">
-        <span>saka / system notice</span>
-      </header>
-
-      <section aria-labelledby="maintenance-title" aria-live="polite">
-        <div class="maintenance-code">503</div>
-        <div class="maintenance-copy">
-          <p class="maintenance-kicker"><span /> Scheduled pause</p>
-          <h1 id="maintenance-title">{{ maintenanceData?.title || 'The arena is between rounds.' }}</h1>
-          <p>{{ maintenanceData?.message || 'We are performing maintenance. Please check back soon.' }}</p>
-
-          <dl v-if="maintenanceData?.estimatedTime || maintenanceData?.lastUpdated">
-            <div v-if="maintenanceData?.estimatedTime"><dt>Estimated return</dt><dd>{{ maintenanceData.estimatedTime }}</dd></div>
-            <div v-if="maintenanceData?.lastUpdated"><dt>Notice updated</dt><dd>{{ formatDate(maintenanceData.lastUpdated) }}</dd></div>
-          </dl>
-
-          <p v-if="statusError" class="status-error" role="alert">{{ statusError }}</p>
-          <div class="maintenance-actions">
-            <button type="button" :disabled="isChecking" @click="checkStatus">{{ isChecking ? 'Checking status…' : 'Check status' }} <span aria-hidden="true">↻</span></button>
-            <a :href="discordUrl" target="_blank" rel="noopener noreferrer">Community updates <span aria-hidden="true">↗</span></a>
-          </div>
+  <div class="public-site min-h-screen flex items-center justify-center" style="background: linear-gradient(135deg, #23104D, #734C96);">
+    <div class="max-w-2xl mx-auto px-4 text-center">
+      <div class="bg-white/10 backdrop-blur-lg rounded-lg p-8 shadow-2xl border border-white/20">
+        <!-- Logo -->
+        <div class="mb-8">
+          <img
+            src="/default-512x512.png"
+            alt="Saka's Dodgeball Server Logo"
+            class="w-24 h-24 mx-auto mb-6 rounded-lg"
+            width="96"
+            height="96"
+          />
         </div>
-      </section>
 
-      <footer><span>Team Fortress 2</span><span>Frankfurt, DE</span><span>Automatic status check available</span></footer>
+        <!-- Maintenance Icon -->
+        <div class="mb-6">
+          <svg class="w-16 h-16 mx-auto text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+        </div>
+
+        <!-- Title -->
+        <h1 class="text-3xl md:text-4xl font-bold text-white mb-4">
+          {{ maintenanceData?.title || 'Maintenance Mode' }}
+        </h1>
+
+        <!-- Message -->
+        <p class="text-lg text-white/90 mb-6 leading-relaxed">
+          {{ maintenanceData?.message || "We're currently performing maintenance on our servers. Please check back soon!" }}
+        </p>
+
+        <!-- Estimated Time -->
+        <div v-if="maintenanceData?.estimatedTime" class="mb-6">
+          <p class="text-white/80">
+            <span class="font-semibold">Estimated completion:</span>
+            {{ maintenanceData.estimatedTime }}
+          </p>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <button
+            type="button"
+            @click="checkStatus"
+            :disabled="isChecking"
+            class="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <svg v-if="isChecking" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span v-if="isChecking">Checking...</span>
+            <span v-else>Check Status</span>
+          </button>
+
+          <a
+            :href="discordUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-white/80 hover:text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+            </svg>
+            Join Discord
+          </a>
+        </div>
+
+        <p v-if="statusError" class="mt-4 text-sm text-red-200" role="alert">{{ statusError }}</p>
+
+        <!-- Last Updated -->
+        <div v-if="maintenanceData?.lastUpdated" class="mt-8 pt-6 border-t border-white/20">
+          <p class="text-sm text-white/60">
+            Last updated: {{ formatDate(maintenanceData.lastUpdated) }}
+          </p>
+        </div>
+      </div>
     </div>
-  </main>
+  </div>
 </template>
 
 <script setup>
-definePageMeta({ layout: false })
+definePageMeta({
+  layout: false
+});
 
-const maintenanceData = ref(null)
-const isChecking = ref(false)
-const statusError = ref('')
-const discordUrl = ref('https://discord.gg/JuxYYVEkzc')
+const maintenanceData = ref(null);
+const isChecking = ref(false);
+const statusError = ref('');
+const discordUrl = ref('https://discord.gg/JuxYYVEkzc');
 
+// Load maintenance data
 const loadMaintenanceData = async () => {
-  statusError.value = ''
+  statusError.value = '';
   try {
-    const [status, settings] = await Promise.all([
+    const [response, settings] = await Promise.all([
       $fetch('/api/maintenance-status'),
-      $fetch('/api/settings').catch(() => null),
-    ])
-    maintenanceData.value = status.maintenance
-    discordUrl.value = settings?.data?.discord?.inviteUrl || discordUrl.value
-  } catch {
-    statusError.value = 'The status service did not respond. Please try again shortly.'
+      $fetch('/api/settings').catch(() => null)
+    ]);
+    maintenanceData.value = response.maintenance;
+    discordUrl.value = settings?.data?.discord?.inviteUrl || discordUrl.value;
+  } catch (error) {
+    statusError.value = 'The status service did not respond. Please try again shortly.';
   }
-}
+};
 
+// Check if maintenance is still active
 const checkStatus = async () => {
-  isChecking.value = true
-  await loadMaintenanceData()
-  if (maintenanceData.value && !maintenanceData.value.enabled) await navigateTo('/')
-  isChecking.value = false
-}
-const formatDate = value => {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('en-GB', { timeZone: 'Europe/Berlin' })
-}
+  isChecking.value = true;
+  try {
+    await loadMaintenanceData();
 
-onMounted(loadMaintenanceData)
+    // If maintenance is disabled, redirect to home
+    if (!maintenanceData.value?.enabled) {
+      await navigateTo('/');
+    }
+  } catch (error) {
+    console.error('Failed to check maintenance status:', error);
+  } finally {
+    isChecking.value = false;
+  }
+};
+
+// Format date for display
+const formatDate = (dateString) => {
+  try {
+    return new Date(dateString).toLocaleString('en-GB', { timeZone: 'Europe/Berlin' });
+  } catch (error) {
+    return dateString;
+  }
+};
+
+// Load data on mount
+onMounted(() => {
+  loadMaintenanceData();
+});
+
+// Set page title
 useHead({
-  title: 'Maintenance',
-  meta: [{ name: 'description', content: 'saka\'s Dodgeball Server is currently under maintenance.' }],
-})
+  title: 'Maintenance Mode - Saka\'s Dodgeball Server',
+  meta: [
+    { name: 'description', content: 'Saka\'s Dodgeball Server is currently under maintenance. Please check back soon!' }
+  ]
+});
 </script>
-
-<style scoped>
-.maintenance-page { min-height: 100dvh; display: grid; place-items: center; padding: 1rem; color: var(--arena-text); background: var(--arena-ink); }.maintenance-frame { position: relative; width: min(100%, 72rem); border: 1px solid var(--arena-line-strong); background: #0e0d11; }.maintenance-frame > header, .maintenance-frame > footer { display: flex; align-items: center; gap: 1rem; padding: .8rem 1rem; color: var(--arena-dim); font: 600 .6rem var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }.maintenance-frame > header { border-bottom: 1px solid var(--arena-line); }.maintenance-frame > header img { width: 2rem; height: 2rem; border-radius: .25rem; }.maintenance-frame > section { display: grid; grid-template-columns: .55fr 1.45fr; min-height: 31rem; }.maintenance-code { display: flex; align-items: flex-end; padding: 2rem; color: rgba(142,111,200,.22); background: #131116; border-right: 1px solid var(--arena-line); font: 700 clamp(6rem,17vw,13rem)/.72 var(--font-display); letter-spacing: -.08em; }.maintenance-copy { align-self: center; padding: clamp(2rem,6vw,5rem); }.maintenance-kicker { display: flex; align-items: center; gap: .6rem; margin: 0; color: var(--arena-violet-soft); font: 600 .65rem var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }.maintenance-kicker span { width: .45rem; height: .45rem; background: var(--arena-warning); border-radius: 50%; }.maintenance-copy h1 { max-width: 12ch; margin: 1rem 0 1.3rem; font-family: var(--font-display); font-size: clamp(2.7rem,6vw,5.5rem); line-height: .94; letter-spacing: -.055em; }.maintenance-copy > p:not(.maintenance-kicker):not(.status-error) { max-width: 39rem; margin: 0; color: var(--arena-muted); line-height: 1.7; }.maintenance-copy dl { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 2rem 0; background: var(--arena-line); border: 1px solid var(--arena-line); }.maintenance-copy dl div { padding: .8rem; background: #141218; }.maintenance-copy dt { color: var(--arena-dim); font: 600 .57rem var(--font-mono); text-transform: uppercase; }.maintenance-copy dd { margin: .4rem 0 0; color: var(--arena-text-soft); font: 600 .72rem var(--font-mono); }.maintenance-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; }.maintenance-actions button, .maintenance-actions a { display: flex; justify-content: space-between; gap: 1.5rem; min-width: 10rem; padding: .8rem .9rem; color: white; background: var(--arena-violet); border: 1px solid var(--arena-violet); font-size: .76rem; font-weight: 700; text-decoration: none; }.maintenance-actions a { color: var(--arena-text-soft); background: transparent; border-color: var(--arena-line-strong); }.maintenance-actions button:disabled { opacity: .45; }.status-error { margin: 1rem 0 0; color: #f0afb2; font-size: .75rem; }.maintenance-frame > footer { justify-content: space-between; border-top: 1px solid var(--arena-line); }
-@media (max-width: 700px) { .maintenance-frame > section { grid-template-columns: 1fr; }.maintenance-code { min-height: 10rem; align-items: flex-end; border-right: 0; border-bottom: 1px solid var(--arena-line); font-size: 6rem; }.maintenance-copy { padding: 2rem 1.2rem 2.5rem; }.maintenance-frame > footer { align-items: flex-start; flex-direction: column; gap: .4rem; } }
-</style>
