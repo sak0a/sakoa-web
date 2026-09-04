@@ -1,11 +1,10 @@
+import tailwindcss from '@tailwindcss/vite'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-05-15',
-  devtools: { enabled: true },
-  modules: [
-    '@nuxtjs/tailwindcss',
-    '@nuxt/image'
-  ],
+  compatibilityDate: '2026-09-04',
+  devtools: { enabled: process.env.NODE_ENV === 'development' },
+  modules: ['@nuxt/image', '@nuxt/eslint'],
 
   // Image optimization configuration
   image: {
@@ -22,8 +21,8 @@ export default defineNuxtConfig({
       xl: 1280,
       xxl: 1536,
     },
-    // Provider configuration - disable in production to avoid IPX issues
-    provider: process.env.NODE_ENV === 'production' ? 'none' : 'ipx',
+    // Provider configuration - enable for production to work with Docker
+    provider: 'ipx',
     ipx: {
       // Enable WebP conversion
       modifiers: {
@@ -49,129 +48,84 @@ export default defineNuxtConfig({
       }
     }
   },
-  experimental: {
-    // Minimal experimental features to avoid build issues
-    payloadExtraction: false
-  },
+  css: ['~/assets/css/main.css', '~/assets/css/admin.css'],
 
-  css: ['~/assets/css/main.css'],
-
-  // Optimized Vite configuration for smaller bundles
   vite: {
-    optimizeDeps: {
-      include: ['gsap', 'ofetch', 'ufo', 'defu']
-    },
-    build: {
-      rollupOptions: {
-        // Removed heavy AI dependencies to reduce bundle size
-        output: {
-          manualChunks: {
-            'vendor': ['vue', 'vue-router'],
-            'gsap': ['gsap']
-          }
-        }
-      },
-      // CSS optimization
-      cssCodeSplit: true,
-      cssMinify: 'esbuild'
-    },
-    css: {
-      // Optimize CSS processing
-      devSourcemap: false
-    }
+    plugins: [tailwindcss()]
   },
 
   runtimeConfig: {
     // Private keys (only available on server-side)
-    dbHost: process.env.DB_HOST || 'localhost',
+    dbHost: process.env.DB_HOST || '',
     dbPort: process.env.DB_PORT || '3306',
-    dbUser: process.env.DB_USER || 'root',
+    dbUser: process.env.DB_USER || '',
     dbPassword: process.env.DB_PASSWORD || '',
-    dbName: process.env.DB_NAME || 'sakaStats',
-    adminPassword: process.env.ADMIN_PASSWORD,
-    steamApiKey: process.env.STEAM_API_KEY,
+    dbName: process.env.DB_NAME || '',
+    adminPassword: process.env.ADMIN_PASSWORD || '',
+    adminSessionSecret: process.env.ADMIN_SESSION_SECRET || '',
+    steamApiKey: process.env.STEAM_API_KEY || '',
     // Public keys (exposed to client-side)
     public: {
-      serverIp: '45.81.234.145:27015'
+      serverIp: '',
+      siteUrl: ''
     }
   },
   nitro: {
-    publicAssets: [
-      {
-        baseURL: '/data',
-        dir: 'server/data'
-      }
-    ],
-    // Enhanced route rules for performance and caching
-    routeRules: {
-      '/_nuxt/builds/**': { prerender: false },
-      '/admin/**': { ssr: false },
-      '/assets/**': {
-        headers: {
-          'Cache-Control': 'public, max-age=31536000, immutable',
-          'X-Content-Type-Options': 'nosniff'
-        }
-      },
-      '/favicon.*': {
-        headers: {
-          'Cache-Control': 'public, max-age=31536000, immutable'
-        }
-      },
-      '/site.webmanifest': {
-        headers: {
-          'Cache-Control': 'public, max-age=86400'
-        }
-      },
-      '/api/leaderboard': {
-        headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=600' }
-      },
-      '/api/donors': {
-        headers: { 'Cache-Control': 's-maxage=600, stale-while-revalidate=1200' }
-      },
-      '/api/server-status': {
-        headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=120' }
-      },
-      '/api/settings': {
-        headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=600' }
-      }
-    },
-    // Performance optimizations
+    preset: 'node-server',
     minify: true,
-    compressPublicAssets: true,
-    // Reduce bundle size
-    experimental: {
-      wasm: false
+    compressPublicAssets: true
+  },
+  routeRules: {
+    '/**': {
+      headers: {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+      }
     },
-    // Exclude heavy dependencies from server bundle
-    externals: {
-      inline: [
-        // Keep essential modules inline
-        'gsap',
-        // IPX dependencies required for image processing
-        'ofetch',
-        'ufo',
-        'defu',
-        'ipx'
-      ]
+    '/_nuxt/builds/**': { prerender: false },
+    '/admin/**': { ssr: false },
+    '/assets/**': {
+      headers: {
+        'Cache-Control': 'public, max-age=31536000, immutable',
+        'X-Content-Type-Options': 'nosniff'
+      }
+    },
+    '/favicon.*': {
+      headers: {
+        'Cache-Control': 'public, max-age=31536000, immutable'
+      }
+    },
+    '/site.webmanifest': {
+      headers: {
+        'Cache-Control': 'public, max-age=86400'
+      }
+    },
+    '/api/leaderboard': {
+      headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=600' }
+    },
+    '/api/donors': {
+      headers: { 'Cache-Control': 's-maxage=600, stale-while-revalidate=1200' }
+    },
+    '/api/server-status': {
+      headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=120' }
+    },
+    '/api/settings': {
+      headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=600' }
     }
   },
   // Additional SSR configuration for better stability
   ssr: true,
-  // Disable client-side routing features that cause manifest issues
-  router: {
-    options: {
-      hashMode: false
-    }
-  },
   // Enhanced SEO and Performance
   app: {
     head: {
-      title: "saka's Dodgeball Server - Premium TF2 Gaming Experience",
-      titleTemplate: '%s | saka\'s Dodgeball Server',
+      title: "saka's Dodgeball — TF2 arena",
+      titleTemplate: '%s | saka\'s Dodgeball',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'Join saka\'s premium Team Fortress 2 dodgeball server. 24/7 uptime, custom maps, active community, and competitive gameplay. Support our server through donations.' },
+        { name: 'description', content: 'Live status, seasonal rankings and community support for saka\'s Team Fortress 2 dodgeball server.' },
         { name: 'keywords', content: 'TF2, Team Fortress 2, dodgeball, server, gaming, community, donations, competitive, custom maps' },
         { name: 'author', content: 'saka\'s Dodgeball Server' },
         { name: 'robots', content: 'index, follow' },
@@ -179,23 +133,23 @@ export default defineNuxtConfig({
         // Open Graph / Facebook
         { property: 'og:type', content: 'website' },
         { property: 'og:url', content: 'https://sakoa.xyz/' },
-        { property: 'og:title', content: 'saka\'s Dodgeball Server - Premium TF2 Gaming' },
-        { property: 'og:description', content: 'Join our premium Team Fortress 2 dodgeball server with 24/7 uptime, custom maps, and active community.' },
-        { property: 'og:image', content: '/assets/img/og-image.png' },
-        { property: 'og:image:width', content: '1200' },
-        { property: 'og:image:height', content: '630' },
+        { property: 'og:title', content: 'saka\'s Dodgeball — TF2 arena' },
+        { property: 'og:description', content: 'Live server status, seasonal rankings and community support.' },
+        { property: 'og:image', content: '/default-512x512.png' },
+        { property: 'og:image:width', content: '512' },
+        { property: 'og:image:height', content: '512' },
         { property: 'og:site_name', content: 'saka\'s Dodgeball Server' },
 
         // Twitter
-        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:card', content: 'summary' },
         { name: 'twitter:url', content: 'https://sakoa.xyz/' },
-        { name: 'twitter:title', content: 'saka\'s Dodgeball Server - Premium TF2 Gaming' },
-        { name: 'twitter:description', content: 'Join our premium Team Fortress 2 dodgeball server with 24/7 uptime, custom maps, and active community.' },
-        { name: 'twitter:image', content: '/assets/img/og-image.png' },
+        { name: 'twitter:title', content: 'saka\'s Dodgeball — TF2 arena' },
+        { name: 'twitter:description', content: 'Live server status, seasonal rankings and community support.' },
+        { name: 'twitter:image', content: '/default-512x512.png' },
 
         // Additional SEO
-        { name: 'theme-color', content: '#734C96' },
-        { name: 'msapplication-TileColor', content: '#734C96' },
+        { name: 'theme-color', content: '#09090b' },
+        { name: 'msapplication-TileColor', content: '#09090b' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' }
       ],
@@ -203,9 +157,9 @@ export default defineNuxtConfig({
         {
           innerHTML: `
             /* Critical CSS - Inline for immediate rendering */
-            :root{--font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--font-mono:'JetBrains Mono','SF Mono',Monaco,'Cascadia Code',monospace}
+            :root{--font-sans:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--font-mono:'IBM Plex Mono','SF Mono',Monaco,'Cascadia Code',monospace}
             html{font-family:var(--font-sans);scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-            body{background:linear-gradient(135deg,#0f0f23 0%,#1a1a2e 50%,#16213e 100%);color:#f3f4f6;min-height:100vh;margin:0;padding:0}
+            body{background:#09090b;color:#f3f4f6;min-height:100vh;margin:0;padding:0}
             .navigation{position:fixed;left:0;width:100%;z-index:50;transition:all 0.5s ease-out}
             .min-h-screen{min-height:100vh}
             .flex{display:flex}
@@ -235,21 +189,21 @@ export default defineNuxtConfig({
         { rel: 'dns-prefetch', href: 'https://fonts.gstatic.com' },
         {
           rel: 'preload',
-          href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap',
           as: 'style',
           onload: "this.onload=null;this.rel='stylesheet'"
         },
         // Fallback for browsers that don't support preload
         {
           rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap',
           media: 'print',
           onload: "this.media='all'"
         }
       ],
       noscript: [
         // Fallback for users with JavaScript disabled
-        { innerHTML: '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">' }
+        { innerHTML: '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap">' }
       ],
       script: [
         {
@@ -258,9 +212,9 @@ export default defineNuxtConfig({
             '@context': 'https://schema.org',
             '@type': 'Organization',
             name: 'saka\'s Dodgeball Server',
-            description: 'Premium Team Fortress 2 dodgeball gaming server with 24/7 uptime and active community.',
+            description: 'Team Fortress 2 dodgeball server with live status, rankings and community support.',
             url: 'https://sakoa.xyz/',
-            logo: 'https://sakoa.xyz/assets/img/default-512x512.png',
+            logo: 'https://sakoa.xyz/default-512x512.png',
             sameAs: [
               'https://discord.gg/JuxYYVEkzc'
             ],

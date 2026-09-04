@@ -17,13 +17,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
           });
 
           if (authStatus?.authenticated) {
-            // User is an admin, allow access to main site
-            console.log('Admin user detected, bypassing maintenance mode');
             return;
           }
-        } catch (authError) {
-          // Not an admin or auth check failed, proceed with maintenance redirect
-          console.log('Not an admin user, redirecting to maintenance');
+        } catch {
+          // An unauthenticated visitor should see the maintenance page.
         }
 
         return navigateTo('/maintenance');

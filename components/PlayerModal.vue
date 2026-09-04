@@ -1,594 +1,161 @@
 <template>
   <Teleport to="body">
-    <!-- Modal Backdrop -->
-    <Transition name="modal-backdrop">
-      <div v-if="isOpen" class="modal-backdrop" @click="closeModal"></div>
-    </Transition>
-
-    <!-- Modal -->
     <Transition name="modal">
-      <div v-if="isOpen" class="modal-container" @click.self="closeModal">
-        <div class="modal-content">
+      <div
+        v-if="isOpen"
+        ref="dialogLayer"
+        class="modal-layer"
+        role="dialog"
+        aria-modal="true"
+        :aria-labelledby="player ? 'player-dialog-title' : 'player-dialog-state'"
+        @click.self="closeModal"
+      >
+        <section class="player-panel">
+          <button ref="closeButton" type="button" class="close-button" aria-label="Close player details" @click="closeModal">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
 
-          <!-- Loading State -->
-          <Transition name="fade" mode="out-in">
-            <div v-if="loading" class="state-container">
-              <div class="loading-spinner">
-                <div class="spinner-ring"></div>
-                <div class="spinner-ring"></div>
+          <div v-if="loading" class="modal-state" role="status">
+            <span class="loading-line" aria-hidden="true" />
+            <p id="player-dialog-state">Loading player statistics…</p>
+          </div>
+
+          <div v-else-if="error" class="modal-state modal-state--error" role="alert">
+            <span class="state-code">ERR</span>
+            <h3 id="player-dialog-state">Player unavailable</h3>
+            <p>{{ error }}</p>
+          </div>
+
+          <div v-else-if="player" class="player-data">
+            <header class="player-header">
+              <SteamAvatar
+                :steam-id="player.steamid"
+                size="72px"
+                avatar-size="full"
+                :clickable="true"
+                :show-status="false"
+              />
+              <div>
+                <p>{{ season?.displayName || 'Season statistics' }}</p>
+                <h3 id="player-dialog-title">{{ player.name }}</h3>
+                <span>{{ player.steamid }}</span>
               </div>
-              <p class="state-text">Loading player data...</p>
-            </div>
+              <strong>#{{ player.rank }}</strong>
+            </header>
 
-            <!-- Error State -->
-            <div v-else-if="error" class="state-container">
-              <div class="error-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <h4 class="error-title">Player Not Found</h4>
-              <p class="state-text">{{ error }}</p>
-            </div>
+            <dl class="primary-stats">
+              <div class="is-primary"><dt>Points</dt><dd>{{ number(player.points) }}</dd></div>
+              <div><dt>Kills</dt><dd>{{ number(player.kills) }}</dd></div>
+              <div><dt>Deaths</dt><dd>{{ number(player.deaths) }}</dd></div>
+              <div><dt>K/D</dt><dd>{{ player.kd_ratio || '0.00' }}</dd></div>
+            </dl>
 
-            <!-- Player Data -->
-            <div v-else-if="player" class="player-card">
-              <!-- Close button -->
-              <button @click="closeModal" class="close-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+            <dl class="secondary-stats">
+              <div><dt>Playtime</dt><dd>{{ player.playtimeHours }}h</dd></div>
+              <div><dt>Top speed</dt><dd>{{ number(player.topspeed) }}</dd></div>
+              <div><dt>Deflections</dt><dd>{{ number(player.deflections) }}</dd></div>
+            </dl>
 
-              <!-- Player Header -->
-              <div class="player-header">
-                <div class="header-left">
-                  <div @click.stop>
-                    <SteamAvatar
-                      :steam-id="player.steamid"
-                      size="64px"
-                      avatar-size="full"
-                      :clickable="true"
-                      :show-status="false"
-                      container-class="header-avatar"
-                    />
-                  </div>
-                  <div class="header-info">
-                    <div class="name-row">
-                      <h3 class="player-name">{{ player.name }}</h3>
-                      <span class="rank-badge">#{{ player.rank }}</span>
-                    </div>
-                    <p class="player-meta">{{ player.steamid }}</p>
-                    <p class="player-season">{{ season?.displayName || '' }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Primary Stats -->
-              <div class="primary-stats">
-                <div class="stat-item stat-highlight">
-                  <span class="stat-val">{{ player.points?.toLocaleString() || '0' }}</span>
-                  <span class="stat-lbl">Points</span>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                  <span class="stat-val">{{ player.kills?.toLocaleString() || '0' }}</span>
-                  <span class="stat-lbl">Kills</span>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                  <span class="stat-val">{{ player.deaths?.toLocaleString() || '0' }}</span>
-                  <span class="stat-lbl">Deaths</span>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                  <span class="stat-val">{{ player.kd_ratio || '0.00' }}</span>
-                  <span class="stat-lbl">K/D</span>
-                </div>
-              </div>
-
-              <!-- Secondary Stats -->
-              <div class="secondary-stats">
-                <div class="sec-stat">
-                  <span class="sec-val">{{ player.playtimeHours }}h</span>
-                  <span class="sec-lbl">Playtime</span>
-                </div>
-                <div class="sec-stat">
-                  <span class="sec-val">{{ player.topspeed?.toLocaleString() || '0' }}</span>
-                  <span class="sec-lbl">Top Speed</span>
-                </div>
-                <div class="sec-stat">
-                  <span class="sec-val">{{ player.deflections?.toLocaleString() || '0' }}</span>
-                  <span class="sec-lbl">Deflections</span>
-                </div>
-              </div>
-
-              <!-- Activity Footer -->
-              <div class="activity-row">
-                <span>First seen: <strong>{{ player.firstLoginDate }}</strong></span>
-                <span class="activity-sep"></span>
-                <span>Last online: <strong>{{ player.lastLoginDate }}</strong></span>
-                <span class="activity-sep"></span>
-                <span>Last logout: <strong>{{ player.lastLogoutDate }}</strong></span>
-              </div>
-            </div>
-          </Transition>
-
-        </div>
+            <footer class="activity-log">
+              <div><span>First seen</span><strong>{{ player.firstLoginDate || 'Unknown' }}</strong></div>
+              <div><span>Last online</span><strong>{{ player.lastLoginDate || 'Unknown' }}</strong></div>
+              <div><span>Last logout</span><strong>{{ player.lastLogoutDate || 'Unknown' }}</strong></div>
+            </footer>
+          </div>
+        </section>
       </div>
     </Transition>
   </Teleport>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
-import SteamAvatar from './SteamAvatar.vue';
+import { nextTick, onUnmounted, ref, watch } from 'vue'
+import SteamAvatar from './SteamAvatar.vue'
 
 const props = defineProps({
-  isOpen: {
-    type: Boolean,
-    default: false
-  },
-  steamid: {
-    type: String,
-    default: null
-  },
-  season: {
-    type: Object,
-    default: null
-  }
-});
+  isOpen: { type: Boolean, default: false },
+  steamid: { type: String, default: null },
+  season: { type: Object, default: null },
+})
+const emit = defineEmits(['close'])
+const loading = ref(false)
+const error = ref(null)
+const player = ref(null)
+const dialogLayer = ref(null)
+const closeButton = ref(null)
+let previouslyFocused
 
-const emit = defineEmits(['close']);
-
-const loading = ref(false);
-const error = ref(null);
-const player = ref(null);
-
-// Watch for changes in props to fetch player data
-watch([() => props.isOpen, () => props.steamid, () => props.season], async () => {
-  if (props.isOpen && props.steamid && props.season) {
-    await fetchPlayerData();
-  }
-}, { immediate: true });
+const number = value => (Number(value) || 0).toLocaleString('en-GB')
+const closeModal = () => emit('close')
 
 const fetchPlayerData = async () => {
-  if (!props.steamid || !props.season) return;
-
-  loading.value = true;
-  error.value = null;
-  player.value = null;
-
+  if (!props.steamid || !props.season) return
+  loading.value = true
+  error.value = null
+  player.value = null
   try {
-    const response = await fetch(`/api/player-search?steamid=${encodeURIComponent(props.steamid)}&season=${props.season.seasonNumber}`);
-
+    const response = await fetch(`/api/player-search?steamid=${encodeURIComponent(props.steamid)}&season=${props.season.seasonNumber}`)
+    const data = await response.json().catch(() => ({}))
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      error.value = errorData.message || errorData.statusMessage || `HTTP ${response.status}: ${response.statusText}`;
-      return;
+      error.value = data?.error?.message || data.message || data.statusMessage || `Player request failed (${response.status})`
+      return
     }
-
-    const data = await response.json();
-
-    if (data.success) {
-      player.value = data.data.player;
-    } else {
-      error.value = data.error;
-    }
-  } catch (err) {
-    console.error('Error fetching player data:', err);
-    error.value = 'Failed to load player data';
+    if (data.success && data.data.player) player.value = data.data.player
+    else error.value = data?.error?.message || data.error || 'Player data is unavailable.'
+  } catch {
+    error.value = 'Player data is temporarily unavailable.'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
-const closeModal = () => {
-  emit('close');
-};
+const onKeydown = (event) => {
+  if (event.key === 'Escape') {
+    closeModal()
+    return
+  }
+  if (event.key !== 'Tab' || !dialogLayer.value) return
+  const focusable = [...dialogLayer.value.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+  if (!focusable.length) return
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+}
+
+watch([() => props.isOpen, () => props.steamid, () => props.season], async () => {
+  if (!import.meta.client) return
+  if (props.isOpen) {
+    previouslyFocused = document.activeElement
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', onKeydown)
+    await nextTick()
+    closeButton.value?.focus()
+    await fetchPlayerData()
+  } else {
+    document.body.style.overflow = ''
+    document.removeEventListener('keydown', onKeydown)
+    previouslyFocused?.focus?.()
+  }
+}, { immediate: true })
+
+onUnmounted(() => {
+  if (!import.meta.client) return
+  document.body.style.overflow = ''
+  document.removeEventListener('keydown', onKeydown)
+})
 </script>
 
 <style scoped>
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.modal-container {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.modal-content {
-  position: relative;
-  width: 100%;
-  max-width: 560px;
-  min-height: 120px;
-}
-
-/* Loading & Error states */
-.state-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 2rem;
-  background: rgba(26, 26, 26, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(115, 76, 150, 0.25);
-  border-radius: 1rem;
-}
-
-.state-text {
-  color: #a3a3a3;
-  font-size: 0.875rem;
-  margin: 0;
-}
-
-.loading-spinner {
-  position: relative;
-  width: 3rem;
-  height: 3rem;
-  margin-bottom: 1rem;
-}
-
-.spinner-ring {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border: 3px solid transparent;
-  border-top: 3px solid #734C96;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.spinner-ring:nth-child(2) {
-  width: 70%;
-  height: 70%;
-  top: 15%;
-  left: 15%;
-  animation-delay: 0.15s;
-  border-top-color: #9B6BC7;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.error-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  background: rgba(220, 38, 38, 0.15);
-  border-radius: 50%;
-  color: #ef4444;
-  margin-bottom: 0.75rem;
-}
-
-.error-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #ffffff;
-  margin: 0 0 0.25rem 0;
-}
-
-/* Player Card */
-.player-card {
-  position: relative;
-  background: rgba(26, 26, 26, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(115, 76, 150, 0.25);
-  border-radius: 1rem;
-  overflow: hidden;
-  box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(115, 76, 150, 0.1);
-}
-
-.close-btn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.5rem;
-  color: #a3a3a3;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-}
-
-/* Header */
-.player-header {
-  padding: 1.25rem 1.5rem;
-  padding-right: 3.5rem;
-  background: linear-gradient(135deg, rgba(115, 76, 150, 0.15), rgba(35, 16, 77, 0.15));
-  border-bottom: 1px solid rgba(115, 76, 150, 0.15);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.header-avatar {
-  border: 2px solid rgba(115, 76, 150, 0.4);
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.header-info {
-  min-width: 0;
-}
-
-.name-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.player-name {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.rank-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.125rem 0.5rem;
-  background: linear-gradient(135deg, #734C96, #9B6BC7);
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: white;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.player-meta {
-  font-size: 0.75rem;
-  color: #737373;
-  margin: 0.125rem 0 0 0;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.player-season {
-  font-size: 0.75rem;
-  color: #9B6BC7;
-  margin: 0.125rem 0 0 0;
-}
-
-/* Primary Stats */
-.primary-stats {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.25rem 1.5rem;
-  gap: 0;
-}
-
-.stat-item {
-  flex: 1;
-  text-align: center;
-}
-
-.stat-val {
-  display: block;
-  font-size: 1.375rem;
-  font-weight: 700;
-  color: #ffffff;
-  line-height: 1.2;
-}
-
-.stat-highlight .stat-val {
-  color: #9B6BC7;
-}
-
-.stat-lbl {
-  display: block;
-  font-size: 0.6875rem;
-  color: #737373;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-top: 0.125rem;
-}
-
-.stat-divider {
-  width: 1px;
-  height: 2.5rem;
-  background: rgba(115, 76, 150, 0.2);
-  flex-shrink: 0;
-}
-
-/* Secondary Stats */
-.secondary-stats {
-  display: flex;
-  gap: 0.75rem;
-  padding: 0 1.5rem;
-  padding-bottom: 1rem;
-}
-
-.sec-stat {
-  flex: 1;
-  text-align: center;
-  padding: 0.75rem 0.5rem;
-  background: rgba(36, 36, 36, 0.6);
-  border: 1px solid rgba(115, 76, 150, 0.12);
-  border-radius: 0.5rem;
-}
-
-.sec-val {
-  display: block;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #d4d4d4;
-  line-height: 1.2;
-}
-
-.sec-lbl {
-  display: block;
-  font-size: 0.6875rem;
-  color: #737373;
-  margin-top: 0.125rem;
-}
-
-/* Activity Footer */
-.activity-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: rgba(0, 0, 0, 0.2);
-  border-top: 1px solid rgba(115, 76, 150, 0.1);
-  font-size: 0.75rem;
-  color: #737373;
-}
-
-.activity-row strong {
-  color: #a3a3a3;
-  font-weight: 500;
-}
-
-.activity-sep {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: rgba(115, 76, 150, 0.3);
-  flex-shrink: 0;
-}
-
-/* Transitions */
-.modal-backdrop-enter-active,
-.modal-backdrop-leave-active {
-  transition: all 0.3s ease;
-}
-
-.modal-backdrop-enter-from,
-.modal-backdrop-leave-to {
-  opacity: 0;
-}
-
-.modal-enter-active {
-  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.modal-leave-active {
-  transition: all 0.25s ease;
-}
-
-.modal-enter-from {
-  opacity: 0;
-  transform: scale(0.9) translateY(16px);
-}
-
-.modal-leave-to {
-  opacity: 0;
-  transform: scale(0.95) translateY(-8px);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.25s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(8px);
-}
-
-/* Responsive */
-@media (max-width: 560px) {
-  .modal-content {
-    max-width: 100%;
-  }
-
-  .player-header {
-    padding: 1rem 1.25rem;
-    padding-right: 3rem;
-  }
-
-  .player-name {
-    font-size: 1.125rem;
-  }
-
-  .primary-stats {
-    padding: 1rem 1.25rem;
-  }
-
-  .stat-val {
-    font-size: 1.125rem;
-  }
-
-  .secondary-stats {
-    padding: 0 1.25rem;
-    padding-bottom: 0.75rem;
-    gap: 0.5rem;
-  }
-
-  .activity-row {
-    padding: 0.625rem 1.25rem;
-    gap: 0.375rem;
-    font-size: 0.6875rem;
-  }
-}
-
-@media (max-width: 400px) {
-  .primary-stats {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .stat-item {
-    flex: 0 0 calc(50% - 0.5rem);
-  }
-
-  .stat-divider {
-    display: none;
-  }
-
-  .secondary-stats {
-    flex-direction: column;
-  }
-
-  .activity-row {
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .activity-sep {
-    display: none;
-  }
-}
+.modal-layer { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; overflow-y: auto; padding: 1rem; background: rgba(5,4,7,.86); }
+.player-panel { position: relative; width: min(100%, 42rem); background: #111016; border: 1px solid var(--arena-line-strong); box-shadow: 1.5rem 1.5rem 0 rgba(142,111,200,.08); }
+.close-button { position: absolute; top: .9rem; right: .9rem; z-index: 2; display: grid; width: 2.4rem; height: 2.4rem; place-items: center; color: var(--arena-muted); background: #17151b; border: 1px solid var(--arena-line-strong); }.close-button:hover { color: white; border-color: var(--arena-violet-soft); }.close-button svg { width: 1rem; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.player-header { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 1rem; align-items: center; padding: 1.5rem 4rem 1.5rem 1.5rem; border-bottom: 1px solid var(--arena-line-strong); }.player-header p, .player-header h3 { margin: 0; }.player-header p { color: var(--arena-violet-soft); font: 600 .62rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }.player-header h3 { overflow: hidden; margin-top: .35rem; color: var(--arena-text); font-family: var(--font-display); font-size: 1.6rem; text-overflow: ellipsis; white-space: nowrap; }.player-header span { display: block; overflow: hidden; margin-top: .25rem; color: var(--arena-dim); font: 500 .65rem var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }.player-header > strong { color: var(--arena-violet-soft); font: 650 1.1rem var(--font-mono); }
+.primary-stats, .secondary-stats { display: grid; margin: 0; }.primary-stats { grid-template-columns: repeat(4,1fr); border-bottom: 1px solid var(--arena-line-strong); }.primary-stats div, .secondary-stats div { min-width: 0; padding: 1.25rem; border-left: 1px solid var(--arena-line); }.primary-stats div:first-child, .secondary-stats div:first-child { border-left: 0; }.primary-stats dt, .secondary-stats dt, .activity-log span { color: var(--arena-dim); font: 600 .57rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }.primary-stats dd { overflow: hidden; margin: .45rem 0 0; color: var(--arena-text); font: 650 1.25rem var(--font-mono); text-overflow: ellipsis; }.primary-stats .is-primary dd { color: var(--arena-violet-soft); }.secondary-stats { grid-template-columns: repeat(3,1fr); background: #151319; }.secondary-stats dd { margin: .4rem 0 0; color: var(--arena-text-soft); font: 600 .82rem var(--font-mono); }
+.activity-log { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; padding: 1rem 1.5rem; border-top: 1px solid var(--arena-line); }.activity-log div { display: grid; gap: .3rem; }.activity-log strong { color: var(--arena-muted); font-size: .68rem; font-weight: 550; }
+.modal-state { min-height: 17rem; display: grid; justify-items: start; align-content: center; gap: .5rem; padding: 2rem; }.modal-state p, .modal-state h3 { margin: 0; }.modal-state p { color: var(--arena-muted); font-size: .8rem; }.modal-state h3 { color: var(--arena-text); font-family: var(--font-display); font-size: 1.4rem; }.state-code { color: var(--arena-danger); font: 650 .65rem var(--font-mono); letter-spacing: .15em; }.loading-line { width: 4rem; height: 2px; background: var(--arena-violet); animation: load 1s ease-in-out infinite alternate; }
+.modal-enter-active, .modal-leave-active { transition: opacity 180ms ease; }.modal-enter-active .player-panel, .modal-leave-active .player-panel { transition: transform 180ms ease; }.modal-enter-from, .modal-leave-to { opacity: 0; }.modal-enter-from .player-panel, .modal-leave-to .player-panel { transform: translateY(1rem); }
+@keyframes load { to { width: 8rem; opacity: .4; } }
+@media (max-width: 560px) { .player-header { grid-template-columns: auto minmax(0,1fr); padding: 1.2rem 3.7rem 1.2rem 1.2rem; }.player-header > strong { grid-column: 2; }.primary-stats { grid-template-columns: 1fr 1fr; }.primary-stats div:nth-child(3) { border-left: 0; }.primary-stats div:nth-child(n+3) { border-top: 1px solid var(--arena-line); }.secondary-stats, .activity-log { grid-template-columns: 1fr; }.secondary-stats div { border-left: 0; border-top: 1px solid var(--arena-line); }.activity-log { gap: .7rem; } }
+@media (prefers-reduced-motion: reduce) { .loading-line { animation: none; }.modal-enter-active, .modal-leave-active, .modal-enter-active .player-panel, .modal-leave-active .player-panel { transition: none; } }
 </style>

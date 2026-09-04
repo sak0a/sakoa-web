@@ -96,23 +96,6 @@ export interface DbDonation {
   notes?: string;
 }
 
-// ===== CHATBOT TYPES =====
-
-export interface ChatMessage {
-  id: string;
-  message: string;
-  response: string;
-  timestamp: number;
-  isUser: boolean;
-}
-
-export interface ChatbotResponse {
-  success: boolean;
-  response: string;
-  suggestions?: string[];
-  error?: string;
-}
-
 // ===== SERVER TYPES =====
 
 export interface ServerConfig {
@@ -381,11 +364,6 @@ export interface AdminState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-}
-
-export interface FileManagerData {
-  fileType: 'donors' | 'servers';
-  data: string;
 }
 
 // ===== UTILITY TYPES =====

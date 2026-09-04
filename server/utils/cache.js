@@ -1,9 +1,9 @@
 // Centralized caching system for server and database data
-import fs from 'fs';
-import path from 'path';
+import { getSettingsRecord } from '../repositories/settings.js';
 
 // Cache storage
 const cache = new Map();
+const inFlightRequests = new Map();
 
 // Default cache intervals (in seconds)
 const DEFAULT_INTERVALS = {
@@ -20,13 +20,7 @@ const DEFAULT_INTERVALS = {
 // Get cache settings from admin settings
 async function getCacheSettings() {
   try {
-    const projectRoot = process.cwd().includes('.output/server')
-      ? path.join(process.cwd(), '../../')
-      : process.cwd();
-    const settingsFilePath = path.join(projectRoot, 'server/data/settings.json');
-    
-    const data = await fs.promises.readFile(settingsFilePath, 'utf8');
-    const settings = JSON.parse(data);
+    const { settings } = await getSettingsRecord();
     
     if (settings.cache) {
       return {
@@ -71,14 +65,12 @@ export async function getCachedData(key, fetchFunction, cacheType = 'default', f
 
   // Check if we should force refresh
   if (forceRefresh) {
-    console.log(`Force refreshing cache for key: ${key}`);
     cache.delete(key);
   }
 
   // Check if we have valid cached data
   const cached = cache.get(key);
   if (cached && !cached.isExpired()) {
-    console.log(`Cache hit for ${key}, TTL remaining: ${cached.getRemainingTTL()}s`);
     return {
       data: cached.data,
       cached: true,
@@ -88,55 +80,57 @@ export async function getCachedData(key, fetchFunction, cacheType = 'default', f
     };
   }
 
-  // Cache miss or expired, fetch fresh data
-  console.log(`Cache miss for ${key}, fetching fresh data...`);
-  try {
-    const freshData = await fetchFunction();
-    
-    // Store in cache
-    const entry = new CacheEntry(freshData, ttl);
-    cache.set(key, entry);
-    
-    console.log(`Cached fresh data for ${key}, TTL: ${ttl}s`);
-    return {
-      data: freshData,
-      cached: false,
-      timestamp: entry.timestamp,
-      ttl: ttl,
-      source: 'fresh'
-    };
-  } catch (error) {
-    console.error(`Failed to fetch fresh data for ${key}:`, error);
-    
-    // If we have expired cached data, return it as fallback
-    if (cached) {
-      console.log(`Returning expired cache for ${key} as fallback`);
-      return {
-        data: cached.data,
-        cached: true,
-        timestamp: cached.timestamp,
-        ttl: 0,
-        source: 'expired_fallback',
-        error: error.message
-      };
-    }
-    
-    throw error;
+  if (!forceRefresh && inFlightRequests.has(key)) {
+    return inFlightRequests.get(key);
   }
+
+  let request;
+  request = (async () => {
+    try {
+      const freshData = await Promise.resolve().then(fetchFunction);
+      const entry = new CacheEntry(freshData, ttl);
+      cache.set(key, entry);
+
+      return {
+        data: freshData,
+        cached: false,
+        timestamp: entry.timestamp,
+        ttl,
+        source: 'fresh'
+      };
+    } catch (error) {
+      if (cached) {
+        return {
+          data: cached.data,
+          cached: true,
+          timestamp: cached.timestamp,
+          ttl: 0,
+          source: 'expired_fallback',
+          error: error instanceof Error ? error.message : 'Refresh failed'
+        };
+      }
+
+      throw error;
+    } finally {
+      if (inFlightRequests.get(key) === request) {
+        inFlightRequests.delete(key);
+      }
+    }
+  })();
+
+  inFlightRequests.set(key, request);
+  return request;
 }
 
 // Clear specific cache entry
 export function clearCache(key) {
-  const deleted = cache.delete(key);
-  console.log(`Cache cleared for ${key}: ${deleted ? 'success' : 'not found'}`);
-  return deleted;
+  return cache.delete(key);
 }
 
 // Clear all cache entries
 export function clearAllCache() {
   const size = cache.size;
   cache.clear();
-  console.log(`Cleared all cache entries: ${size} items removed`);
   return size;
 }
 
@@ -152,7 +146,6 @@ export function clearCacheByPattern(pattern) {
     }
   }
   
-  console.log(`Cleared ${cleared} cache entries matching pattern: ${pattern}`);
   return cleared;
 }
 
@@ -195,10 +188,6 @@ export function cleanupExpiredCache() {
     }
   }
   
-  if (cleaned > 0) {
-    console.log(`Cleaned up ${cleaned} expired cache entries`);
-  }
-  
   return cleaned;
 }
 
@@ -219,4 +208,4 @@ setInterval(() => {
   cleanupExpiredCache();
 }, 5 * 60 * 1000);
 
-export { DEFAULT_INTERVALS, cache, CacheEntry };
+export { DEFAULT_INTERVALS, cache, CacheEntry, inFlightRequests };

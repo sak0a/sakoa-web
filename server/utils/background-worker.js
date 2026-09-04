@@ -24,8 +24,8 @@ class BackgroundQueryManager {
 
       // Check if query is already in progress for this server
       if (this.activeQueries.has(server.id)) {
-        // Return the existing promise
-        return this.activeQueries.get(server.id);
+        this.activeQueries.get(server.id).then(resolve, reject);
+        return;
       }
 
       const queryPromise = this._executeQuery(server, options, queryId);

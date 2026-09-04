@@ -1,124 +1,43 @@
-import fs from 'fs';
-import path from 'path';
-
-// Get the absolute path to the project root directory
-// In production, we need to go up from .output/server to the root
-const projectRoot = process.cwd().includes('.output/server')
-  ? path.join(process.cwd(), '../../')
-  : process.cwd();
-const settingsFilePath = path.join(projectRoot, 'server/data/settings.json');
-
-// Helper function to read settings data
-async function readSettingsData() {
-  try {
-    const data = await fs.promises.readFile(settingsFilePath, 'utf8');
-    const parsed = JSON.parse(data);
-    return parsed;
-  } catch (error) {
-    // Return default settings if file doesn't exist
-    return {
-      maintenance: {
-        enabled: false,
-        title: "Maintenance Mode",
-        message: "We're currently performing maintenance on our servers. Please check back soon!",
-        estimatedTime: "",
-        lastUpdated: ""
-      },
-      seasons: {
-        startYear: 2025,
-        startMonth: 5,
-        startDay: 15,
-        lastUpdated: ""
-      },
-      discord: {
-        inviteUrl: "https://discord.gg/JuxYYVEkzc",
-        lastUpdated: ""
-      },
-      donations: {
-        paypalEnabled: true,
-        revolutEnabled: true,
-        buyMeACoffeeEnabled: true,
-        lastUpdated: ""
-      }
-    };
-  }
-}
+import {
+  DEFAULT_SETTINGS,
+  getSettingsRecord,
+  publicSettings
+} from '../repositories/settings.js';
 
 export default defineEventHandler(async (event) => {
-  const method = getMethod(event);
-  
-  if (method === 'GET') {
-    // Get public settings (non-sensitive data only)
-    try {
-      const settingsData = await readSettingsData();
+  if (getMethod(event) !== 'GET') {
+    throw createError({ statusCode: 405, statusMessage: 'Method not allowed' });
+  }
 
-      const publicSettings = {
-        success: true,
-        data: {
-          discord: {
-            inviteUrl: settingsData.discord?.inviteUrl || "https://discord.gg/JuxYYVEkzc"
-          },
-
-          maintenance: {
-            enabled: settingsData.maintenance?.enabled || false
-          },
-          chatbot: {
-            enabled: settingsData.chatbot?.enabled !== false
-          },
-          donations: {
-            paypalEnabled: settingsData.donations?.paypalEnabled !== false,
-            revolutEnabled: settingsData.donations?.revolutEnabled !== false,
-            buyMeACoffeeEnabled: settingsData.donations?.buyMeACoffeeEnabled !== false
-          },
-          heroStats: {
-            uptime: settingsData.heroStats?.uptime || "24/7",
-            activePlayers: settingsData.heroStats?.activePlayers || 1247,
-            monthlyDonations: settingsData.heroStats?.monthlyDonations || 17.5,
-            monthlyGoal: settingsData.heroStats?.monthlyGoal || 30,
-            autoUpdateDonations: settingsData.heroStats?.autoUpdateDonations || false,
-            autoUpdatePlayers: settingsData.heroStats?.autoUpdatePlayers || false
-          }
-        }
-      };
-
-      return publicSettings;
-    } catch (error) {
-      console.error('Failed to get settings:', error);
-      
-      return {
-        success: false,
-        error: 'Failed to get settings',
-        data: {
-          discord: {
-            inviteUrl: "https://discord.gg/JuxYYVEkzc"
-          },
-
-          maintenance: {
-            enabled: false
-          },
-          chatbot: {
-            enabled: true
-          },
-          donations: {
-            paypalEnabled: true,
-            revolutEnabled: true,
-            buyMeACoffeeEnabled: true
-          },
-          heroStats: {
-            uptime: "24/7",
-            activePlayers: 1247,
-            monthlyDonations: 17.5,
-            monthlyGoal: 30,
-            autoUpdateDonations: false,
-            autoUpdatePlayers: false
-          }
-        }
-      };
-    }
-  } else {
-    throw createError({
-      statusCode: 405,
-      statusMessage: 'Method not allowed'
+  try {
+    const record = await getSettingsRecord();
+    return {
+      success: true,
+      data: publicSettings(record.settings),
+      meta: {
+        revision: record.revision,
+        source: record.source,
+        updatedAt: record.updatedAt
+      }
+    };
+  } catch (error) {
+    console.error('Public settings are using safe defaults', {
+      code: error?.code,
+      message: error?.message
     });
+
+    return {
+      success: false,
+      data: publicSettings(DEFAULT_SETTINGS),
+      error: {
+        code: 'SETTINGS_UNAVAILABLE',
+        message: 'Saved settings are temporarily unavailable'
+      },
+      meta: {
+        revision: 0,
+        source: 'defaults',
+        updatedAt: null
+      }
+    };
   }
 });

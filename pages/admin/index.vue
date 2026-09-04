@@ -1,91 +1,76 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center" style="background: linear-gradient(135deg, #23104D, #734C96);">
-    <div class="max-w-md w-full mx-4">
-      <div class="bg-white/10 backdrop-blur-lg rounded-lg p-8 shadow-2xl border border-white/20">
-        <div class="text-center mb-8">
-          <img
-            src="/default-512x512.png"
-            alt="Admin Logo"
-            class="w-16 h-16 mx-auto mb-4 rounded-lg"
-            width="64"
-            height="64"
-          />
-          <h1 class="text-2xl font-bold text-white mb-2">Admin Panel</h1>
-          <p class="text-white/80">Enter your password to access the admin dashboard</p>
-        </div>
+  <main class="admin-login">
+    <NuxtLink to="/" class="admin-login__back">← Public site</NuxtLink>
 
-        <form @submit.prevent="handleLogin" class="space-y-6">
-          <div>
-            <label for="password" class="block text-sm font-medium text-white mb-2">
-              Password
-            </label>
-            <input
-              id="password"
-              v-model="password"
-              type="password"
-              required
-              class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
-              placeholder="Enter admin password"
-              :disabled="isLoading"
-            />
-          </div>
-
-          <div v-if="error" class="p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
-            <p class="text-red-200 text-sm">{{ error }}</p>
-          </div>
-
-          <button
-            type="submit"
-            :disabled="isLoading || !password"
-            class="w-full bg-white text-purple-900 font-semibold py-3 px-4 rounded-lg hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-          >
-            <span v-if="isLoading" class="flex items-center justify-center">
-              <svg class="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Logging in...
-            </span>
-            <span v-else>Login</span>
-          </button>
-        </form>
-
-        <div class="mt-6 text-center">
-          <NuxtLink to="/" class="text-white/80 hover:text-white text-sm transition-colors">
-            ← Back to main site
-          </NuxtLink>
-        </div>
+    <section class="admin-login__intro" aria-labelledby="login-title">
+      <div class="admin-login__brand">
+        <img src="/default-512x512.png" alt="" width="42" height="42">
+        <span>saka dodgeball / private operations</span>
       </div>
-    </div>
-  </div>
+      <p class="admin-eyebrow">Control room</p>
+      <h1 id="login-title">Keep the arena running.</h1>
+      <p class="admin-login__lede">Server state, community support, publishing and site controls in one restricted workspace.</p>
+      <div class="admin-login__signal" aria-hidden="true">
+        <span>DB</span><i></i><span>WEB</span><i></i><span>DISCORD</span>
+      </div>
+    </section>
+
+    <section class="admin-login__form-wrap" aria-label="Admin sign in">
+      <form class="admin-login__form" @submit.prevent="handleLogin">
+        <p class="admin-eyebrow">Authorized access only</p>
+        <h2>Sign in</h2>
+        <p>Use the administrator credential configured for this deployment.</p>
+
+        <label class="admin-field">
+          <span>Password</span>
+          <input v-model="password" type="password" required autocomplete="current-password" placeholder="Enter admin password" :disabled="isLoading">
+        </label>
+
+        <div v-if="error" class="admin-notice admin-notice--error" role="alert">{{ error }}</div>
+
+        <button type="submit" class="admin-button admin-button-primary" :disabled="isLoading || !password">
+          {{ isLoading ? 'Verifying…' : 'Enter control room' }}
+        </button>
+      </form>
+    </section>
+  </main>
 </template>
 
 <script setup>
-definePageMeta({
-  layout: false
-});
+definePageMeta({ layout: false })
 
-const { login, isLoading, error, checkAuth } = useAdmin();
+const { login, isLoading, error } = useAdmin()
+const password = ref('')
 
-const password = ref('');
-
-// Check if already authenticated
-onMounted(async () => {
-  try {
-    const isAuth = await checkAuth();
-    if (isAuth) {
-      await navigateTo('/admin/dashboard');
-    }
-  } catch (error) {
-    console.error('Initial auth check failed:', error);
-    // Continue to show login form
-  }
-});
-
-const handleLogin = async () => {
-  const success = await login(password.value);
-  if (success) {
-    await navigateTo('/admin/dashboard');
-  }
-};
+async function handleLogin() {
+  if (await login(password.value)) await navigateTo('/admin/dashboard')
+}
 </script>
+
+<style scoped>
+.admin-login { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(24rem, .85fr); background: #09090b; color: #f5f3ff; }
+.admin-login__back { position: fixed; top: 1.5rem; right: 1.75rem; z-index: 2; color: #8c8995; font-family: var(--font-mono); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
+.admin-login__back:hover { color: #fff; }
+.admin-login__intro { position: relative; display: flex; min-height: 100vh; flex-direction: column; justify-content: center; overflow: hidden; padding: clamp(3rem, 8vw, 9rem); border-right: 1px solid #29292f; }
+.admin-login__intro::after { position: absolute; right: -10rem; bottom: -17rem; width: 38rem; height: 38rem; border: 1px solid #312b3f; border-radius: 50%; box-shadow: 0 0 0 7rem #0d0c10, 0 0 0 7.05rem #312b3f, 0 0 0 14rem #0b0b0d; content: ''; }
+.admin-login__brand { position: absolute; top: 2rem; left: clamp(2rem, 8vw, 9rem); display: flex; align-items: center; gap: .8rem; color: #8c8995; font-family: var(--font-mono); font-size: .63rem; letter-spacing: .1em; text-transform: uppercase; }
+.admin-login__brand img { border-radius: .35rem; }
+.admin-login h1 { position: relative; z-index: 1; max-width: 11ch; margin: 1rem 0 1.5rem; font-size: clamp(3.3rem, 7vw, 7.4rem); font-weight: 600; letter-spacing: -.075em; line-height: .9; }
+.admin-login__lede { position: relative; z-index: 1; max-width: 35rem; color: #9e9ba7; font-size: clamp(.95rem, 1.5vw, 1.15rem); }
+.admin-login__signal { position: relative; z-index: 1; display: flex; max-width: 28rem; align-items: center; gap: .75rem; margin-top: 3.5rem; color: #787580; font-family: var(--font-mono); font-size: .62rem; letter-spacing: .12em; }
+.admin-login__signal i { height: 1px; flex: 1; background: #39363f; }
+.admin-login__form-wrap { display: grid; place-items: center; padding: 6rem clamp(1.5rem, 5vw, 6rem); background: #0d0d10; }
+.admin-login__form { width: min(100%, 25rem); }
+.admin-login__form h2 { margin: .75rem 0 .25rem; font-size: 2.4rem; letter-spacing: -.055em; }
+.admin-login__form > p:not(.admin-eyebrow) { margin: 0 0 2.25rem; color: #8f8c98; font-size: .85rem; }
+.admin-login__form .admin-field { margin-bottom: 1rem; }
+.admin-login__form .admin-button { width: 100%; margin-top: .25rem; }
+@media (max-width: 850px) {
+  .admin-login { grid-template-columns: 1fr; }
+  .admin-login__intro { min-height: 46vh; padding: 7rem 1.25rem 3rem; border-right: 0; border-bottom: 1px solid #29292f; }
+  .admin-login__brand { left: 1.25rem; }
+  .admin-login h1 { font-size: clamp(3rem, 15vw, 5rem); }
+  .admin-login__signal { display: none; }
+  .admin-login__form-wrap { min-height: 54vh; padding: 3rem 1.25rem; }
+}
+</style>

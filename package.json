@@ -2,42 +2,51 @@
   "name": "sakas-dodgeball-server",
   "private": true,
   "type": "module",
+  "packageManager": "bun@1.4.1",
   "engines": {
-    "node": ">=20"
+    "node": ">=24.11.0 <25",
+    "bun": ">=1.4.1 <2"
   },
   "scripts": {
-    "build": "nuxt build",
+    "build": "bun run build:web && bun run build:services",
+    "build:web": "nuxt build",
+    "build:services": "bun build bot/index.ts bot/healthcheck.ts database/migrate.ts --target=node --packages=external --sourcemap=external --outdir=.output/services --entry-naming='[dir]/[name].mjs' && bun run scripts/copy-migrations.ts",
+    "bot": "bun run bot/index.ts",
+    "bot:health": "bun run bot/healthcheck.ts",
+    "db:migrate": "bun run database/migrate.ts",
     "dev": "nuxt dev",
-    "generate": "nuxt generate && bun run scripts/copy-data-files.js",
+    "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "prepare-nuxt": "nuxt prepare",
-    "ci-build": "bun run scripts/ci-build.js",
-    "type-check": "nuxt typecheck",
-    "copy-data": "bun run scripts/copy-data-files.js"
+    "start": "node .output/server/index.mjs",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "typecheck": "nuxt typecheck",
+    "audit": "bun audit --production",
+    "verify": "bun run lint && bun run typecheck && bun run test && bun run build"
   },
   "dependencies": {
-    "@nuxt/image": "^1.11.0",
-    "defu": "^6.1.4",
-    "gsap": "^3.13.0",
-    "ipx": "^3.1.1",
-    "mysql2": "^3.15.1",
-    "nuxt": "4.1.0",
-    "ofetch": "^1.4.1",
-    "ufo": "^1.6.1",
-    "vue": "^3.5.22",
-    "vue-router": "^4.5.1"
+    "@nuxt/image": "2.1.0",
+    "discord.js": "14.27.0",
+    "gamedig": "5.3.3",
+    "gsap": "3.15.0",
+    "mysql2": "3.24.3",
+    "nuxt": "4.5.2",
+    "vue": "3.5.42",
+    "vue-router": "5.3.1",
+    "zod": "4.5.4"
   },
   "devDependencies": {
-    "@nuxt/typescript-build": "^3.0.2",
-    "@nuxtjs/tailwindcss": "^6.14.0",
-    "@types/gamedig": "^5.0.3",
-    "@types/node": "^24.5.2",
-    "autoprefixer": "^10.4.21",
-    "gamedig": "^5.3.2",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.17",
-    "tsx": "^4.20.6",
-    "typescript": "^5.9.2"
+    "@nuxt/eslint": "1.17.0",
+    "@playwright/test": "1.62.1",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/gamedig": "5.0.3",
+    "@types/node": "24.13.3",
+    "eslint": "10.10.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3",
+    "vitest": "5.0.0",
+    "vue-tsc": "3.3.11"
   }
 }

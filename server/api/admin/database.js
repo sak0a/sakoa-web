@@ -1,22 +1,7 @@
 import { testDbConnection, retryDbConnection, getDbStatus, getCurrentConnectionState, reloadConfigAndReconnect } from '../../utils/database.js';
 
-// Helper function to check admin authentication
-function checkAdminAuth(event) {
-  const sessionCookie = getCookie(event, 'admin-session');
-  if (sessionCookie !== 'authenticated') {
-    console.error('Admin authentication failed - invalid or missing session cookie');
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Admin password not found. Please log in again.'
-    });
-  }
-}
-
 export default defineEventHandler(async (event) => {
   const method = getMethod(event);
-
-  // Check admin authentication for all requests
-  checkAdminAuth(event);
 
   if (method === 'GET') {
     // Get current database status
@@ -46,8 +31,6 @@ export default defineEventHandler(async (event) => {
       const { action } = body;
 
       if (action === 'test') {
-        // Test database connection
-        console.log('Testing database connection...');
         const result = await testDbConnection();
         
         return {
@@ -58,8 +41,6 @@ export default defineEventHandler(async (event) => {
       }
 
       if (action === 'retry') {
-        // Retry database connection
-        console.log('Retrying database connection...');
         const result = await retryDbConnection();
         
         return {
@@ -87,8 +68,6 @@ export default defineEventHandler(async (event) => {
       }
 
       if (action === 'reload') {
-        // Reload configuration and reconnect
-        console.log('Reloading database configuration from environment variables...');
         const result = await reloadConfigAndReconnect();
 
         return {

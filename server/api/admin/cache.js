@@ -6,23 +6,8 @@ import {
   cleanupExpiredCache 
 } from '../../utils/cache.js';
 
-// Helper function to check admin authentication
-function checkAdminAuth(event) {
-  const sessionCookie = getCookie(event, 'admin-session');
-  if (sessionCookie !== 'authenticated') {
-    console.error('Admin authentication failed - invalid or missing session cookie');
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Admin password not found. Please log in again.'
-    });
-  }
-}
-
 export default defineEventHandler(async (event) => {
   const method = getMethod(event);
-
-  // Check admin authentication for all requests
-  checkAdminAuth(event);
 
   if (method === 'GET') {
     // Get cache statistics

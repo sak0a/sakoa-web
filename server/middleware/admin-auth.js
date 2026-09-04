@@ -1,0 +1,25 @@
+import { getMethod, getRequestURL, setResponseHeader } from 'h3';
+import {
+  assertSameOriginRequest,
+  isMutation,
+  requireAdminSession,
+  requireCsrfToken
+} from '../utils/admin-auth.js';
+
+export default defineEventHandler((event) => {
+  const pathname = getRequestURL(event).pathname;
+  if (!pathname.startsWith('/api/admin/')) return;
+
+  setResponseHeader(event, 'Cache-Control', 'no-store');
+  const method = getMethod(event).toUpperCase();
+  const isAuthRoute = pathname === '/api/admin/auth';
+
+  if (isMutation(method)) assertSameOriginRequest(event);
+
+  // Login and status checks are the only unauthenticated admin operations.
+  if (isAuthRoute && (method === 'POST' || method === 'GET')) return;
+
+  const session = requireAdminSession(event);
+  event.context.adminSession = session;
+  if (isMutation(method)) requireCsrfToken(event, session);
+});

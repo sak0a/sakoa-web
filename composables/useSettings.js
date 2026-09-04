@@ -13,12 +13,14 @@ export const useSettings = () => {
         method: 'GET'
       });
 
-      if (response.success) {
+      if (response.data) {
         settings.value = response.data;
+        if (!response.success) {
+          error.value = response.error?.message || 'Saved settings are temporarily unavailable';
+        }
         return response.data;
-      } else {
-        throw new Error(response.error || 'Failed to get settings');
       }
+      throw new Error('Failed to get settings');
     } catch (err) {
       console.error('Failed to get settings:', err);
       error.value = err.message || 'Failed to get settings';

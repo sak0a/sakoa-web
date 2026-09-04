@@ -1,391 +1,161 @@
 <template>
-  <div>
-    <!-- Loading State -->
-    <div v-if="loading" class="glass-card p-8 text-center">
-      <div class="flex flex-col items-center justify-center space-y-6">
-        <div class="relative">
-          <div class="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 backdrop-blur-sm flex items-center justify-center animate-pulse">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </div>
-          <div class="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 opacity-20 animate-ping"></div>
-        </div>
-        <div>
-          <h3 class="text-xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-1">
-            Loading Server Status...
-          </h3>
-          <p class="text-gray-400 text-sm">Please wait while we check our servers</p>
-        </div>
-      </div>
+  <div class="server-feed" aria-live="polite" aria-busy="loading || refreshing">
+    <div v-if="loading" class="server-skeleton" role="status">
+      <span class="sr-only">Loading server status</span>
+      <div class="skeleton-line skeleton-line--short" />
+      <div class="skeleton-line" />
+      <div class="skeleton-metrics"><i /><i /><i /></div>
     </div>
 
-    <!-- Error State -->
-    <div v-else-if="error" class="glass-card p-8 text-center border border-red-500/20">
-      <div class="flex flex-col items-center justify-center space-y-6">
-        <div class="relative">
-          <div class="w-20 h-20 rounded-full bg-gradient-to-r from-red-500/20 to-orange-500/20 backdrop-blur-sm flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-          </div>
-        </div>
-        <div>
-          <h3 class="text-xl font-bold bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent mb-1">
-            Error Loading Servers
-          </h3>
-          <p class="text-gray-400 text-sm">{{ error }}</p>
-        </div>
-      </div>
+    <div v-else-if="error && servers.length === 0" class="server-error" role="alert">
+      <span class="status-dot status-dot--offline" />
+      <div><strong>Status unavailable</strong><p>{{ error }}</p></div>
+      <button type="button" class="refresh-button" @click="refreshAll">Try again</button>
     </div>
 
-    <!-- Server List -->
-    <div v-else class="space-y-6">
-      <div v-for="server in servers" :key="server.id" class="relative">
-        <!-- Online Server -->
-        <div v-if="server.status === 'online'" class="glass-card p-8 relative border border-green-500/20 hover:border-green-500/40 transition-all duration-300 group">
-          <!-- Status Indicator -->
-          <div class="absolute top-6 right-6 flex items-center space-x-2">
-            <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-            <span class="text-green-400 text-sm font-medium">ONLINE</span>
-          </div>
-
-          <!-- Coming Soon Badge -->
-          <div v-if="server.comingSoon" class="absolute top-6 right-24 bg-gradient-to-r from-yellow-500 to-orange-500 text-black px-3 py-1 rounded-full text-sm font-bold">
-            Future Plans
-          </div>
-
-          <!-- Last Checked Timestamp -->
-          <div class="absolute top-6 left-6 bg-white/10 backdrop-blur-sm text-gray-300 px-3 py-1 rounded-full text-xs border border-white/10">
-            Last checked: {{ formatLastChecked(server.lastChecked) }}
-          </div>
-
-          <div class="flex flex-col md:flex-row items-center justify-between mb-6 mt-8">
-            <div class="flex items-center mb-4 md:mb-0">
-              <div class="mr-4">
-                <div class="w-16 h-16 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-sm flex items-center justify-center border border-green-500/30 group-hover:border-green-500/50 transition-all duration-300">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-              <div>
-                <h3 class="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-1">
-                  {{ server.name }}
-                </h3>
-                <p v-if="server.comingSoon" class="text-gray-400 text-sm">Not public yet - Stay tuned!</p>
-                <p v-else class="text-green-400 text-sm font-medium">Ready to play</p>
-              </div>
-            </div>
+    <div v-else class="server-list">
+      <article v-for="server in servers" :key="server.id" class="server-row" :class="`is-${server.status}`">
+        <header class="server-row__header">
+          <div class="server-identity">
+            <span class="status-dot" :class="statusDotClass(server.status)" />
             <div>
-              <a
-                :href="server.connectUrl"
-                :class="server.comingSoon ? 'bg-white/10 text-gray-400 cursor-not-allowed border-gray-600' : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 border-green-500/50 hover:border-green-400'"
-                class="font-bold py-3 px-6 rounded-lg flex items-center shadow-lg transition-all duration-300 border backdrop-blur-sm group/btn"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 transition-transform group-hover/btn:scale-110" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.29-.249-1.878-.03l1.523.63c.956.4 1.409 1.5 1.009 2.455-.397.957-1.497 1.41-2.454 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.253 0-2.265-1.014-2.265-2.265z"/>
-                </svg>
-                {{ server.comingSoon ? 'Future Plans' : 'Connect to Server' }}
-              </a>
+              <p class="status-name">{{ statusText(server.status) }}</p>
+              <h3>{{ server.name }}</h3>
             </div>
           </div>
+          <span class="checked-time">{{ server.status === 'checking' ? 'Querying now' : formatLastChecked(server.lastChecked) }}</span>
+        </header>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div class="bg-white/[0.02] backdrop-blur-sm rounded-lg p-4 border border-white/[0.08] hover:border-white/20 transition-all duration-300">
-              <div class="text-gray-400 text-xs font-medium mb-1 uppercase tracking-wider">Map</div>
-              <div class="text-lg font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                {{ server.map }}
-              </div>
-            </div>
-            <div class="bg-white/[0.02] backdrop-blur-sm rounded-lg p-4 border border-white/[0.08] hover:border-white/20 transition-all duration-300">
-              <div class="text-gray-400 text-xs font-medium mb-1 uppercase tracking-wider">Players</div>
-              <div class="text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                {{ server.players.length }}/{{ server.maxplayers }}
-              </div>
-            </div>
-            <div class="bg-white/[0.02] backdrop-blur-sm rounded-lg p-4 border border-white/[0.08] hover:border-white/20 transition-all duration-300 relative">
-              <div class="text-gray-400 text-xs font-medium mb-1 uppercase tracking-wider">Location</div>
-              <div class="flex items-center justify-center space-x-2">
-                <!-- German Flag -->
-                <div class="w-6 h-4 rounded-sm overflow-hidden border border-gray-600">
-                  <div class="h-1/3 bg-black"></div>
-                  <div class="h-1/3 bg-red-600"></div>
-                  <div class="h-1/3 bg-yellow-400"></div>
-                </div>
-                <span class="text-lg font-bold text-white">{{ server.location }}</span>
-              </div>
-            </div>
-          </div>
+        <dl class="server-metrics">
+          <div><dt>Map</dt><dd>{{ server.status === 'online' ? (server.map || 'Unknown') : '—' }}</dd></div>
+          <div><dt>Players</dt><dd>{{ server.status === 'online' ? `${server.players?.length || 0}/${server.maxplayers || '—'}` : `0/${server.maxplayers || '—'}` }}</dd></div>
+          <div><dt>Location</dt><dd>{{ server.location || 'Unknown' }}</dd></div>
+        </dl>
 
-          <!-- Player List -->
-          <div v-if="server.players && server.players.length > 0" class="mt-6">
-            <h4 class="text-lg font-semibold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-4">
-              Players Online
-            </h4>
-            <div class="bg-white/[0.02] backdrop-blur-sm rounded-lg p-4 border border-white/[0.08]">
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                <div v-for="player in server.players" :key="player.name" class="flex justify-between items-center bg-white/[0.02] backdrop-blur-sm rounded px-3 py-2 border border-white/[0.08] hover:border-white/20 transition-all duration-300">
-                  <span class="text-white font-medium text-sm">{{ player.name }}</span>
-                  <div class="text-right">
-                    <div class="text-blue-400 text-sm font-medium">{{ player.score }} pts</div>
-                    <div class="text-gray-400 text-xs">{{ formatPlayerTime(player.time) }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div class="server-actions">
+          <a
+            v-if="server.status === 'online' && !server.comingSoon && server.connectUrl"
+            :href="server.connectUrl"
+            class="connect-button"
+          >
+            Connect with Steam <span aria-hidden="true">↗</span>
+          </a>
+          <span v-else class="connect-disabled">{{ server.comingSoon ? 'Coming soon' : 'Connection unavailable' }}</span>
+          <button
+            type="button"
+            class="icon-button"
+            :disabled="server.isQuerying"
+            :aria-label="`Refresh ${server.name}`"
+            @click="refreshServer(server.id)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.1 9A7 7 0 0 1 18 6l2 2M17.9 15A7 7 0 0 1 6 18l-2-2" /></svg>
+          </button>
         </div>
 
-        <!-- Checking Server -->
-        <div v-else-if="server.status === 'checking'" class="glass-card p-8 relative border border-yellow-500/20">
-          <!-- Status Indicator -->
-          <div class="absolute top-6 right-6 flex items-center space-x-2">
-            <div class="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
-            <span class="text-yellow-400 text-sm font-medium">CHECKING</span>
-          </div>
+        <details v-if="server.status === 'online' && server.players?.length" class="player-list">
+          <summary>{{ server.players.length }} player{{ server.players.length === 1 ? '' : 's' }} online</summary>
+          <ul>
+            <li v-for="(player, index) in server.players" :key="`${player.name}-${index}`">
+              <span>{{ player.name || 'Anonymous' }}</span>
+              <span>{{ player.score || 0 }} pts · {{ formatPlayerTime(player.time) }}</span>
+            </li>
+          </ul>
+        </details>
+      </article>
 
-          <!-- Coming Soon Badge -->
-          <div v-if="server.comingSoon" class="absolute top-6 right-28 bg-gradient-to-r from-yellow-500 to-orange-500 text-black px-3 py-1 rounded-full text-sm font-bold">
-            Future Plans
-          </div>
-
-          <!-- Last Checked Timestamp -->
-          <div class="absolute top-6 left-6 bg-white/10 backdrop-blur-sm text-gray-300 px-3 py-1 rounded-full text-xs border border-white/10">
-            Checking server...
-          </div>
-
-          <div class="flex flex-col md:flex-row items-center justify-between mb-6 mt-8">
-            <div class="flex items-center mb-4 md:mb-0">
-              <div class="mr-4">
-                <div class="w-16 h-16 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-sm flex items-center justify-center border border-yellow-500/30">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-400 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </div>
-              </div>
-              <div>
-                <h3 class="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-1">
-                  {{ server.name }}
-                </h3>
-                <p class="text-yellow-400 font-medium text-sm">🔄 Checking status...</p>
-                <p v-if="server.comingSoon" class="text-gray-400 text-sm">Not public yet - Stay tuned!</p>
-              </div>
-            </div>
-            <div>
-              <div class="bg-white/10 backdrop-blur-sm text-gray-400 font-bold py-3 px-6 rounded-lg flex items-center shadow-lg border border-gray-600 cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.29-.249-1.878-.03l1.523.63c.956.4 1.409 1.5 1.009 2.455-.397.957-1.497 1.41-2.454 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.253 0-2.265-1.014-2.265-2.265z"/>
-                </svg>
-                Checking...
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div class="bg-white/[0.02] backdrop-blur-sm rounded-lg p-4 border border-white/[0.08]">
-              <div class="text-gray-400 text-xs font-medium mb-1 uppercase tracking-wider">Map</div>
-              <div class="text-lg font-bold text-gray-500">
-                Checking...
-              </div>
-            </div>
-            <div class="bg-white/[0.02] backdrop-blur-sm rounded-lg p-4 border border-white/[0.08]">
-              <div class="text-gray-400 text-xs font-medium mb-1 uppercase tracking-wider">Players</div>
-              <div class="text-lg font-bold text-gray-500">
-                -/-
-              </div>
-            </div>
-            <div class="bg-white/[0.02] backdrop-blur-sm rounded-lg p-4 border border-white/[0.08]">
-              <div class="text-gray-400 text-xs font-medium mb-1 uppercase tracking-wider">Location</div>
-              <div class="flex items-center justify-center space-x-2">
-                <!-- German Flag -->
-                <div class="w-6 h-4 rounded-sm overflow-hidden border border-gray-600">
-                  <div class="h-1/3 bg-black"></div>
-                  <div class="h-1/3 bg-red-600"></div>
-                  <div class="h-1/3 bg-yellow-400"></div>
-                </div>
-                <span class="text-lg font-bold text-white">{{ server.location || 'Unknown' }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Offline Server -->
-        <div v-else class="glass-card p-8 relative border border-red-500/20">
-          <!-- Status Indicator -->
-          <div class="absolute top-6 right-6 flex items-center space-x-2">
-            <div class="w-3 h-3 bg-red-400 rounded-full"></div>
-            <span class="text-red-400 text-sm font-medium">OFFLINE</span>
-          </div>
-
-          <!-- Coming Soon Badge -->
-          <div v-if="server.comingSoon" class="absolute top-6 right-24 bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-            Future Plans
-          </div>
-
-          <!-- Last Checked Timestamp -->
-          <div class="absolute top-6 left-6 bg-white/10 backdrop-blur-sm text-gray-300 px-3 py-1 rounded-full text-xs border border-white/10">
-            Last checked: {{ formatLastChecked(server.lastChecked) }}
-          </div>
-
-          <div class="flex flex-col md:flex-row items-center justify-between mb-6 mt-8">
-            <div class="flex items-center mb-4 md:mb-0">
-              <div class="mr-4">
-                <div class="w-16 h-16 rounded-full bg-gradient-to-r from-red-500/20 to-pink-500/20 backdrop-blur-sm flex items-center justify-center border border-red-500/30">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </div>
-              </div>
-              <div>
-                <h3 class="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-1">
-                  {{ server.name }}
-                </h3>
-                <p v-if="server.comingSoon" class="text-gray-400 text-sm">Not public yet - Stay tuned!</p>
-                <p v-else class="text-gray-400 text-sm">
-                  Server is currently offline.
-                  <a href="https://discord.gg/JuxYYVEkzc" class="text-blue-400 underline hover:text-blue-300 transition-colors">
-                    Join our Discord
-                  </a>
-                  for updates!
-                </p>
-              </div>
-            </div>
-            <div>
-              <div class="bg-white/10 backdrop-blur-sm text-gray-400 font-bold py-3 px-6 rounded-lg flex items-center shadow-lg border border-gray-600 cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.29-.249-1.878-.03l1.523.63c.956.4 1.409 1.5 1.009 2.455-.397.957-1.497 1.41-2.454 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.253 0-2.265-1.014-2.265-2.265z"/>
-                </svg>
-                Server Offline
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div class="bg-white/[0.02] backdrop-blur-sm rounded-lg p-4 border border-white/[0.08]">
-              <div class="text-gray-400 text-xs font-medium mb-1 uppercase tracking-wider">Map</div>
-              <div class="text-lg font-bold text-gray-500">
-                -
-              </div>
-            </div>
-            <div class="bg-white/[0.02] backdrop-blur-sm rounded-lg p-4 border border-white/[0.08]">
-              <div class="text-gray-400 text-xs font-medium mb-1 uppercase tracking-wider">Players</div>
-              <div class="text-lg font-bold bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent">
-                0/{{ server.maxplayers || '-' }}
-              </div>
-            </div>
-            <div class="bg-white/[0.02] backdrop-blur-sm rounded-lg p-4 border border-white/[0.08]">
-              <div class="text-gray-400 text-xs font-medium mb-1 uppercase tracking-wider">Location</div>
-              <div class="flex items-center justify-center space-x-2">
-                <!-- German Flag -->
-                <div class="w-6 h-4 rounded-sm overflow-hidden border border-gray-600">
-                  <div class="h-1/3 bg-black"></div>
-                  <div class="h-1/3 bg-red-600"></div>
-                  <div class="h-1/3 bg-yellow-400"></div>
-                </div>
-                <span class="text-lg font-bold text-white">{{ server.location || 'Unknown' }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <p v-if="error" class="stale-note">Live refresh failed. Showing the most recent available result.</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue'
 
-const {
-  getAllServerStates,
-  getServerState,
-  isLoading,
-  error
-} = useServerStatus();
+const { getAllServerStates, isLoading, error, forceRefreshServer, forceRefreshAll } = useServerStatus()
+const servers = computed(() => getAllServerStates())
+const loading = computed(() => isLoading.value)
+const refreshing = ref(false)
 
-const servers = computed(() => getAllServerStates());
-const loading = computed(() => isLoading.value);
-
-// Format seconds into hours:minutes:seconds
-const formatTime = (seconds) => {
-  if (!seconds) return '00:00:00';
-
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
-
-  return [
-    hours.toString().padStart(2, '0'),
-    minutes.toString().padStart(2, '0'),
-    secs.toString().padStart(2, '0')
-  ].join(':');
-};
+const statusText = status => ({ online: 'Online', checking: 'Checking', 'coming-soon': 'Coming soon' }[status] || 'Offline')
+const statusDotClass = status => status === 'online'
+  ? 'status-dot--online'
+  : status === 'checking' ? 'status-dot--checking' : 'status-dot--offline'
 
 const formatPlayerTime = (seconds) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
+  const total = Number(seconds) || 0
+  const hours = Math.floor(total / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+}
 
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes}m`;
-};
-
-// Format last checked timestamp
 const formatLastChecked = (timestamp) => {
-  if (!timestamp) return 'Never';
+  if (!timestamp) return 'Not checked yet'
+  const elapsed = Math.max(0, Date.now() - new Date(timestamp).getTime())
+  const seconds = Math.floor(elapsed / 1000)
+  if (seconds < 60) return `${seconds}s ago`
+  const minutes = Math.floor(seconds / 60)
+  return minutes < 60 ? `${minutes}m ago` : new Date(timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' })
+}
 
-  const now = new Date();
-  const checked = new Date(timestamp);
-  const diffMs = now - checked;
-  const diffSeconds = Math.floor(diffMs / 1000);
-  const diffMinutes = Math.floor(diffSeconds / 60);
+const refreshServer = async (serverId) => {
+  try { await forceRefreshServer(serverId) } catch { /* Existing status remains visible. */ }
+}
 
-  if (diffSeconds < 60) {
-    return `${diffSeconds}s ago`;
-  } else if (diffMinutes < 60) {
-    return `${diffMinutes}m ago`;
-  } else {
-    return checked.toLocaleTimeString();
-  }
-};
-
-const getStatusColor = (status) => {
-  switch (status) {
-    case 'online':
-      return 'text-green-400';
-    case 'offline':
-      return 'text-red-400';
-    case 'checking':
-      return 'text-yellow-400';
-    default:
-      return 'text-gray-400';
-  }
-};
-
-const getStatusIcon = (status) => {
-  switch (status) {
-    case 'online':
-      return 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z';
-    case 'offline':
-      return 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z';
-    case 'checking':
-      return 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
-    default:
-      return 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
-  }
-};
-
-const getStatusText = (status) => {
-  switch (status) {
-    case 'online':
-      return 'Online';
-    case 'offline':
-      return 'Offline';
-    case 'checking':
-      return 'Checking...';
-    default:
-      return 'Unknown';
-  }
-};
+const refreshAll = async () => {
+  refreshing.value = true
+  try { await forceRefreshAll() } catch { /* The composable exposes the degraded state. */ } finally { refreshing.value = false }
+}
 </script>
+
+<style scoped>
+.server-feed { min-height: 11rem; }
+.server-list { display: grid; gap: .65rem; }
+.server-row { background: var(--arena-ink); border-left: 2px solid var(--arena-line-strong); padding: 1.15rem; }
+.server-row.is-online { border-left-color: var(--arena-success); }
+.server-row.is-checking { border-left-color: var(--arena-warning); }
+.server-row__header, .server-actions, .server-identity { display: flex; align-items: center; }
+.server-row__header { justify-content: space-between; gap: 1rem; }
+.server-identity { min-width: 0; gap: .75rem; }
+.server-identity h3 { max-width: 29rem; margin: .18rem 0 0; overflow: hidden; color: var(--arena-text); font-family: var(--font-display); font-size: 1rem; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.status-name, .checked-time { margin: 0; color: var(--arena-muted); font: 600 .62rem/1.2 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.is-online .status-name { color: var(--arena-success); }
+.is-checking .status-name { color: var(--arena-warning); }
+.status-dot { display: block; width: .55rem; height: .55rem; flex: 0 0 auto; background: var(--arena-danger); border-radius: 50%; box-shadow: 0 0 0 .26rem rgba(205, 92, 97, .1); }
+.status-dot--online { background: var(--arena-success); box-shadow: 0 0 0 .26rem rgba(86, 180, 142, .1); }
+.status-dot--checking { background: var(--arena-warning); box-shadow: 0 0 0 .26rem rgba(204, 163, 91, .1); animation: status-pulse 1.2s ease-in-out infinite; }
+.server-metrics { display: grid; grid-template-columns: 1.3fr .7fr 1fr; gap: 1px; margin: 1rem 0; background: var(--arena-line); border: 1px solid var(--arena-line); }
+.server-metrics div { min-width: 0; padding: .8rem; background: #141218; }
+.server-metrics dt { color: var(--arena-dim); font: 600 .59rem/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+.server-metrics dd { margin: .42rem 0 0; overflow: hidden; color: var(--arena-text-soft); font: 600 .78rem/1.25 var(--font-mono); text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.server-actions { gap: .55rem; }
+.connect-button, .connect-disabled { flex: 1; padding: .72rem .8rem; font-size: .76rem; font-weight: 700; }
+.connect-button { display: flex; justify-content: space-between; color: white; background: var(--arena-violet); text-decoration: none; transition: background-color 160ms ease, transform 160ms ease; }
+.connect-button:hover { background: #7658aa; transform: translateY(-1px); }
+.connect-disabled { color: var(--arena-dim); border: 1px solid var(--arena-line); }
+.icon-button { display: grid; width: 2.55rem; height: 2.55rem; place-items: center; color: var(--arena-muted); background: transparent; border: 1px solid var(--arena-line-strong); }
+.icon-button:hover:not(:disabled) { color: white; border-color: var(--arena-violet-soft); }
+.icon-button:disabled { cursor: wait; opacity: .45; }
+.icon-button svg { width: 1rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
+.player-list { margin-top: .8rem; border-top: 1px solid var(--arena-line); }
+.player-list summary { padding: .8rem 0 0; color: var(--arena-muted); font-size: .72rem; cursor: pointer; }
+.player-list ul { max-height: 10rem; overflow: auto; margin: .7rem 0 0; padding: 0; list-style: none; }
+.player-list li { display: flex; justify-content: space-between; gap: 1rem; padding: .55rem 0; border-top: 1px solid var(--arena-line); color: var(--arena-text-soft); font-size: .72rem; }
+.player-list li span:last-child { color: var(--arena-dim); font-family: var(--font-mono); white-space: nowrap; }
+.server-error { min-height: 10rem; display: grid; grid-template-columns: auto 1fr; gap: .9rem; align-content: center; padding: 1rem; }
+.server-error strong { color: var(--arena-text); }
+.server-error p, .stale-note { margin: .3rem 0 0; color: var(--arena-muted); font-size: .75rem; }
+.refresh-button { grid-column: 2; justify-self: start; padding: .55rem .75rem; color: var(--arena-text); background: transparent; border: 1px solid var(--arena-line-strong); font-size: .72rem; }
+.server-skeleton { display: grid; gap: .8rem; padding: 1.2rem; }
+.skeleton-line, .skeleton-metrics i { display: block; background: #232028; animation: skeleton 1.2s ease-in-out infinite alternate; }
+.skeleton-line { width: 80%; height: .8rem; }.skeleton-line--short { width: 28%; }
+.skeleton-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 1rem; }
+.skeleton-metrics i { height: 3.6rem; }
+@keyframes skeleton { to { background: #2a2630; } }
+@keyframes status-pulse { 50% { opacity: .35; } }
+@media (max-width: 520px) {
+  .checked-time { display: none; }
+  .server-metrics { grid-template-columns: 1fr 1fr; }
+  .server-metrics div:last-child { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) { .status-dot--checking, .skeleton-line, .skeleton-metrics i { animation: none; } }
+</style>

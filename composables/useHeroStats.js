@@ -19,7 +19,7 @@ export const useHeroStats = () => {
 
       const response = await $fetch('/api/settings');
 
-      if (response.success && response.data?.heroStats) {
+      if (response.data?.heroStats) {
         heroStats.value = {
           uptime: response.data.heroStats.uptime || '24/7',
           activePlayers: response.data.heroStats.activePlayers || 1247,
@@ -28,6 +28,10 @@ export const useHeroStats = () => {
           autoUpdateDonations: response.data.heroStats.autoUpdateDonations || false,
           autoUpdatePlayers: response.data.heroStats.autoUpdatePlayers || false
         };
+
+        if (!response.success) {
+          error.value = response.error?.message || 'Saved hero statistics are temporarily unavailable';
+        }
 
         // If auto-update is enabled, fetch real-time data
         if (response.data.heroStats.autoUpdateDonations) {

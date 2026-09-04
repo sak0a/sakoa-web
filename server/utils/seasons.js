@@ -1,6 +1,5 @@
 // Season calculation utilities based on the SourceMod plugin logic
-import fs from 'fs';
-import path from 'path';
+import { getSettingsRecord } from '../repositories/settings.js';
 
 /**
  * Default season configuration - used as fallback
@@ -17,14 +16,7 @@ const DEFAULT_SEASON_CONFIG = {
  */
 async function getSeasonConfig() {
   try {
-    // Get the absolute path to the project root directory
-    const projectRoot = process.cwd().includes('.output/server')
-      ? path.join(process.cwd(), '../../')
-      : process.cwd();
-    const settingsFilePath = path.join(projectRoot, 'server/data/settings.json');
-
-    const data = await fs.promises.readFile(settingsFilePath, 'utf8');
-    const settings = JSON.parse(data);
+    const { settings } = await getSettingsRecord();
 
     if (settings.seasons) {
       return {

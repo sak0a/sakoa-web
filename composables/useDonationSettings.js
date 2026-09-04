@@ -15,12 +15,13 @@ export const useDonationSettings = () => {
 
       const response = await $fetch('/api/settings');
 
-      if (response.success && response.data?.donations) {
+      if (response.data?.donations) {
         donationSettings.value = {
           paypalEnabled: response.data.donations.paypalEnabled !== false,
           revolutEnabled: response.data.donations.revolutEnabled !== false,
           buyMeACoffeeEnabled: response.data.donations.buyMeACoffeeEnabled !== false
         };
+        if (!response.success) error.value = response.error?.message || 'Saved donation settings are temporarily unavailable';
       }
     } catch (err) {
       error.value = err;

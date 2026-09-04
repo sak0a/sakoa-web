@@ -1,1027 +1,157 @@
 <template>
-  <div class="min-h-screen bg-gray-900">
-    <AdminLayout>
-      <div class="p-6">
-        <div class="mb-8">
-          <h1 class="text-3xl font-bold text-white mb-2">Settings</h1>
-          <p class="text-gray-400">Configure your TF2 dodgeball server settings</p>
+  <AdminLayout>
+    <div class="admin-page">
+      <header class="admin-page-header">
+        <div>
+          <span class="admin-eyebrow">System / settings</span>
+          <h1>Site settings.</h1>
+          <p>Public availability, season boundaries, community links and cache freshness. Discord worker configuration lives in its dedicated workspace.</p>
         </div>
+        <span v-if="meta.updatedAt" class="settings-revision">REV {{ meta.revision }} · {{ formatDate(meta.updatedAt) }}</span>
+      </header>
 
-        <!-- Maintenance Mode Settings -->
-        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="text-xl font-semibold text-white mb-1">Maintenance Mode</h2>
-              <p class="text-gray-400 text-sm">Control when your site is accessible to users</p>
-            </div>
-            <div class="flex items-center space-x-3">
-              <span class="text-sm text-gray-400">
-                {{ settings?.maintenance?.enabled ? 'Enabled' : 'Disabled' }}
-              </span>
-              <button
-                @click="toggleMaintenance"
-                :disabled="isLoading"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50"
-                :class="settings?.maintenance?.enabled ? 'bg-purple-600' : 'bg-gray-600'"
-              >
-                <span
-                  class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                  :class="settings?.maintenance?.enabled ? 'translate-x-6' : 'translate-x-1'"
-                ></span>
-              </button>
-            </div>
+      <div v-if="notice" :class="['admin-notice', notice.type === 'error' ? 'admin-notice--error' : 'admin-notice--success']" role="status">{{ notice.text }}</div>
+      <div v-if="loading && !settings" class="admin-empty">Loading settings…</div>
+
+      <div v-else-if="settings" class="settings-stack">
+        <section class="admin-panel">
+          <div class="admin-panel__header">
+            <div><h2>Maintenance gate</h2><p>Controls the public maintenance screen and its message.</p></div>
+            <label class="admin-toggle"><input v-model="settings.maintenance.enabled" type="checkbox"> Enabled</label>
           </div>
-
-          <!-- Maintenance Configuration Form -->
-          <form @submit.prevent="saveMaintenanceSettings" class="space-y-4">
-            <div>
-              <label for="maintenance-title" class="block text-sm font-medium text-gray-300 mb-2">
-                Title
-              </label>
-              <input
-                id="maintenance-title"
-                v-model="maintenanceForm.title"
-                type="text"
-                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="Maintenance Mode"
-              />
+          <form class="admin-panel__body" @submit.prevent="save('maintenance')">
+            <div class="admin-form-grid">
+              <label class="admin-field"><span>Headline</span><input v-model.trim="settings.maintenance.title" required maxlength="120"></label>
+              <label class="admin-field"><span>Estimated duration</span><input v-model.trim="settings.maintenance.estimatedTime" maxlength="120" placeholder="Optional"></label>
+              <label class="admin-field field-wide"><span>Message</span><textarea v-model.trim="settings.maintenance.message" required maxlength="1000"></textarea></label>
             </div>
+            <div class="admin-actions"><button class="admin-button admin-button-primary" :disabled="saving">Save maintenance</button></div>
+          </form>
+        </section>
 
-            <div>
-              <label for="maintenance-message" class="block text-sm font-medium text-gray-300 mb-2">
-                Message
-              </label>
-              <textarea
-                id="maintenance-message"
-                v-model="maintenanceForm.message"
-                rows="3"
-                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="We're currently performing maintenance on our servers. Please check back soon!"
-              ></textarea>
+        <section class="admin-panel">
+          <div class="admin-panel__header"><div><h2>Season boundary</h2><p>The first day used by seasonal leaderboard queries.</p></div></div>
+          <form class="admin-panel__body" @submit.prevent="save('seasons')">
+            <div class="season-grid">
+              <label class="admin-field"><span>Year</span><input v-model.number="settings.seasons.startYear" type="number" min="2020" max="2200" required></label>
+              <label class="admin-field"><span>Month</span><input v-model.number="settings.seasons.startMonth" type="number" min="1" max="12" required></label>
+              <label class="admin-field"><span>Day</span><input v-model.number="settings.seasons.startDay" type="number" min="1" max="31" required></label>
             </div>
+            <div class="admin-actions"><button class="admin-button admin-button-primary" :disabled="saving">Save season date</button></div>
+          </form>
+        </section>
 
-            <div>
-              <label for="maintenance-time" class="block text-sm font-medium text-gray-300 mb-2">
-                Estimated Completion Time (Optional)
-              </label>
-              <input
-                id="maintenance-time"
-                v-model="maintenanceForm.estimatedTime"
-                type="text"
-                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="e.g., 2 hours, Tomorrow at 3 PM, etc."
-              />
+        <section class="admin-panel">
+          <div class="admin-panel__header"><div><h2>Community & support</h2><p>Public Discord destination and the payment routes visible on the site.</p></div></div>
+          <form class="admin-panel__body" @submit.prevent="saveCommunity">
+            <label class="admin-field"><span>Discord invite URL</span><input v-model.trim="settings.discord.inviteUrl" type="url" required placeholder="https://discord.gg/…"></label>
+            <div class="channel-toggles">
+              <label class="admin-toggle"><input v-model="settings.donations.paypalEnabled" type="checkbox"> PayPal</label>
+              <label class="admin-toggle"><input v-model="settings.donations.revolutEnabled" type="checkbox"> Revolut</label>
+              <label class="admin-toggle"><input v-model="settings.donations.buyMeACoffeeEnabled" type="checkbox"> Buy Me a Coffee</label>
             </div>
+            <div class="admin-actions"><button class="admin-button admin-button-primary" :disabled="saving">Save community settings</button></div>
+          </form>
+        </section>
 
-            <div class="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                @click="resetForm"
-                class="px-4 py-2 text-gray-400 hover:text-white transition-colors"
-              >
-                Reset
-              </button>
-              <button
-                type="submit"
-                :disabled="isLoading"
-                class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg transition-colors flex items-center"
-              >
-                <svg v-if="isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Save Settings
-              </button>
+        <section class="admin-panel">
+          <div class="admin-panel__header"><div><h2>Data freshness</h2><p>Cache lifetimes in seconds. Lower values increase traffic to MySQL and game servers.</p></div></div>
+          <form class="admin-panel__body" @submit.prevent="save('cache')">
+            <div class="cache-grid">
+              <label v-for="field in cacheFields" :key="field.key" class="admin-field">
+                <span>{{ field.label }}</span>
+                <input v-model.number="settings.cache[field.key]" type="number" :min="field.min" max="86400" required>
+              </label>
+            </div>
+            <div class="admin-actions">
+              <button class="admin-button admin-button-primary" :disabled="saving">Save cache intervals</button>
+              <NuxtLink to="/admin/cache" class="admin-button admin-button-secondary">Inspect cache</NuxtLink>
             </div>
           </form>
-
-          <!-- Current Status -->
-          <div v-if="settings?.maintenance?.enabled" class="mt-6 p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg">
-            <div class="flex items-center mb-2">
-              <svg class="w-5 h-5 text-yellow-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-              </svg>
-              <span class="text-yellow-400 font-medium">Maintenance Mode Active</span>
-            </div>
-            <p class="text-yellow-300 text-sm mb-2">All users except admins will see the maintenance page.</p>
-            <a
-              href="/maintenance"
-              target="_blank"
-              class="text-yellow-400 hover:text-yellow-300 text-sm underline"
-            >
-              Preview maintenance page →
-            </a>
-          </div>
-
-          <!-- Last Updated -->
-          <div v-if="settings?.maintenance?.lastUpdated" class="mt-4 text-xs text-gray-500">
-            Last updated: {{ formatDate(settings.maintenance.lastUpdated) }}
-          </div>
-        </div>
-
-        <!-- Season Settings -->
-        <div class="bg-gray-800 rounded-lg p-6 mb-8">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="text-xl font-semibold text-white mb-2">Season Configuration</h2>
-              <p class="text-gray-400">Configure when seasons start (year, month, day)</p>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Start Year</label>
-              <input
-                v-model.number="seasonForm.startYear"
-                type="number"
-                min="2020"
-                max="2030"
-                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="2025"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Start Month</label>
-              <select
-                v-model.number="seasonForm.startMonth"
-                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              >
-                <option value="1">January</option>
-                <option value="2">February</option>
-                <option value="3">March</option>
-                <option value="4">April</option>
-                <option value="5">May</option>
-                <option value="6">June</option>
-                <option value="7">July</option>
-                <option value="8">August</option>
-                <option value="9">September</option>
-                <option value="10">October</option>
-                <option value="11">November</option>
-                <option value="12">December</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Start Day</label>
-              <input
-                v-model.number="seasonForm.startDay"
-                type="number"
-                min="1"
-                max="31"
-                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="15"
-              />
-            </div>
-          </div>
-
-          <div class="flex gap-4">
-            <button
-              @click="saveSeasonSettings"
-              :disabled="isLoading"
-              class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-            >
-              <span v-if="isLoading">Saving...</span>
-              <span v-else>Save Season Settings</span>
-            </button>
-            <button
-              @click="resetSeasonForm"
-              :disabled="isLoading"
-              class="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-            >
-              Reset
-            </button>
-          </div>
-
-          <!-- Last Updated -->
-          <div v-if="settings?.seasons?.lastUpdated" class="mt-4 text-xs text-gray-500">
-            Last updated: {{ formatDate(settings.seasons.lastUpdated) }}
-          </div>
-        </div>
-
-        <!-- Discord Settings -->
-        <div class="bg-gray-800 rounded-lg p-6 mb-8">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="text-xl font-semibold text-white mb-2">Discord Configuration</h2>
-              <p class="text-gray-400">Configure Discord invite link for the server</p>
-            </div>
-          </div>
-
-          <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-300 mb-2">Discord Invite URL</label>
-            <input
-              v-model="discordForm.inviteUrl"
-              type="url"
-              class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="https://discord.gg/your-invite-code"
-            />
-            <p class="text-xs text-gray-500 mt-1">This link will be used throughout the website for Discord references</p>
-          </div>
-
-          <div class="flex gap-4">
-            <button
-              @click="saveDiscordSettings"
-              :disabled="isLoading"
-              class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-            >
-              <span v-if="isLoading">Saving...</span>
-              <span v-else>Save Discord Settings</span>
-            </button>
-            <button
-              @click="resetDiscordForm"
-              :disabled="isLoading"
-              class="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-            >
-              Reset
-            </button>
-          </div>
-
-          <!-- Last Updated -->
-          <div v-if="settings?.discord?.lastUpdated" class="mt-4 text-xs text-gray-500">
-            Last updated: {{ formatDate(settings.discord.lastUpdated) }}
-          </div>
-        </div>
-
-
-
-        <!-- Chatbot Settings -->
-        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="text-xl font-semibold text-white mb-1">AI Chatbot</h2>
-              <p class="text-gray-400 text-sm">Control the TF2 server assistant chatbot</p>
-            </div>
-            <div class="flex items-center space-x-3">
-              <span class="text-sm text-gray-400">
-                {{ settings?.chatbot?.enabled ? 'Enabled' : 'Disabled' }}
-              </span>
-              <button
-                @click="toggleChatbot"
-                :disabled="isLoading"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50"
-                :class="settings?.chatbot?.enabled ? 'bg-purple-600' : 'bg-gray-600'"
-              >
-                <span
-                  class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                  :class="settings?.chatbot?.enabled ? 'translate-x-6' : 'translate-x-1'"
-                ></span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Chatbot Configuration Form -->
-          <form @submit.prevent="saveChatbotSettings" class="space-y-4">
-            <div>
-              <label for="chatbot-welcome" class="block text-sm font-medium text-gray-300 mb-2">
-                Welcome Message
-              </label>
-              <textarea
-                id="chatbot-welcome"
-                v-model="chatbotForm.welcomeMessage"
-                rows="3"
-                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                placeholder="Hi! I'm your TF2 Dodgeball Server assistant..."
-              ></textarea>
-              <p class="text-xs text-gray-500 mt-1">This message will be shown when users first open the chatbot</p>
-            </div>
-
-            <div class="flex gap-4">
-              <button
-                type="submit"
-                :disabled="isLoading"
-                class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-              >
-                <span v-if="isLoading">Saving...</span>
-                <span v-else>Save Chatbot Settings</span>
-              </button>
-              <button
-                type="button"
-                @click="resetChatbotForm"
-                :disabled="isLoading"
-                class="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-              >
-                Reset
-              </button>
-            </div>
-          </form>
-
-          <!-- Last Updated -->
-          <div v-if="settings?.chatbot?.lastUpdated" class="mt-4 text-xs text-gray-500">
-            Last updated: {{ formatDate(settings.chatbot.lastUpdated) }}
-          </div>
-        </div>
-
-        <!-- Cache Settings -->
-        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-8">
-          <h3 class="text-xl font-semibold text-white mb-4">Cache Settings</h3>
-          <p class="text-gray-400 mb-6">Configure cache intervals for different data types (in seconds)</p>
-
-          <form @submit.prevent="updateCacheSettings" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">
-                  Server Status Interval
-                </label>
-                <input
-                  v-model.number="cacheForm.serverStatusInterval"
-                  type="number"
-                  min="5"
-                  max="300"
-                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="30"
-                />
-                <p class="text-xs text-gray-500 mt-1">How often to query game servers (5-300 seconds)</p>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">
-                  Leaderboard Interval
-                </label>
-                <input
-                  v-model.number="cacheForm.leaderboardInterval"
-                  type="number"
-                  min="5"
-                  max="300"
-                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="10"
-                />
-                <p class="text-xs text-gray-500 mt-1">How often to refresh leaderboard data (5-300 seconds)</p>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">
-                  Player Search Interval
-                </label>
-                <input
-                  v-model.number="cacheForm.playerSearchInterval"
-                  type="number"
-                  min="5"
-                  max="300"
-                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="10"
-                />
-                <p class="text-xs text-gray-500 mt-1">How often to refresh player search results (5-300 seconds)</p>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">
-                  Database Status Interval
-                </label>
-                <input
-                  v-model.number="cacheForm.databaseStatusInterval"
-                  type="number"
-                  min="1"
-                  max="60"
-                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="5"
-                />
-                <p class="text-xs text-gray-500 mt-1">How often to check database status (1-60 seconds)</p>
-              </div>
-
-
-            </div>
-
-            <div class="flex justify-end">
-              <button
-                type="submit"
-                :disabled="isLoading"
-                class="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
-              >
-                Update Cache Settings
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <!-- Logging Settings -->
-        <div class="bg-gray-800 rounded-lg p-6 mb-8">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="text-xl font-semibold text-white mb-2">System Logging Configuration</h2>
-              <p class="text-gray-400">Configure logging behavior for server queries and background workers</p>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-4">
-              <div class="flex items-center">
-                <input
-                  v-model="loggingForm.backgroundWorkers"
-                  type="checkbox"
-                  id="backgroundWorkers"
-                  class="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
-                />
-                <label for="backgroundWorkers" class="ml-2 text-sm text-gray-300">
-                  Enable Background Workers
-                </label>
-              </div>
-              <p class="text-xs text-gray-500 ml-6">Use background worker system for server queries (recommended)</p>
-
-              <div class="flex items-center">
-                <input
-                  v-model="loggingForm.statusChangesOnly"
-                  type="checkbox"
-                  id="statusChangesOnly"
-                  class="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
-                />
-                <label for="statusChangesOnly" class="ml-2 text-sm text-gray-300">
-                  Log Status Changes Only
-                </label>
-              </div>
-              <p class="text-xs text-gray-500 ml-6">Only log when server status changes (reduces log spam)</p>
-            </div>
-
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Server Query Logging Level</label>
-                <select
-                  v-model="loggingForm.serverQueries"
-                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="minimal">Minimal</option>
-                  <option value="normal">Normal</option>
-                  <option value="verbose">Verbose</option>
-                </select>
-                <p class="text-xs text-gray-500 mt-1">Level of detail for server query logging</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex gap-4 mt-6">
-            <button
-              @click="saveLoggingSettings"
-              :disabled="isLoading"
-              class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-            >
-              <span v-if="isLoading">Saving...</span>
-              <span v-else>Save Logging Settings</span>
-            </button>
-            <button
-              @click="resetLoggingForm"
-              :disabled="isLoading"
-              class="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-            >
-              Reset
-            </button>
-          </div>
-
-          <!-- Last Updated -->
-          <div v-if="settings?.logging?.lastUpdated" class="mt-4 text-xs text-gray-500">
-            Last updated: {{ formatDate(settings.logging.lastUpdated) }}
-          </div>
-        </div>
-
-        <!-- Donation Settings -->
-        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
-          <div class="mb-6">
-            <h2 class="text-xl font-semibold text-white mb-1">Donation Settings</h2>
-            <p class="text-gray-400 text-sm">Control which donation methods are available on your website</p>
-          </div>
-
-          <form @submit.prevent="saveDonationSettings" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <!-- PayPal Toggle -->
-              <div class="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
-                <div>
-                  <h3 class="text-sm font-medium text-white">PayPal</h3>
-                  <p class="text-xs text-gray-400">Enable PayPal donation button</p>
-                </div>
-                <button
-                  type="button"
-                  @click="donationForm.paypalEnabled = !donationForm.paypalEnabled"
-                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800"
-                  :class="donationForm.paypalEnabled ? 'bg-purple-600' : 'bg-gray-600'"
-                >
-                  <span
-                    class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                    :class="donationForm.paypalEnabled ? 'translate-x-6' : 'translate-x-1'"
-                  ></span>
-                </button>
-              </div>
-
-              <!-- Revolut Toggle -->
-              <div class="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
-                <div>
-                  <h3 class="text-sm font-medium text-white">Revolut</h3>
-                  <p class="text-xs text-gray-400">Enable Revolut donation button</p>
-                </div>
-                <button
-                  type="button"
-                  @click="donationForm.revolutEnabled = !donationForm.revolutEnabled"
-                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800"
-                  :class="donationForm.revolutEnabled ? 'bg-purple-600' : 'bg-gray-600'"
-                >
-                  <span
-                    class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                    :class="donationForm.revolutEnabled ? 'translate-x-6' : 'translate-x-1'"
-                  ></span>
-                </button>
-              </div>
-
-              <!-- Buy Me a Coffee Toggle -->
-              <div class="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
-                <div>
-                  <h3 class="text-sm font-medium text-white">Buy Me a Coffee</h3>
-                  <p class="text-xs text-gray-400">Enable Buy Me a Coffee button</p>
-                </div>
-                <button
-                  type="button"
-                  @click="donationForm.buyMeACoffeeEnabled = !donationForm.buyMeACoffeeEnabled"
-                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800"
-                  :class="donationForm.buyMeACoffeeEnabled ? 'bg-purple-600' : 'bg-gray-600'"
-                >
-                  <span
-                    class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                    :class="donationForm.buyMeACoffeeEnabled ? 'translate-x-6' : 'translate-x-1'"
-                  ></span>
-                </button>
-              </div>
-            </div>
-
-            <div class="flex gap-4">
-              <button
-                type="submit"
-                :disabled="isLoading"
-                class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-              >
-                <span v-if="isLoading">Saving...</span>
-                <span v-else>Save Donation Settings</span>
-              </button>
-              <button
-                type="button"
-                @click="resetDonationForm"
-                :disabled="isLoading"
-                class="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-              >
-                Reset
-              </button>
-            </div>
-
-            <!-- Last Updated -->
-            <div v-if="settings?.donations?.lastUpdated" class="text-xs text-gray-500">
-              Last updated: {{ formatDate(settings.donations.lastUpdated) }}
-            </div>
-          </form>
-        </div>
-
-        <!-- Cache Management -->
-        <CacheManagement />
-
-        <!-- Success/Error Messages -->
-        <div v-if="message" class="mb-6">
-          <div
-            class="p-4 rounded-lg"
-            :class="messageType === 'success' ? 'bg-green-900/20 border border-green-700 text-green-400' : 'bg-red-900/20 border border-red-700 text-red-400'"
-          >
-            {{ message }}
-          </div>
-        </div>
+        </section>
       </div>
-    </AdminLayout>
-  </div>
+    </div>
+  </AdminLayout>
 </template>
 
 <script setup>
-definePageMeta({
-  layout: false
-});
+definePageMeta({ layout: false })
 
-const { getSettings, updateSettings, checkAuth } = useAdmin();
+const { getSettings, updateSettings } = useAdmin()
+const settings = ref(null)
+const meta = ref({ revision: 0, updatedAt: null })
+const loading = ref(false)
+const saving = ref(false)
+const notice = ref(null)
+let noticeTimer
 
-const settings = ref(null);
-const isLoading = ref(false);
-const message = ref('');
-const messageType = ref('success');
+const cacheFields = [
+  { key: 'serverStatusInterval', label: 'Server status', min: 10 },
+  { key: 'leaderboardInterval', label: 'Leaderboard', min: 10 },
+  { key: 'seasonalLeaderboardInterval', label: 'Season leaderboard', min: 10 },
+  { key: 'playerSearchInterval', label: 'Player search', min: 10 },
+  { key: 'databaseStatusInterval', label: 'Database status', min: 5 },
+  { key: 'steamProfilesInterval', label: 'Steam profiles', min: 60 },
+]
 
-const maintenanceForm = ref({
-  title: '',
-  message: '',
-  estimatedTime: ''
-});
+function showNotice(text, type = 'success') {
+  notice.value = { text, type }
+  clearTimeout(noticeTimer)
+  noticeTimer = setTimeout(() => { notice.value = null }, 5000)
+}
 
-const seasonForm = ref({
-  startYear: 2025,
-  startMonth: 5,
-  startDay: 15
-});
-
-const discordForm = ref({
-  inviteUrl: ''
-});
-
-
-
-const loggingForm = ref({
-  backgroundWorkers: true,
-  statusChangesOnly: true,
-  serverQueries: 'minimal'
-});
-
-const cacheForm = ref({
-  serverStatusInterval: 30,
-  leaderboardInterval: 10,
-  playerSearchInterval: 10,
-  seasonalLeaderboardInterval: 10,
-  databaseStatusInterval: 5
-});
-
-const chatbotForm = ref({
-  welcomeMessage: 'Hi! I\'m your TF2 Dodgeball Server assistant. I can help you with commands, donations, gameplay, and more!'
-});
-
-const donationForm = ref({
-  paypalEnabled: true,
-  revolutEnabled: true,
-  buyMeACoffeeEnabled: true
-});
-
-// Load settings
-const loadSettings = async () => {
+async function loadSettings() {
+  loading.value = true
   try {
-    const settingsData = await getSettings();
-    settings.value = settingsData;
-    
-    // Populate form with current values
-    if (settingsData.maintenance) {
-      maintenanceForm.value = {
-        title: settingsData.maintenance.title || '',
-        message: settingsData.maintenance.message || '',
-        estimatedTime: settingsData.maintenance.estimatedTime || ''
-      };
-    }
-
-    if (settingsData.seasons) {
-      seasonForm.value = {
-        startYear: settingsData.seasons.startYear || 2025,
-        startMonth: settingsData.seasons.startMonth || 5,
-        startDay: settingsData.seasons.startDay || 15
-      };
-    }
-
-    if (settingsData.discord) {
-      discordForm.value = {
-        inviteUrl: settingsData.discord.inviteUrl || ''
-      };
-    }
-
-
-
-    if (settingsData.logging) {
-      loggingForm.value = {
-        backgroundWorkers: settingsData.logging.backgroundWorkers !== false,
-        statusChangesOnly: settingsData.logging.statusChangesOnly !== false,
-        serverQueries: settingsData.logging.serverQueries || 'minimal'
-      };
-    }
-
-    if (settingsData.cache) {
-      cacheForm.value = {
-        serverStatusInterval: settingsData.cache.serverStatusInterval || 30,
-        leaderboardInterval: settingsData.cache.leaderboardInterval || 10,
-        playerSearchInterval: settingsData.cache.playerSearchInterval || 10,
-        seasonalLeaderboardInterval: settingsData.cache.seasonalLeaderboardInterval || 10,
-        databaseStatusInterval: settingsData.cache.databaseStatusInterval || 5
-      };
-    }
-
-    if (settingsData.chatbot) {
-      chatbotForm.value = {
-        welcomeMessage: settingsData.chatbot.welcomeMessage || 'Hi! I\'m your TF2 Dodgeball Server assistant. I can help you with commands, donations, gameplay, and more!'
-      };
-    }
-
-    if (settingsData.donations) {
-      donationForm.value = {
-        paypalEnabled: settingsData.donations.paypalEnabled !== false,
-        revolutEnabled: settingsData.donations.revolutEnabled !== false,
-        buyMeACoffeeEnabled: settingsData.donations.buyMeACoffeeEnabled !== false
-      };
-    }
+    const result = await getSettings()
+    meta.value = result._meta || meta.value
+    const { _meta, ...editable } = result
+    settings.value = structuredClone(editable)
   } catch (error) {
-    console.error('Failed to load settings:', error);
-    showMessage('Failed to load settings', 'error');
-  }
-};
-
-// Toggle maintenance mode
-const toggleMaintenance = async () => {
-  try {
-    isLoading.value = true;
-    
-    const newEnabled = !settings.value?.maintenance?.enabled;
-    
-    const response = await updateSettings({
-      maintenance: {
-        enabled: newEnabled
-      }
-    });
-    
-    if (response.success) {
-      settings.value = response.settings;
-      showMessage(`Maintenance mode ${newEnabled ? 'enabled' : 'disabled'}`, 'success');
-    }
-  } catch (error) {
-    console.error('Failed to toggle maintenance mode:', error);
-    showMessage('Failed to toggle maintenance mode', 'error');
+    showNotice(error?.data?.message || 'Settings could not be loaded.', 'error')
   } finally {
-    isLoading.value = false;
+    loading.value = false
   }
-};
+}
 
-// Save maintenance settings
-const saveMaintenanceSettings = async () => {
+async function persist(payload, successMessage) {
+  saving.value = true
   try {
-    isLoading.value = true;
-    
-    const response = await updateSettings({
-      maintenance: {
-        title: maintenanceForm.value.title,
-        message: maintenanceForm.value.message,
-        estimatedTime: maintenanceForm.value.estimatedTime
-      }
-    });
-    
-    if (response.success) {
-      settings.value = response.settings;
-      showMessage('Maintenance settings saved successfully', 'success');
-    }
+    const result = await updateSettings(payload)
+    settings.value = structuredClone(result.settings)
+    meta.value.revision = result.revision
+    meta.value.updatedAt = new Date().toISOString()
+    showNotice(successMessage)
   } catch (error) {
-    console.error('Failed to save maintenance settings:', error);
-    showMessage('Failed to save maintenance settings', 'error');
+    showNotice(error?.data?.message || error?.data?.statusMessage || 'Settings could not be saved.', 'error')
   } finally {
-    isLoading.value = false;
+    saving.value = false
   }
-};
+}
 
-// Save season settings
-const saveSeasonSettings = async () => {
-  try {
-    isLoading.value = true;
+function save(section) {
+  return persist({ [section]: settings.value[section] }, `${section.charAt(0).toUpperCase() + section.slice(1)} settings saved.`)
+}
 
-    const response = await updateSettings({
-      seasons: {
-        startYear: seasonForm.value.startYear,
-        startMonth: seasonForm.value.startMonth,
-        startDay: seasonForm.value.startDay
-      }
-    });
+function saveCommunity() {
+  return persist({ discord: settings.value.discord, donations: settings.value.donations }, 'Community settings saved.')
+}
 
-    if (response.success) {
-      settings.value = response.settings;
-      showMessage('Season settings saved successfully', 'success');
-    }
-  } catch (error) {
-    console.error('Failed to save season settings:', error);
-    showMessage('Failed to save season settings', 'error');
-  } finally {
-    isLoading.value = false;
-  }
-};
+function formatDate(value) {
+  return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+}
 
-// Save Discord settings
-const saveDiscordSettings = async () => {
-  try {
-    isLoading.value = true;
-
-    const response = await updateSettings({
-      discord: {
-        inviteUrl: discordForm.value.inviteUrl
-      }
-    });
-
-    if (response.success) {
-      settings.value = response.settings;
-      showMessage('Discord settings saved successfully', 'success');
-    }
-  } catch (error) {
-    console.error('Failed to save Discord settings:', error);
-    showMessage('Failed to save Discord settings', 'error');
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-
-
-// Toggle chatbot
-const toggleChatbot = async () => {
-  try {
-    isLoading.value = true;
-
-    const newEnabled = !settings.value?.chatbot?.enabled;
-
-    const response = await updateSettings({
-      chatbot: {
-        enabled: newEnabled
-      }
-    });
-
-    if (response.success) {
-      settings.value = response.settings;
-      showMessage(`Chatbot ${newEnabled ? 'enabled' : 'disabled'}`, 'success');
-    }
-  } catch (error) {
-    console.error('Failed to toggle chatbot:', error);
-    showMessage('Failed to toggle chatbot', 'error');
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-// Save chatbot settings
-const saveChatbotSettings = async () => {
-  try {
-    isLoading.value = true;
-
-    const response = await updateSettings({
-      chatbot: {
-        welcomeMessage: chatbotForm.value.welcomeMessage
-      }
-    });
-
-    if (response.success) {
-      settings.value = response.settings;
-      showMessage('Chatbot settings saved successfully', 'success');
-    }
-  } catch (error) {
-    console.error('Failed to save chatbot settings:', error);
-    showMessage('Failed to save chatbot settings', 'error');
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-// Reset chatbot form
-const resetChatbotForm = () => {
-  chatbotForm.value = {
-    welcomeMessage: settings.value?.chatbot?.welcomeMessage || 'Hi! I\'m your TF2 Dodgeball Server assistant. I can help you with commands, donations, gameplay, and more!'
-  };
-};
-
-// Save cache settings
-const updateCacheSettings = async () => {
-  try {
-    isLoading.value = true;
-
-    const response = await updateSettings({
-      cache: {
-        serverStatusInterval: cacheForm.value.serverStatusInterval,
-        leaderboardInterval: cacheForm.value.leaderboardInterval,
-        playerSearchInterval: cacheForm.value.playerSearchInterval,
-        seasonalLeaderboardInterval: cacheForm.value.seasonalLeaderboardInterval,
-        databaseStatusInterval: cacheForm.value.databaseStatusInterval
-      }
-    });
-
-    if (response.success) {
-      settings.value = response.settings;
-      showMessage('Cache settings saved successfully', 'success');
-    }
-  } catch (error) {
-    console.error('Failed to save cache settings:', error);
-    showMessage('Failed to save cache settings', 'error');
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-// Reset form to current settings
-const resetForm = () => {
-  if (settings.value?.maintenance) {
-    maintenanceForm.value = {
-      title: settings.value.maintenance.title || '',
-      message: settings.value.maintenance.message || '',
-      estimatedTime: settings.value.maintenance.estimatedTime || ''
-    };
-  }
-};
-
-// Reset season form
-const resetSeasonForm = () => {
-  if (settings.value?.seasons) {
-    seasonForm.value = {
-      startYear: settings.value.seasons.startYear || 2025,
-      startMonth: settings.value.seasons.startMonth || 5,
-      startDay: settings.value.seasons.startDay || 15
-    };
-  }
-};
-
-// Reset Discord form
-const resetDiscordForm = () => {
-  if (settings.value?.discord) {
-    discordForm.value = {
-      inviteUrl: settings.value.discord.inviteUrl || ''
-    };
-  }
-};
-
-
-
-// Save Logging settings
-const saveLoggingSettings = async () => {
-  try {
-    isLoading.value = true;
-
-    const response = await updateSettings({
-      logging: {
-        backgroundWorkers: loggingForm.value.backgroundWorkers,
-        statusChangesOnly: loggingForm.value.statusChangesOnly,
-        serverQueries: loggingForm.value.serverQueries
-      }
-    });
-
-    if (response.success) {
-      settings.value = response.settings;
-      showMessage('Logging settings saved successfully', 'success');
-    }
-  } catch (error) {
-    console.error('Failed to save logging settings:', error);
-    showMessage('Failed to save logging settings', 'error');
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-// Reset Logging form
-const resetLoggingForm = () => {
-  if (settings.value?.logging) {
-    loggingForm.value = {
-      backgroundWorkers: settings.value.logging.backgroundWorkers !== false,
-      statusChangesOnly: settings.value.logging.statusChangesOnly !== false,
-      serverQueries: settings.value.logging.serverQueries || 'minimal'
-    };
-  }
-};
-
-// Save donation settings
-const saveDonationSettings = async () => {
-  try {
-    isLoading.value = true;
-
-    const response = await updateSettings({
-      donations: {
-        paypalEnabled: donationForm.value.paypalEnabled,
-        revolutEnabled: donationForm.value.revolutEnabled,
-        buyMeACoffeeEnabled: donationForm.value.buyMeACoffeeEnabled,
-        lastUpdated: new Date().toISOString()
-      }
-    });
-
-    if (response.success) {
-      settings.value = response.settings;
-      showMessage('Donation settings saved successfully', 'success');
-    }
-  } catch (error) {
-    console.error('Failed to save donation settings:', error);
-    showMessage('Failed to save donation settings', 'error');
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-// Reset donation form
-const resetDonationForm = () => {
-  if (settings.value?.donations) {
-    donationForm.value = {
-      paypalEnabled: settings.value.donations.paypalEnabled !== false,
-      revolutEnabled: settings.value.donations.revolutEnabled !== false,
-      buyMeACoffeeEnabled: settings.value.donations.buyMeACoffeeEnabled !== false
-    };
-  }
-};
-
-// Show message
-const showMessage = (msg, type = 'success') => {
-  message.value = msg;
-  messageType.value = type;
-  setTimeout(() => {
-    message.value = '';
-  }, 5000);
-};
-
-// Format date
-const formatDate = (dateString) => {
-  try {
-    return new Date(dateString).toLocaleString();
-  } catch (error) {
-    return dateString;
-  }
-};
-
-// Load data on mount
-onMounted(async () => {
-  try {
-    // Check authentication first
-    const isAuth = await checkAuth();
-    if (!isAuth) {
-      await navigateTo('/admin');
-      return;
-    }
-
-    await loadSettings();
-  } catch (error) {
-    console.error('Failed to initialize settings page:', error);
-    await navigateTo('/admin');
-  }
-});
+onMounted(loadSettings)
+onBeforeUnmount(() => clearTimeout(noticeTimer))
 </script>
+
+<style scoped>
+.settings-stack { display: grid; gap: 1rem; }
+.settings-revision { color: var(--admin-muted); font-family: var(--font-mono); font-size: .65rem; letter-spacing: .08em; }
+.field-wide { grid-column: 1 / -1; }
+.season-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 10rem)); gap: 1rem; }
+.cache-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.channel-toggles { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-top: 1.25rem; padding: 1rem 0; border-block: 1px solid var(--admin-line); }
+@media (max-width: 950px) { .cache-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .season-grid, .cache-grid { grid-template-columns: 1fr; } .field-wide { grid-column: auto; } }
+</style>

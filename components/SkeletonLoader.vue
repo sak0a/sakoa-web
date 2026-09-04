@@ -104,6 +104,8 @@ const getLineWidth = (index) => {
 </script>
 
 <style scoped>
+@reference "../assets/css/main.css";
+
 .skeleton-loader {
   @apply w-full;
 }

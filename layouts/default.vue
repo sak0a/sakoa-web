@@ -1,213 +1,173 @@
 <template>
-  <div class="min-h-screen flex flex-col">
-    <!-- Admin Notice -->
+  <div class="site-shell">
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <AdminNotice />
 
-    <header
-      ref="navigation"
-      class="navigation fixed left-0 w-full z-50 transition-all duration-500 ease-out admin-aware"
-      :class="{ 'scrolled': scrolled }"
-    >
-      <div class="nav-container" :class="navContainerClasses">
-        <div class="nav-parent">
-          <!-- Logo and title section -->
-          <div class="nav-logo">
-            <img
-              src="/default-512x512.png"
-              alt="saka's Dodgeball Server Logo"
-              class="nav-logo-img w-10 h-10 rounded-lg"
-              width="40"
-              height="40"
-              loading="eager"
-            />
-            <span
-              class="nav-title transition-all duration-500 ease-out font-semibold text-white"
-              :class="{ 'nav-title-hidden': scrolled }"
-            >
-              saka's dodgeball server
-            </span>
-          </div>
+    <header ref="navigation" class="navigation admin-aware" :class="{ 'is-scrolled': scrolled }">
+      <div class="nav-frame">
+        <a href="#top" class="brand" aria-label="saka's dodgeball server, home" @click="closeMobileMenu">
+          <img src="/default-512x512.png" alt="" class="brand-mark" width="36" height="36">
+          <span class="brand-copy">
+            <strong>saka</strong>
+            <span>dodgeball / tf2</span>
+          </span>
+        </a>
 
-          <!-- Centered navigation menu -->
-          <nav class="nav-menu" :class="{ 'open': mobileMenuOpen }">
-            <a href="#" class="nav-link" @click="closeMobileMenu">Start</a>
-            <a href="#about" class="nav-link" @click="closeMobileMenu">About</a>
-            <a href="#server-status" class="nav-link" @click="closeMobileMenu">Status</a>
-            <a href="#leaderboard" class="nav-link" @click="closeMobileMenu">Leaderboard</a>
-            <a href="#tiers" class="nav-link" @click="closeMobileMenu">Rewards</a>
-            <a href="#donors" class="nav-link" @click="closeMobileMenu">Donators</a>
-
-            <!-- Mobile menu buttons -->
-            <div class="nav-buttons-mobile">
-              <a href="#donate" rel="noopener noreferrer" class="nav-button outline" @click="closeMobileMenu">
-                <span>Donate</span>
-                <svg class="nav-button-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </a>
-            </div>
-          </nav>
-
-          <!-- Mobile hamburger menu button -->
-          <button
-            class="mobile-menu-toggle"
-            @click="toggleMobileMenu"
-            :class="{ 'open': mobileMenuOpen }"
-            aria-label="Toggle mobile menu"
+        <nav id="primary-navigation" class="nav-menu" :class="{ 'is-open': mobileMenuOpen }" aria-label="Primary navigation">
+          <a
+            v-for="item in navigationItems"
+            :key="item.id"
+            :href="`#${item.id}`"
+            class="nav-link"
+            :class="{ 'is-active': activeSection === item.id }"
+            :aria-current="activeSection === item.id ? 'location' : undefined"
+            @click="closeMobileMenu"
           >
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-          </button>
+            {{ item.label }}
+          </a>
+          <a href="#donate" class="nav-mobile-action" @click="closeMobileMenu">Support the server</a>
+        </nav>
 
-          <!-- Right-side buttons (desktop only) -->
-          <div class="nav-buttons-right">
-            <a href="#donate" rel="noopener noreferrer" class="btn btn-primary text-sm px-4 py-2 group">
-              <span>Donate</span>
-              <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12H19M19 12L12 5M19 12L12 19"/>
-              </svg>
-            </a>
-          </div>
-        </div>
+        <a href="#donate" class="nav-action">Support</a>
+        <button
+          class="menu-toggle"
+          type="button"
+          :aria-expanded="mobileMenuOpen"
+          :data-hydrated="hydrated ? 'true' : 'false'"
+          aria-controls="primary-navigation"
+          :aria-label="mobileMenuOpen ? 'Close navigation' : 'Open navigation'"
+          @click="toggleMobileMenu"
+        >
+          <span />
+          <span />
+        </button>
       </div>
     </header>
 
-    <main class="flex-grow">
-      <slot />
-    </main>
-
-    <!-- Back to Top Button -->
+    <main id="main-content"><slot /></main>
     <BackToTop />
 
-    <!-- Chatbot -->
-    <Chatbot />
-
-    <!-- Performance Monitor (dev only) -->
-    <!-- <PerformanceMonitor /> -->
-
-    <footer class="py-8" style="background-color: #0a0a0a; color: var(--text-primary);">
-      <div class=" text-center text-sm animate-on-scroll animate-fade-in animate-delay-3" style="border-color: var(--border-color); color: var(--text-tertiary);">
-        <p>&copy; {{ new Date().getFullYear() }} saka's dodgeball server. All rights reserved.</p>
+    <footer class="site-footer">
+      <div class="footer-frame">
+        <div>
+          <span class="footer-kicker">Community-operated since 2024</span>
+          <p>saka's dodgeball server</p>
+        </div>
+        <div class="footer-meta">
+          <span>Team Fortress 2</span>
+          <span>Frankfurt, DE</span>
+          <span>© {{ currentYear }}</span>
+        </div>
       </div>
     </footer>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import BackToTop from '~/components/BackToTop.vue';
-import AdminNotice from '~/components/AdminNotice.vue';
-import Chatbot from '~/components/Chatbot.vue';
-// import PerformanceMonitor from '~/components/PerformanceMonitor.vue';
+import { onMounted, onUnmounted, ref } from 'vue'
+import AdminNotice from '~/components/AdminNotice.vue'
+import BackToTop from '~/components/BackToTop.vue'
 
-const navigation = ref(null);
-const scrolled = ref(false);
-const mobileMenuOpen = ref(false);
-const currentScrollY = ref(0);
+const navigation = ref(null)
+const hydrated = ref(false)
+const scrolled = ref(false)
+const mobileMenuOpen = ref(false)
+const activeSection = ref('top')
+const currentYear = new Date().getFullYear()
+const navigationItems = [
+  { id: 'top', label: 'Start' },
+  { id: 'server-status', label: 'Live' },
+  { id: 'leaderboard', label: 'Ranks' },
+  { id: 'tiers', label: 'Rewards' },
+  { id: 'donors', label: 'Donors' },
+]
 
-// Dynamic navbar background based on scroll position and section
-const navContainerClasses = computed(() => {
-  const isInHero = currentScrollY.value < (typeof window !== 'undefined' ? window.innerHeight * 0.8 : 600);
-  const isCompact = currentScrollY.value > 100;
-
-  return {
-    'backdrop-blur-xl': isCompact,
-    'bg-gray-950/80': isCompact && !isInHero,
-    'bg-gray-950/20': isCompact && isInHero,
-    'border-b': isCompact,
-    'border-gray-800/50': isCompact && !isInHero,
-    'border-gray-700/30': isCompact && isInHero,
-  };
-});
-
-// Mobile menu functions
-const toggleMobileMenu = () => {
-  mobileMenuOpen.value = !mobileMenuOpen.value;
-
-  // Prevent body scrolling when menu is open
-  if (mobileMenuOpen.value) {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = '';
-  }
-};
+let sectionObserver
 
 const closeMobileMenu = () => {
-  mobileMenuOpen.value = false;
-  document.body.style.overflow = '';
-};
+  mobileMenuOpen.value = false
+  document.body.style.overflow = ''
+}
 
-// Close mobile menu when clicking outside
-const handleClickOutside = (event) => {
-  if (mobileMenuOpen.value && navigation.value && !navigation.value.contains(event.target)) {
-    closeMobileMenu();
-  }
-};
+const toggleMobileMenu = () => {
+  mobileMenuOpen.value = !mobileMenuOpen.value
+  document.body.style.overflow = mobileMenuOpen.value ? 'hidden' : ''
+}
 
-// Close mobile menu on escape key
-const handleEscapeKey = (event) => {
-  if (event.key === 'Escape' && mobileMenuOpen.value) {
-    closeMobileMenu();
-  }
-};
-
-// Close mobile menu on window resize to desktop
-const handleResize = () => {
-  if (window.innerWidth > 991 && mobileMenuOpen.value) {
-    closeMobileMenu();
-  }
-};
-
-// Track scroll position for navbar styling
-const updateScrollPosition = () => {
-  currentScrollY.value = window.scrollY;
-};
+const onScroll = () => { scrolled.value = window.scrollY > 24 }
+const onKeydown = (event) => {
+  if (event.key === 'Escape' && mobileMenuOpen.value) closeMobileMenu()
+}
+const onResize = () => {
+  if (window.innerWidth >= 900 && mobileMenuOpen.value) closeMobileMenu()
+}
 
 onMounted(() => {
-  // Register ScrollTrigger plugin
-  gsap.registerPlugin(ScrollTrigger);
+  hydrated.value = true
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('resize', onResize)
+  document.addEventListener('keydown', onKeydown)
+  onScroll()
 
-  // Add event listeners for mobile menu and search
-  document.addEventListener('click', handleClickOutside);
-  document.addEventListener('keydown', handleEscapeKey);
-  window.addEventListener('resize', handleResize);
+  sectionObserver = new IntersectionObserver((entries) => {
+    const visible = entries.filter(entry => entry.isIntersecting)
+      .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0]
+    if (visible?.target?.id) activeSection.value = visible.target.id
+  }, { rootMargin: '-25% 0px -60%', threshold: [0.05, 0.25, 0.5] })
 
-  // Add scroll listener for navbar styling
-  window.addEventListener('scroll', updateScrollPosition);
-  updateScrollPosition(); // Initial call
-
-  // Wait for DOM to be ready
-  setTimeout(() => {
-    const heroSection = document.querySelector('section'); // First section is the hero
-
-    if (heroSection && navigation.value) {
-      // ScrollTrigger for the main navigation animation
-      ScrollTrigger.create({
-        trigger: heroSection,
-        start: "bottom top", // When the bottom of hero section hits the top of viewport
-        end: "bottom top",
-        onEnter: () => {
-          scrolled.value = true;
-        },
-        onLeaveBack: () => {
-          scrolled.value = false;
-        },
-      });
-    }
-  }, 100);
-});
+  navigationItems.forEach(({ id }) => {
+    const section = document.getElementById(id)
+    if (section) sectionObserver.observe(section)
+  })
+})
 
 onUnmounted(() => {
-  // Clean up ScrollTrigger instances
-  ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-
-  // Remove event listeners
-  document.removeEventListener('click', handleClickOutside);
-  document.removeEventListener('keydown', handleEscapeKey);
-  window.removeEventListener('resize', handleResize);
-  window.removeEventListener('scroll', updateScrollPosition);
-});
+  window.removeEventListener('scroll', onScroll)
+  window.removeEventListener('resize', onResize)
+  document.removeEventListener('keydown', onKeydown)
+  sectionObserver?.disconnect()
+  document.body.style.overflow = ''
+})
 </script>
+
+<style scoped>
+.site-shell { min-height: 100dvh; background: var(--arena-ink); color: var(--arena-text); }
+.navigation { position: fixed; inset: 0 0 auto; z-index: 50; padding: .85rem 0; transition: background-color 180ms ease, border-color 180ms ease, padding 180ms ease; border-bottom: 1px solid transparent; }
+.navigation.is-scrolled { padding: .45rem 0; background: rgba(12, 11, 15, .94); border-color: var(--arena-line); }
+.nav-frame, .footer-frame { width: min(100% - 2rem, 86rem); margin-inline: auto; display: flex; align-items: center; }
+.nav-frame { min-height: 3.5rem; gap: 1.5rem; }
+.brand { display: inline-flex; align-items: center; gap: .7rem; color: var(--arena-text); text-decoration: none; flex-shrink: 0; }
+.brand-mark { width: 2.25rem; height: 2.25rem; border-radius: .35rem; border: 1px solid var(--arena-line-strong); }
+.brand-copy { display: grid; line-height: 1; }
+.brand-copy strong { font-family: var(--font-display); font-size: 1rem; letter-spacing: -.02em; }
+.brand-copy span, .footer-kicker { margin-top: .28rem; color: var(--arena-muted); font: 600 .62rem/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
+.nav-menu { margin-left: auto; display: flex; align-items: center; gap: .2rem; }
+.nav-link { position: relative; padding: .7rem .8rem; color: var(--arena-muted); font-size: .82rem; font-weight: 600; text-decoration: none; }
+.nav-link::after { content: ''; position: absolute; inset: auto .8rem .36rem; height: 1px; background: var(--arena-violet); transform: scaleX(0); transform-origin: left; transition: transform 180ms ease; }
+.nav-link:hover, .nav-link.is-active { color: var(--arena-text); }
+.nav-link.is-active::after { transform: scaleX(1); }
+.nav-action, .nav-mobile-action { border: 1px solid var(--arena-violet); color: var(--arena-text); text-decoration: none; font-size: .78rem; font-weight: 700; padding: .68rem 1rem; transition: background-color 180ms ease, transform 180ms ease; }
+.nav-action:hover, .nav-mobile-action:hover { background: var(--arena-violet); }
+.nav-action:active, .nav-mobile-action:active { transform: translateY(1px); }
+.nav-mobile-action, .menu-toggle { display: none; }
+.site-footer { border-top: 1px solid var(--arena-line); padding: 2.5rem 0 3rem; background: #09080b; }
+.footer-frame { justify-content: space-between; gap: 2rem; }
+.footer-frame p { margin: .45rem 0 0; color: var(--arena-text); font-family: var(--font-display); font-size: 1.1rem; }
+.footer-meta { display: flex; gap: 1.5rem; color: var(--arena-muted); font: 500 .72rem/1.4 var(--font-mono); }
+
+@media (max-width: 899px) {
+  .nav-frame { justify-content: space-between; }
+  .nav-action { display: none; }
+  .menu-toggle { display: grid; place-content: center; gap: .38rem; width: 2.75rem; height: 2.75rem; border: 1px solid var(--arena-line-strong); color: var(--arena-text); background: var(--arena-panel); }
+  .menu-toggle span { display: block; width: 1.1rem; height: 1px; background: currentColor; transition: transform 180ms ease; }
+  .menu-toggle[aria-expanded='true'] span:first-child { transform: translateY(.22rem) rotate(45deg); }
+  .menu-toggle[aria-expanded='true'] span:last-child { transform: translateY(-.22rem) rotate(-45deg); }
+  .nav-menu { position: absolute; z-index: 100; inset: calc(100% + 1px) 1rem auto; width: auto; margin: 0; display: none; align-items: stretch; padding: 1rem; background: #111016; border: 1px solid var(--arena-line-strong); border-radius: 0; box-shadow: 0 1.5rem 3rem rgba(5, 4, 7, .45); opacity: 0; visibility: hidden; transform: none; pointer-events: none; }
+  .nav-menu.is-open { display: grid; opacity: 1; visibility: visible; transform: none; pointer-events: auto; }
+  .nav-link { padding: .9rem .65rem; border-bottom: 1px solid var(--arena-line); }
+  .nav-link::after { display: none; }
+  .nav-mobile-action { display: block; margin-top: 1rem; text-align: center; }
+  .footer-frame, .footer-meta { align-items: flex-start; flex-direction: column; }
+  .footer-meta { gap: .45rem; }
+}
+</style>

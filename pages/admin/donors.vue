@@ -1,366 +1,330 @@
 <template>
-  <div class="min-h-screen bg-gray-900">
-    <AdminLayout>
-      <div class="p-6">
-        <div class="flex justify-between items-center mb-8">
+  <AdminLayout>
+    <div class="admin-page">
+      <header class="admin-page-header">
           <div>
-            <h1 class="text-3xl font-bold text-white mb-2">Donor Management</h1>
-            <p class="text-gray-400">Add, edit, or remove donors from your list</p>
+            <span class="admin-eyebrow">Operate / donor records</span>
+            <h1>Donors.</h1>
+            <p>Manage public recognition, access expiry, and contribution history for each Steam account.</p>
           </div>
           <button
+            type="button"
             @click="openAddModal"
-            class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+            class="admin-button admin-button-primary"
           >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            Add Donor
+            Add donor
           </button>
-        </div>
+        </header>
 
         <!-- Loading State -->
-        <div v-if="loading" class="text-center py-8">
-          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
-          <p class="text-gray-400 mt-2">Loading donors...</p>
+        <div v-if="loading" class="admin-panel admin-empty" aria-live="polite">
+          Loading donor records…
         </div>
 
         <!-- Error State -->
-        <div v-else-if="error" class="bg-red-500/20 border border-red-500/50 rounded-lg p-4 mb-6">
-          <p class="text-red-200">{{ error }}</p>
+        <div v-else-if="error" class="admin-notice admin-notice--error" role="alert">
+          <span>{{ error }}</span>
+          <button type="button" class="notice-retry" @click="loadDonors">Retry</button>
         </div>
 
         <!-- Donors Cards -->
-        <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section v-else class="admin-panel donor-register" aria-label="Donor records">
           <div
-            v-for="(donor, index) in donors"
-            :key="index"
-            class="bg-white/10 backdrop-blur-lg rounded-lg p-6 border border-white/20"
+            v-for="donor in donors"
+            :key="donor.steamid"
+            class="donor-record"
           >
-            <div class="flex justify-between items-start mb-4">
-              <div class="flex-1">
-                <div class="flex items-center mb-2">
-                  <h3 class="text-lg font-semibold text-white mr-3">{{ donor.display_name || donor.name }}</h3>
-                  <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-500/20 text-purple-300">
+            <div class="donor-record__summary">
+              <div class="donor-record__identity">
+                <div class="donor-title-row">
+                  <h2>{{ donor.display_name || donor.name }}</h2>
+                  <span class="donor-tag donor-tag--tier">
                     {{ donor.tier }}
                   </span>
-                  <span v-if="donor.show_on_website" class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-300">
+                  <span v-if="donor.show_on_website" class="donor-tag donor-tag--visible">
                     Visible
                   </span>
-                  <span v-else class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-gray-500/20 text-gray-300">
+                  <span v-else class="donor-tag">
                     Hidden
                   </span>
                 </div>
-                <p class="text-gray-400 text-sm mb-1">Total: €{{ donor.total_amount || donor.amount }}</p>
-                <p class="text-gray-400 text-sm mb-1">Donations: {{ donor.donation_count || (donor.donations ? donor.donations.length : 0) }}</p>
-                <div v-if="donor.expiry_date && donor.expiry_date > 0" class="mb-1">
-                  <p class="text-sm" :class="isExpired(donor.expiry_date) ? 'text-red-400' : isExpiringSoon(donor.expiry_date) ? 'text-yellow-400' : 'text-green-400'">
-                    {{ isExpired(donor.expiry_date) ? '⚠️ Expired' : '⏰ Expires' }}: {{ formatExpiryDate(donor.expiry_date) }}
+                <p class="donor-fact"><span>Total</span> €{{ donor.total_amount || donor.amount }}</p>
+                <p class="donor-fact"><span>Entries</span> {{ donor.donation_count || (donor.donations ? donor.donations.length : 0) }}</p>
+                <div v-if="donor.expiry_date && donor.expiry_date > 0" class="donor-expiry">
+                  <p :class="expiryClass(donor.expiry_date)">
+                    {{ isExpired(donor.expiry_date) ? 'Expired' : 'Expires' }}: {{ formatExpiryDate(donor.expiry_date) }}
                   </p>
                 </div>
-                <div v-else-if="donor.expiry_date === 0" class="mb-1">
-                  <p class="text-green-400 text-sm">✓ Permanent</p>
+                <div v-else-if="donor.expiry_date === 0" class="donor-expiry">
+                  <p class="donor-expiry--active">Permanent</p>
                 </div>
-                <p v-if="donor.steamid" class="text-gray-400 text-xs font-mono">{{ donor.steamid }}</p>
+                <p v-if="donor.steamid" class="donor-steamid">{{ donor.steamid }}</p>
               </div>
-              <div class="flex space-x-2">
+              <div class="donor-actions">
                 <button
+                  type="button"
                   @click="openEditModal(donor.steamid, donor)"
-                  class="text-blue-400 hover:text-blue-300 p-2 rounded transition-colors"
-                  title="Edit Donor"
+                  class="admin-button admin-button-secondary"
+                  title="Edit donor"
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                  </svg>
+                  Edit
                 </button>
                 <button
+                  type="button"
                   @click="confirmDelete(donor.steamid, donor)"
-                  class="text-red-400 hover:text-red-300 p-2 rounded transition-colors"
-                  title="Delete Donor"
+                  class="admin-button admin-button-danger"
+                  title="Delete donor"
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                  </svg>
+                  Delete
                 </button>
               </div>
             </div>
 
             <!-- Individual Donations -->
-            <div class="space-y-2">
-              <h4 class="text-sm font-medium text-gray-300 mb-2">Donations:</h4>
-              <div class="max-h-32 overflow-y-auto space-y-1">
+            <div class="donation-history">
+              <h3>Contribution history</h3>
+              <div class="donation-history__list">
                 <div
                   v-for="(donation, donationIndex) in (donor.donations || [])"
                   :key="donationIndex"
-                  class="py-1 px-2 bg-white/5 rounded text-sm"
+                  class="donation-entry"
                 >
-                  <div class="flex justify-between items-center">
-                    <span class="text-white">€{{ donation.amount }}</span>
-                    <span class="text-gray-400">{{ donation.date }}</span>
+                  <div class="donation-entry__line">
+                    <span>€{{ donation.amount }}</span>
+                    <time>{{ donation.date }}</time>
                   </div>
-                  <div v-if="donation.notes" class="text-xs text-gray-500 mt-1 italic">
-                    "{{ donation.notes }}"
+                  <div v-if="donation.notes" class="donation-note">
+                    {{ donation.notes }}
                   </div>
                 </div>
               </div>
-              <div v-if="!donor.donations || donor.donations.length === 0" class="text-gray-500 text-sm italic">
-                No individual donations recorded
+              <div v-if="!donor.donations || donor.donations.length === 0" class="donation-empty">
+                No individual contributions recorded.
               </div>
             </div>
           </div>
 
-          <div v-if="donors.length === 0" class="col-span-full text-center py-8">
-            <p class="text-gray-400">No donors found. Add your first donor to get started!</p>
+          <div v-if="donors.length === 0" class="admin-empty">
+            No donor records yet. Add one to begin tracking contributions.
           </div>
-        </div>
+        </section>
 
         <!-- Add/Edit Modal -->
-        <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div class="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h2 class="text-xl font-bold text-white mb-4">
-              {{ editingIndex !== null ? 'Edit Donor' : 'Add New Donor' }}
+        <div v-if="showModal" class="donor-backdrop" role="presentation" @click.self="closeModal">
+          <section class="donor-dialog" role="dialog" aria-modal="true" aria-labelledby="donor-dialog-title">
+            <h2 id="donor-dialog-title" class="donor-dialog-title">
+              {{ editingSteamId !== null ? 'Edit donor' : 'Add donor' }}
             </h2>
 
-            <form @submit.prevent="saveDonor" class="space-y-6">
+            <form class="donor-form" @submit.prevent="saveDonor">
               <!-- Basic Info -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-2">Display Name *</label>
+              <div class="donor-form-grid">
+                <label class="donor-field">
+                  <span>Display name *</span>
                   <input
                     v-model="formData.display_name"
                     type="text"
                     required
-                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="Name to display on website"
-                  />
-                </div>
+                  >
+                </label>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-2">Tier *</label>
+                <label class="donor-field">
+                  <span>Tier *</span>
                   <input
                     v-model="formData.tier"
                     type="text"
                     required
-                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="VIP, Premium, Elite, Supporter, SAS, etc."
-                  />
-                  <p class="text-xs text-gray-400 mt-1">This will be displayed as a badge on the website</p>
-                </div>
+                  >
+                  <small>Displayed as a badge on the public website.</small>
+                </label>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-2">SteamID *</label>
+              <div class="donor-form-grid">
+                <label class="donor-field">
+                  <span>SteamID *</span>
                   <input
                     v-model="formData.steamid"
                     type="text"
                     required
                     :disabled="editingSteamId !== null"
-                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
                     placeholder="[U:1:XXXXXXXX] or STEAM_0:X:XXXXXXX"
-                  />
-                  <p v-if="editingSteamId !== null" class="text-xs text-gray-400 mt-1">SteamID cannot be changed when editing</p>
-                </div>
+                  >
+                  <small v-if="editingSteamId !== null">SteamID cannot be changed while editing.</small>
+                </label>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-2">Website Visibility</label>
-                  <div class="flex items-center space-x-3">
-                    <label class="flex items-center">
-                      <input
-                        v-model="formData.show_on_website"
-                        type="checkbox"
-                        class="rounded bg-gray-700 border-gray-600 text-purple-600 focus:ring-purple-500"
-                      />
-                      <span class="ml-2 text-sm text-gray-300">Show on website</span>
-                    </label>
-                  </div>
-                </div>
+                <fieldset class="donor-fieldset">
+                  <legend>Website visibility</legend>
+                  <label class="donor-choice">
+                    <input v-model="formData.show_on_website" type="checkbox">
+                    <span>Show on website</span>
+                  </label>
+                </fieldset>
               </div>
 
               <!-- Expiry Date Section -->
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-3">Donation Expiry</label>
-                <div class="space-y-3">
-                  <div class="flex items-center space-x-4">
-                    <label class="flex items-center">
+              <fieldset class="donor-fieldset">
+                <legend>Donation expiry</legend>
+                <div class="donor-choice-row">
+                    <label class="donor-choice">
                       <input
                         v-model="formData.is_permanent"
                         type="radio"
                         :value="true"
                         name="expiry_type"
-                        class="text-purple-600 focus:ring-purple-500 bg-gray-700 border-gray-600"
-                      />
-                      <span class="ml-2 text-sm text-gray-300">Permanent donation</span>
+                      >
+                      <span>Permanent donation</span>
                     </label>
-                    <label class="flex items-center">
+                    <label class="donor-choice">
                       <input
                         v-model="formData.is_permanent"
                         type="radio"
                         :value="false"
                         name="expiry_type"
-                        class="text-purple-600 focus:ring-purple-500 bg-gray-700 border-gray-600"
-                      />
-                      <span class="ml-2 text-sm text-gray-300">Temporary donation</span>
+                      >
+                      <span>Temporary donation</span>
                     </label>
-                  </div>
+                </div>
 
-                  <div v-if="!formData.is_permanent" class="transition-all duration-200">
-                    <label class="block text-sm font-medium text-gray-400 mb-2">Expiry Date *</label>
+                  <label v-if="!formData.is_permanent" class="donor-field donor-field--expiry">
+                    <span>Expiry date *</span>
                     <input
                       v-model="formData.expiry_date"
                       type="date"
                       :min="new Date().toISOString().split('T')[0]"
                       required
-                      class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                    <p class="text-xs text-gray-400 mt-1">Select when the donation status should expire</p>
-                  </div>
+                    >
+                    <small>Select when the donation status should expire.</small>
+                  </label>
 
-                  <div v-else class="text-sm text-green-400">
-                    ✓ This donation will never expire
+                  <div v-else class="permanent-note">
+                    This donation will never expire.
                   </div>
-                </div>
-              </div>
+              </fieldset>
 
               <!-- Donations Section -->
-              <div>
-                <div class="flex justify-between items-center mb-3">
-                  <label class="block text-sm font-medium text-gray-300">Donations *</label>
+              <fieldset class="donor-fieldset">
+                <div class="donor-fieldset__header">
+                  <h3>Donations *</h3>
                   <button
                     type="button"
                     @click="addDonation"
-                    class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                    class="admin-button admin-button-secondary"
                   >
-                    + Add Donation
+                    Add entry
                   </button>
                 </div>
 
-                <div class="space-y-3 max-h-60 overflow-y-auto">
+                <div class="donation-editor">
                   <div
                     v-for="(donation, index) in formData.donations"
                     :key="index"
-                    class="flex gap-3 items-end p-3 bg-gray-700/50 rounded-lg"
+                    class="donation-editor-row"
                   >
-                    <div class="flex-1">
-                      <label class="block text-xs text-gray-400 mb-1">Amount (€)</label>
+                    <label class="donor-field">
+                      <span>Amount (€)</span>
                       <input
                         v-model.number="donation.amount"
                         type="number"
                         step="0.01"
                         min="0"
                         required
-                        class="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
                         placeholder="0.00"
-                      />
-                    </div>
-                    <div class="flex-1">
-                      <label class="block text-xs text-gray-400 mb-1">Date</label>
+                      >
+                    </label>
+                    <label class="donor-field">
+                      <span>Date</span>
                       <input
                         v-model="donation.date"
                         type="date"
                         required
-                        class="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
-                      />
-                    </div>
-                    <div class="flex-1">
-                      <label class="block text-xs text-gray-400 mb-1">Notes (Optional)</label>
+                      >
+                    </label>
+                    <label class="donor-field">
+                      <span>Notes (optional)</span>
                       <input
                         v-model="donation.notes"
                         type="text"
-                        class="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
                         placeholder="Optional notes"
-                      />
-                    </div>
+                      >
+                    </label>
                     <button
                       type="button"
                       @click="removeDonation(index)"
-                      class="text-red-400 hover:text-red-300 p-1 transition-colors"
+                      class="remove-entry"
                       title="Remove donation"
                     >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                      </svg>
+                      Remove
                     </button>
                   </div>
 
-                  <div v-if="formData.donations.length === 0" class="text-center py-4 text-gray-400 text-sm">
-                    No donations added yet. Click "Add Donation" to get started.
+                  <div v-if="formData.donations.length === 0" class="donation-empty donation-empty--editor">
+                    No donations added yet. Add an entry to continue.
                   </div>
                 </div>
 
-                <div v-if="formData.donations.length > 0" class="mt-3 p-2 bg-purple-500/20 rounded">
-                  <p class="text-purple-300 text-sm">
-                    Total: €{{ calculateTotal() }}
+                <div v-if="formData.donations.length > 0" class="donation-total">
+                  <p>
+                    Draft total <strong>€{{ calculateTotal() }}</strong>
                   </p>
                 </div>
+              </fieldset>
+
+              <div v-if="modalError" class="admin-notice admin-notice--error" role="alert">
+                {{ modalError }}
               </div>
 
-              <div v-if="modalError" class="p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
-                <p class="text-red-200 text-sm">{{ modalError }}</p>
-              </div>
-
-              <div class="flex justify-end space-x-3 pt-4 border-t border-gray-600">
+              <div class="donor-dialog-actions">
                 <button
                   type="button"
                   @click="closeModal"
-                  class="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+                  class="admin-button admin-button-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   :disabled="saving || formData.donations.length === 0"
-                  class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                  class="admin-button admin-button-primary"
                 >
-                  {{ saving ? 'Saving...' : 'Save' }}
+                  {{ saving ? 'Saving…' : 'Save donor' }}
                 </button>
               </div>
             </form>
-          </div>
+          </section>
         </div>
 
         <!-- Delete Confirmation Modal -->
-        <div v-if="showDeleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h2 class="text-xl font-bold text-white mb-4">Confirm Delete</h2>
-            <p class="text-gray-300 mb-6">
-              Are you sure you want to delete <strong>{{ deleteTarget?.display_name || deleteTarget?.name }}</strong>? This action cannot be undone.
+        <div v-if="showDeleteModal" class="donor-backdrop" role="presentation" @click.self="showDeleteModal = false">
+          <section class="delete-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-dialog-title">
+            <h2 id="delete-dialog-title">Delete donor?</h2>
+            <p class="delete-copy">
+              Delete <strong>{{ deleteTarget?.display_name || deleteTarget?.name }}</strong> and all linked donation entries? This cannot be undone.
             </p>
-            
-            <div class="flex justify-end space-x-3">
+
+            <div class="delete-actions">
               <button
+                type="button"
                 @click="showDeleteModal = false"
-                class="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+                class="admin-button admin-button-secondary"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 @click="deleteDonorConfirmed"
                 :disabled="deleting"
-                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                class="admin-button admin-button-danger"
               >
-                {{ deleting ? 'Deleting...' : 'Delete' }}
+                {{ deleting ? 'Deleting…' : 'Delete donor' }}
               </button>
             </div>
-          </div>
+          </section>
         </div>
 
-        <!-- Cache Management Section -->
-        <div class="mt-8">
-          <div class="bg-white/10 backdrop-blur-lg rounded-lg p-6 border border-white/20">
-            <h2 class="text-xl font-bold text-white mb-4">Cache Management</h2>
-            <p class="text-gray-400 mb-4">Clear donor cache to force refresh of donor data on the website.</p>
-            <button
-              @click="clearDonorCache"
-              :disabled="clearingCache"
-              class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
-            >
-              {{ clearingCache ? 'Clearing...' : 'Clear Donor Cache' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </AdminLayout>
-  </div>
+    </div>
+  </AdminLayout>
 </template>
 
 <script setup>
@@ -368,7 +332,7 @@ definePageMeta({
   layout: false
 });
 
-const { checkAuth } = useAdmin();
+const { adminFetch } = useAdmin();
 
 const donors = ref([]);
 const loading = ref(true);
@@ -393,25 +357,19 @@ const deleteTarget = ref(null);
 const deleteSteamId = ref(null);
 const deleting = ref(false);
 
-const clearingCache = ref(false);
-
 // Load donors from database
 const loadDonors = async () => {
   try {
     loading.value = true;
     error.value = null;
 
-    const response = await $fetch('/api/admin/donors-db', {
-      method: 'GET',
-      credentials: 'include'
-    });
+    const response = await adminFetch('/api/admin/donors-db');
 
     donors.value = response.donors || [];
   } catch (err) {
     console.error('Failed to load donors:', err);
     error.value = err.data?.message || 'Failed to load donors';
     if (err.status === 401) {
-      console.log('Authentication failed, redirecting to login');
       await navigateTo('/admin');
     }
   } finally {
@@ -514,6 +472,12 @@ const isExpiringSoon = (timestamp) => {
   return daysUntilExpiry <= 7 && daysUntilExpiry > 0; // Expiring within 7 days
 };
 
+const expiryClass = (timestamp) => {
+  if (isExpired(timestamp)) return 'donor-expiry--expired';
+  if (isExpiringSoon(timestamp)) return 'donor-expiry--soon';
+  return 'donor-expiry--active';
+};
+
 const saveDonor = async () => {
   try {
     saving.value = true;
@@ -549,9 +513,8 @@ const saveDonor = async () => {
 
     if (editingSteamId.value !== null) {
       // Update existing donor
-      await $fetch('/api/admin/donors-db', {
+      await adminFetch('/api/admin/donors-db', {
         method: 'PUT',
-        credentials: 'include',
         body: {
           steamid: editingSteamId.value,
           donor: donorData
@@ -559,9 +522,8 @@ const saveDonor = async () => {
       });
     } else {
       // Add new donor
-      await $fetch('/api/admin/donors-db', {
+      await adminFetch('/api/admin/donors-db', {
         method: 'POST',
-        credentials: 'include',
         body: {
           donor: donorData
         }
@@ -587,9 +549,8 @@ const deleteDonorConfirmed = async () => {
   try {
     deleting.value = true;
 
-    await $fetch('/api/admin/donors-db', {
+    await adminFetch('/api/admin/donors-db', {
       method: 'DELETE',
-      credentials: 'include',
       query: {
         steamid: deleteSteamId.value
       }
@@ -604,49 +565,9 @@ const deleteDonorConfirmed = async () => {
   }
 };
 
-// Cache management
-const clearDonorCache = async () => {
-  try {
-    clearingCache.value = true;
-
-    await $fetch('/api/admin/cache', {
-      method: 'POST',
-      credentials: 'include',
-      body: {
-        action: 'forceRefresh',
-        dataType: 'donors'
-      }
-    });
-
-    // Reload donors to show fresh data
-    await loadDonors();
-  } catch (err) {
-    error.value = err.data?.message || 'Failed to clear cache';
-  } finally {
-    clearingCache.value = false;
-  }
-};
-
 // Load data on mount
 onMounted(async () => {
   try {
-    console.log('Donors page mounted, checking authentication...');
-
-    // Small delay to ensure proper initialization
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    // Check authentication first
-    const isAuth = await checkAuth();
-    console.log('Authentication check result:', isAuth);
-
-    if (!isAuth) {
-      console.log('Not authenticated, redirecting to login');
-      await navigateTo('/admin');
-      return;
-    }
-
-    // Load donors after authentication is confirmed
-    console.log('Authentication confirmed, loading donors...');
     await loadDonors();
   } catch (error) {
     console.error('Failed to initialize donors page:', error);
@@ -654,3 +575,75 @@ onMounted(async () => {
   }
 });
 </script>
+
+<style scoped>
+.donor-register { overflow: hidden; }
+.admin-notice { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.notice-retry { color: inherit; font-weight: 650; text-decoration: underline; }
+.notice-retry:focus-visible { outline: 2px solid var(--admin-accent); outline-offset: 3px; }
+.donor-record { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(17rem, .9fr); gap: 1.5rem; padding: 1.25rem; border-bottom: 1px solid var(--admin-line); }
+.donor-record:last-of-type { border-bottom: 0; }
+.donor-record:hover { background: #141419; }
+.donor-record__summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.donor-record__identity { min-width: 0; }
+.donor-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin-bottom: .75rem; }
+.donor-title-row h2 { overflow: hidden; max-width: 22rem; margin: 0 .35rem 0 0; font-size: 1rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.donor-tag { border: 1px solid var(--admin-line-strong); padding: .2rem .4rem; color: var(--admin-muted); font-family: var(--font-mono); font-size: .58rem; letter-spacing: .07em; text-transform: uppercase; }
+.donor-tag--tier { border-color: #514267; color: #c4b5fd; }
+.donor-tag--visible { border-color: #275e4c; color: #6ee7b7; }
+.donor-fact { display: inline-block; margin: 0 1rem .4rem 0; color: #dad8e1; font-family: var(--font-mono); font-size: .72rem; }
+.donor-fact span { color: var(--admin-muted); }
+.donor-expiry { margin: .15rem 0; font-family: var(--font-mono); font-size: .68rem; }
+.donor-expiry p { margin: 0; }
+.donor-expiry--active { color: #6ee7b7; }
+.donor-expiry--soon { color: #fcd34d; }
+.donor-expiry--expired { color: #fca5a5; }
+.donor-steamid { display: block; overflow: hidden; margin: .35rem 0 0; color: #85838d; font-family: var(--font-mono); font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
+.donor-actions { display: flex; gap: .45rem; }
+.donation-history { min-width: 0; padding-left: 1.25rem; border-left: 1px solid var(--admin-line); }
+.donation-history h3 { margin: 0 0 .6rem; color: var(--admin-muted); font-family: var(--font-mono); font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; }
+.donation-history__list { display: grid; max-height: 8rem; overflow-y: auto; }
+.donation-entry { padding: .5rem .25rem; border-top: 1px solid var(--admin-line); font-family: var(--font-mono); font-size: .68rem; }
+.donation-entry__line { display: flex; justify-content: space-between; gap: 1rem; }
+.donation-entry__line span { color: #f3f1f8; }
+.donation-entry__line time { color: var(--admin-muted); }
+.donation-note { margin-top: .3rem; color: #777580; font-family: var(--font-sans); font-size: .68rem; }
+.donation-empty { color: var(--admin-muted); font-size: .74rem; }
+.donor-backdrop { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; overflow-y: auto; padding: 1rem; background: rgb(0 0 0 / .78); backdrop-filter: blur(4px); }
+.donor-dialog, .delete-dialog { width: min(100%, 48rem); max-height: calc(100dvh - 2rem); overflow-y: auto; border: 1px solid var(--admin-line-strong); background: #111114; box-shadow: 0 2rem 6rem rgb(0 0 0 / .5); padding: 1.5rem; }
+.delete-dialog { width: min(100%, 28rem); }
+.donor-dialog-title, .delete-dialog h2 { margin: 0 0 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--admin-line); font-size: 1.35rem; letter-spacing: -.025em; }
+.donor-form { display: grid; gap: 1.4rem; }
+.donor-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.donor-field { display: grid; align-content: start; gap: .45rem; }
+.donor-form label, .donor-fieldset legend, .donor-fieldset__header h3 { color: #aaa8b2; font-family: var(--font-mono); font-size: .67rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
+.donor-field small { color: var(--admin-muted); font-family: var(--font-sans); font-size: .67rem; letter-spacing: 0; line-height: 1.45; text-transform: none; }
+.donor-form input[type='text'], .donor-form input[type='number'], .donor-form input[type='date'] { width: 100%; min-height: 2.65rem; border: 1px solid var(--admin-line-strong); border-radius: 0; background: #0c0c0f; color: #f7f5ff; padding: .6rem .7rem; font-family: var(--font-sans); font-size: .82rem; letter-spacing: 0; text-transform: none; }
+.donor-form input:focus { border-color: var(--admin-accent); outline: 2px solid rgb(167 139 250 / .12); outline-offset: 0; }
+.donor-form input:disabled { color: #777580; cursor: not-allowed; }
+.donor-form input[type='checkbox'], .donor-form input[type='radio'] { accent-color: var(--admin-accent-strong); }
+.donor-form p { color: var(--admin-muted); }
+.donor-fieldset { min-width: 0; margin: 0; border: 0; padding: 0; }
+.donor-fieldset legend { margin-bottom: .65rem; padding: 0; }
+.donor-choice-row { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; }
+.donor-choice { display: flex; align-items: center; gap: .5rem; min-height: 2rem; }
+.donor-choice input { width: 1rem; height: 1rem; }
+.donor-field--expiry { max-width: 20rem; margin-top: 1rem; }
+.permanent-note { margin-top: .65rem; color: #6ee7b7; font-size: .74rem; }
+.donor-fieldset__header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .75rem; }
+.donor-fieldset__header h3 { margin: 0; }
+.donation-editor { max-height: 15rem; overflow-y: auto; }
+.donation-editor-row { display: grid; grid-template-columns: .7fr 1fr 1.3fr auto; align-items: end; gap: .65rem; margin-bottom: .5rem; padding: .75rem; border: 1px solid var(--admin-line); background: #0c0c0f; }
+.remove-entry { min-height: 2.5rem; color: #fca5a5; font-size: .68rem; }
+.remove-entry:hover { text-decoration: underline; }
+.remove-entry:focus-visible { outline: 2px solid var(--admin-accent); }
+.donation-total { margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--admin-line); text-align: right; }
+.donation-total p { margin: 0; font-family: var(--font-mono); font-size: .7rem; }
+.donation-total strong { color: var(--admin-accent); }
+.donation-empty--editor { padding: 1rem; border: 1px dashed var(--admin-line-strong); text-align: center; }
+.donor-dialog-actions { display: flex; justify-content: flex-end; gap: .55rem; padding-top: 1rem; border-top: 1px solid var(--admin-line); }
+.delete-copy { margin: 0 0 1.5rem; color: #b8b6c0; font-size: .82rem; line-height: 1.6; }
+.delete-actions { display: flex; justify-content: flex-end; gap: .55rem; }
+@media (max-width: 980px) { .donor-record { grid-template-columns: 1fr; } .donation-history { padding-top: 1rem; padding-left: 0; border-top: 1px solid var(--admin-line); border-left: 0; } }
+@media (max-width: 650px) { .donor-record__summary { flex-direction: column; } .donor-form-grid, .donation-editor-row { grid-template-columns: 1fr; } .donor-actions { width: 100%; } .donor-actions .admin-button { flex: 1; } .donor-dialog-actions { display: grid; grid-template-columns: 1fr 1fr; } }
+</style>

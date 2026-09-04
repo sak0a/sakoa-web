@@ -1,102 +1,85 @@
 <template>
-  <div class="min-h-screen bg-gray-900">
-    <!-- Navigation -->
-    <nav class="bg-gray-800 border-b border-gray-700">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-          <div class="flex items-center">
-            <img
-              src="/default-512x512.png"
-              alt="Admin Logo"
-              class="w-8 h-8 rounded mr-3"
-              width="32"
-              height="32"
-            />
-            <h1 class="text-xl font-semibold text-white">Admin Panel</h1>
-          </div>
-          
-          <div class="flex items-center space-x-4">
-            <NuxtLink
-              to="/admin/dashboard"
-              class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              :class="{ 'bg-gray-700 text-white': $route.path === '/admin/dashboard' }"
-            >
-              Dashboard
-            </NuxtLink>
-            <NuxtLink
-              to="/admin/donors"
-              class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              :class="{ 'bg-gray-700 text-white': $route.path === '/admin/donors' }"
-            >
-              Donors
-            </NuxtLink>
-            <NuxtLink
-              to="/admin/servers"
-              class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              :class="{ 'bg-gray-700 text-white': $route.path === '/admin/servers' }"
-            >
-              Servers
-            </NuxtLink>
-            <NuxtLink
-              to="/admin/hero-stats"
-              class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              :class="{ 'bg-gray-700 text-white': $route.path === '/admin/hero-stats' }"
-            >
-              Hero Stats
-            </NuxtLink>
-            <NuxtLink
-              to="/admin/performance"
-              class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              :class="{ 'bg-gray-700 text-white': $route.path === '/admin/performance' }"
-            >
-              Performance
-            </NuxtLink>
-            <NuxtLink
-              to="/admin/settings"
-              class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              :class="{ 'bg-gray-700 text-white': $route.path === '/admin/settings' }"
-            >
-              Settings
-            </NuxtLink>
-            <NuxtLink
-              to="/admin/cache"
-              class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              :class="{ 'bg-gray-700 text-white': $route.path === '/admin/cache' }"
-            >
-              Cache
-            </NuxtLink>
+  <div class="admin-shell">
+    <a class="admin-skip-link" href="#admin-content">Skip to content</a>
 
-            <div class="border-l border-gray-600 pl-4 ml-4">
-              <NuxtLink
-                to="/"
-                target="_blank"
-                class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                View Site
-              </NuxtLink>
-              <button
-                @click="handleLogout"
-                class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors ml-2"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
+    <aside class="admin-rail" aria-label="Administration">
+      <div class="admin-brand">
+        <NuxtLink to="/admin/dashboard" class="admin-brand__mark" aria-label="saka control room home">
+          <img src="/default-512x512.png" alt="" width="36" height="36">
+        </NuxtLink>
+        <div>
+          <span class="admin-kicker">saka dodgeball</span>
+          <strong>Control room</strong>
         </div>
       </div>
-    </nav>
 
-    <!-- Main Content -->
-    <main>
+      <nav class="admin-nav" aria-label="Administration">
+        <p class="admin-nav__label">Operate</p>
+        <NuxtLink v-for="item in primaryItems" :key="item.to" :to="item.to" class="admin-nav__link">
+          <span class="admin-nav__index">{{ item.index }}</span>
+          <span>{{ item.label }}</span>
+        </NuxtLink>
+
+        <p class="admin-nav__label admin-nav__label--spaced">System</p>
+        <NuxtLink v-for="item in systemItems" :key="item.to" :to="item.to" class="admin-nav__link">
+          <span class="admin-nav__index">{{ item.index }}</span>
+          <span>{{ item.label }}</span>
+        </NuxtLink>
+      </nav>
+
+      <div class="admin-rail__footer">
+        <NuxtLink to="/" target="_blank" class="admin-exit-link">
+          Open public site
+          <span aria-hidden="true">↗</span>
+        </NuxtLink>
+        <button type="button" class="admin-logout" @click="handleLogout">Sign out</button>
+      </div>
+    </aside>
+
+    <main id="admin-content" class="admin-main" tabindex="-1">
+      <div class="admin-mobile-bar">
+        <div>
+          <span class="admin-kicker">saka dodgeball</span>
+          <strong>Control room</strong>
+        </div>
+        <button type="button" class="admin-menu-button" :aria-expanded="mobileOpen" aria-controls="admin-mobile-nav" @click="mobileOpen = !mobileOpen">
+          {{ mobileOpen ? 'Close' : 'Menu' }}
+        </button>
+      </div>
+
+      <nav v-if="mobileOpen" id="admin-mobile-nav" class="admin-mobile-nav" aria-label="Mobile administration">
+        <NuxtLink v-for="item in allItems" :key="item.to" :to="item.to" @click="mobileOpen = false">{{ item.label }}</NuxtLink>
+        <NuxtLink to="/" target="_blank">Public site ↗</NuxtLink>
+        <button type="button" @click="handleLogout">Sign out</button>
+      </nav>
+
       <slot />
     </main>
   </div>
 </template>
 
 <script setup>
-const { logout } = useAdmin();
+setPageLayout(false)
 
-const handleLogout = async () => {
-  await logout();
-};
+const { logout } = useAdmin()
+const mobileOpen = ref(false)
+
+const primaryItems = [
+  { index: '01', label: 'Overview', to: '/admin/dashboard' },
+  { index: '02', label: 'Servers', to: '/admin/servers' },
+  { index: '03', label: 'Discord bot', to: '/admin/discord' },
+  { index: '04', label: 'Donors', to: '/admin/donors' },
+]
+
+const systemItems = [
+  { index: '05', label: 'Site content', to: '/admin/hero-stats' },
+  { index: '06', label: 'Settings', to: '/admin/settings' },
+  { index: '07', label: 'Database & cache', to: '/admin/cache' },
+]
+
+const allItems = [...primaryItems, ...systemItems]
+
+async function handleLogout() {
+  await logout()
+}
 </script>

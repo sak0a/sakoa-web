@@ -53,24 +53,13 @@ export default defineEventHandler(async (event) => {
       source: result.source
     };
   } catch (error) {
-    console.error('Error in donors API:', error);
-
-    // Return fallback data if database is unavailable
-    return {
-      donors: [
-        {
-          name: "saka",
-          amount: 100,
-          tier: "VIP",
-          steamid: "[U:1:XXXXXXXX]",
-          donationCount: 1,
-          firstDonation: "2024-05-15",
-          lastDonation: "2024-05-15"
-        }
-      ],
-      error: "Database unavailable, showing fallback data",
-      cached: false,
-      source: 'fallback'
-    };
+    console.error('Donor query failed', {
+      code: error?.code,
+      message: error?.message
+    });
+    throw createError({
+      statusCode: 503,
+      statusMessage: 'Donor data is temporarily unavailable'
+    });
   }
 });
