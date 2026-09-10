@@ -5,8 +5,8 @@ SELECT 'Current table structure:' as info;
 DESCRIBE dodgeball.sakaDonate_donations;
 
 -- Check if notes column exists
-SELECT 
-    CASE 
+SELECT
+    CASE
         WHEN COUNT(*) > 0 THEN 'NOTES COLUMN EXISTS ✓'
         ELSE 'NOTES COLUMN MISSING ✗ - Run add_notes_column.sql'
     END as notes_column_status

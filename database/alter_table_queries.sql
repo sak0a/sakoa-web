@@ -2,13 +2,13 @@
 -- Run these queries in order on your existing database
 
 -- Step 1: Add new columns to sakaDonate_users table
-ALTER TABLE dodgeball.sakaDonate_users 
+ALTER TABLE dodgeball.sakaDonate_users
 ADD COLUMN show_on_website BOOLEAN DEFAULT FALSE COMMENT 'Whether user wants to be shown on website';
 
-ALTER TABLE dodgeball.sakaDonate_users 
+ALTER TABLE dodgeball.sakaDonate_users
 ADD COLUMN display_name VARCHAR(64) DEFAULT NULL COMMENT 'Name to display on website (optional)';
 
-ALTER TABLE dodgeball.sakaDonate_users 
+ALTER TABLE dodgeball.sakaDonate_users
 ADD COLUMN tier VARCHAR(32) DEFAULT 'Supporter' COMMENT 'Donation tier (VIP, Premium, Elite, Supporter, SAS)';
 
 -- Step 2: Create indexes for better performance on new columns
@@ -33,7 +33,7 @@ CREATE TABLE dodgeball.sakaDonate_donations (
 
 -- Step 4: Create view for easy donation summary queries
 CREATE VIEW dodgeball.v_donation_summary AS
-SELECT 
+SELECT
     u.steamid,
     u.display_name,
     u.tier,
