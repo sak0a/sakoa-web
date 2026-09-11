@@ -55,6 +55,7 @@ test('donator edits show a preview and submit CSRF-protected personal settings',
   expect(submitted).not.toHaveProperty('steamid')
   expect(submitted).not.toHaveProperty('expiry_date')
   expect(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+  await dialog.locator('.account-chat-preview').scrollIntoViewIfNeeded()
   await page.screenshot({ path: `test-results/player-account-${test.info().project.name}.png`, fullPage: false })
 })
 

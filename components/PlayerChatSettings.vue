@@ -14,7 +14,9 @@
       </fieldset>
       <div class="account-chat-preview" aria-label="Approximate in-game chat preview">
         <span class="account-eyebrow">CHAT PREVIEW</span>
+        <div class="account-chat-scene">
         <p><span class="account-preview-tag"><span v-for="(segment, index) in previewTag" :key="index" :style="{ color: segment.color }">{{ segment.text }}</span>{{ previewTag.length ? ' ' : '' }}</span><span class="account-preview-name" :style="{ color: previewNameColor }">{{ playerName }}</span><span style="color:#ffffff"> : </span><span class="account-preview-message" :style="{ color: previewChatColor }">nice airshot!</span></p>
+        </div>
         <label class="account-preview-team">Preview team <select v-model="previewTeam" aria-label="Preview team"><option value="red">RED</option><option value="blue">BLU</option><option value="grey">Spectator</option></select></label>
         <small>Uses your selected personal or group settings. Team colors follow the preview team; appearance may vary with game settings.</small>
       </div>

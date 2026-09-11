@@ -61,7 +61,8 @@
 .account-check input { width:16px; height:16px; accent-color:#aa79d0; }
 .account-color-field { margin-top:14px; }
 .account-chat-preview { background:#0b090e; padding:18px; border-radius:9px; border:1px solid #382844; margin:20px 0; }
-.account-chat-preview p { font:13px/1.6 ui-monospace, monospace; overflow-wrap:anywhere; margin:12px 0; }
+.account-chat-scene { position:relative; aspect-ratio:888/356; margin:12px -18px; background:#493733 url("/images/chat-preview-ingame.png") center bottom / 100% auto no-repeat; container-type:inline-size; }
+.account-chat-scene p { position:absolute; left:7.2%; right:5%; bottom:84%; margin:0; font:700 clamp(11px,3cqw,15px)/1.2 Arial,sans-serif; overflow-wrap:anywhere; text-shadow:1px 1px 0 #000, -1px 0 0 #0008, 0 1px 0 #000; }
 .account-chat-preview small { display:block; color:#a99ab6; font-size:10px; }
 .account-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
 .account-save-status { margin:12px 0 0; }
