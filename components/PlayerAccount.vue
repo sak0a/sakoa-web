@@ -1,7 +1,8 @@
 <template>
   <button ref="trigger" type="button" class="account-trigger" :disabled="!hydrated" aria-haspopup="dialog" :aria-expanded="isOpen" aria-controls="player-account-dialog" @click="openPanel">
     <img v-if="account?.identity.avatar && session?.authenticated" :src="account.identity.avatar" alt="" width="25" height="25" @error="account.identity.avatar = null">
-    <span v-else aria-hidden="true" class="account-trigger-symbol">{{ session?.authenticated ? '●' : '↗' }}</span>
+    <span v-else-if="session?.authenticated" aria-hidden="true" class="account-trigger-symbol">●</span>
+    <img v-else src="/steam.svg" class="account-steam-icon" alt="" width="20" height="20">
     <span>{{ session?.authenticated ? 'My account' : 'Steam login' }}</span>
   </button>
   <Teleport to="body">
@@ -13,9 +14,9 @@
           <div v-if="sessionLoading" class="account-loading" role="status">Checking your Steam session…</div>
           <div v-else-if="sessionError" class="account-empty"><h3>Account service unavailable</h3><p>{{ sessionError }}</p><button type="button" class="account-secondary" @click="loadSession">Try again</button></div>
           <section v-else-if="!session?.authenticated" class="account-welcome">
-            <span class="account-welcome-mark" aria-hidden="true">s.</span>
+            <img class="account-welcome-mark" src="/default-512x512.png" alt="saka’s Dodgeball Server" width="60" height="60">
             <h3>Your game.<br>Your style.</h3><p>Bring your Steam account to see your stats, check your benefits, and make your chat your own.</p>
-            <a v-if="session?.loginAvailable" href="/api/auth/steam" class="account-primary account-steam-link">Sign in through Steam <span aria-hidden="true">↗</span></a>
+            <a v-if="session?.loginAvailable" href="/api/auth/steam" class="account-primary account-steam-link"><img src="/steam.svg" class="account-steam-icon" alt="" width="22" height="22"><span>Sign in through Steam</span></a>
             <p v-else class="account-notice">Steam sign-in is not configured yet. Please check back soon.</p>
             <p class="account-muted">You’ll sign in on Steam and return here. Your Steam password stays with Steam.</p>
             <div class="account-welcome-features"><span>Seasonal stats</span><span>Donator benefits</span><span>Custom chat style</span></div>
