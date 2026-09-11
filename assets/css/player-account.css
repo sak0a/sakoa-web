@@ -15,6 +15,8 @@
 .player-account-dialog :focus-visible, .account-trigger:focus-visible { outline:2px solid #d6b5fa; outline-offset:4px; }
 .account-panel { display:flex; flex-direction:column; min-height:100%; }
 .account-panel-header { display:flex; align-items:center; justify-content:space-between; padding:24px 28px 20px; border-bottom:1px solid #34263f; }
+.account-panel-heading { display:flex; align-items:center; gap:12px; }
+.account-panel-heading img { flex-shrink:0; border-radius:9px; }
 .account-panel-header h2 { font-size:23px; font-weight:600; letter-spacing:-.5px; margin:3px 0 0; }
 .account-eyebrow { display:block; color:#c5a4e3; font-size:10px; font-weight:600; letter-spacing:1.6px; }
 .account-close { width:40px; height:40px; border:1px solid #493653; border-radius:50%; color:#e6d6f1; background:transparent; font-size:25px!important; }

@@ -8,7 +8,7 @@
   <Teleport to="body">
     <dialog id="player-account-dialog" ref="dialog" class="player-account-dialog" aria-labelledby="account-title" @close="onClosed" @cancel.prevent="closePanel" @keydown="trapFocus" @click="backdropClick">
       <div class="account-panel">
-        <header class="account-panel-header"><div><span class="account-eyebrow">SAKA’S DODGEBALL</span><h2 id="account-title">Your account</h2></div><button type="button" class="account-close" aria-label="Close account panel" autofocus @click="closePanel">×</button></header>
+        <header class="account-panel-header"><div class="account-panel-heading"><img v-if="session?.authenticated" src="/default-512x512.png" alt="" width="36" height="36"><div><span class="account-eyebrow">SAKA’S DODGEBALL</span><h2 id="account-title">Your account</h2></div></div><button type="button" class="account-close" aria-label="Close account panel" autofocus @click="closePanel">×</button></header>
         <main class="account-panel-content">
           <p v-if="loginMessage" class="account-notice" role="status">{{ loginMessage }}</p>
           <div v-if="sessionLoading" class="account-loading" role="status">Checking your Steam session…</div>
