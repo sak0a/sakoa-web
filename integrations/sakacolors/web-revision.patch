@@ -1,0 +1,245 @@
+diff --git a/sakaCOLORS/scripting/sakaCOLORS.sp b/sakaCOLORS/scripting/sakaCOLORS.sp
+index 6186baf..03601b7 100644
+--- a/sakaCOLORS/scripting/sakaCOLORS.sp
++++ b/sakaCOLORS/scripting/sakaCOLORS.sp
+@@ -30,7 +30,7 @@
+ 
+ #include <sakaDatabase>
+ 
+-#define SAKA_COLORS_VERSION "26.9.5.1"
++#define SAKA_COLORS_VERSION "26.9.11.1"
+ 
+ #define COLORS_GROUP_NAME_INPUT_MAX_BYTES 32
+ #define COLORS_GROUP_NAME_BUFFER          129 // VARCHAR(32) under utf8mb4, plus NUL.
+@@ -39,7 +39,7 @@
+ #define COLORS_PLAYER_MENU_TEXT_BUFFER    260 // 127-byte player + 128-byte group + " ()" + NUL.
+ 
+ #define SQL_CREATE_GROUPS   "CREATE TABLE IF NOT EXISTS sakaColors_Groups (groupName VARCHAR(32) NOT NULL, tag VARCHAR(64), nameColor VARCHAR(32), chatColor VARCHAR(32), CONSTRAINT chk_group_name_nonempty CHECK (CHAR_LENGTH(groupName) > 0 AND OCTET_LENGTH(groupName) = OCTET_LENGTH(REPLACE(CAST(groupName AS BINARY), 0x00, LEFT(0x00, 0)))), UNIQUE KEY uniq_group_name (groupName)) ENGINE=InnoDB;"
+-#define SQL_CREATE_USERS    "CREATE TABLE IF NOT EXISTS sakaColors_Clients (steamid VARCHAR(64), name VARCHAR(128), groupName VARCHAR(32), premiumPreviousGroup VARCHAR(32) NOT NULL DEFAULT '', premiumOverrideOwned BOOLEAN NOT NULL DEFAULT FALSE, tag VARCHAR(64), nameColor VARCHAR(32), chatColor VARCHAR(32), useGroupTag INT, useGroupNameColor INT, useGroupChatColor INT, UNIQUE KEY uniq_steamid (steamid)) ENGINE=InnoDB;"
++#define SQL_CREATE_USERS    "CREATE TABLE IF NOT EXISTS sakaColors_Clients (steamid VARCHAR(64), name VARCHAR(128), groupName VARCHAR(32), premiumPreviousGroup VARCHAR(32) NOT NULL DEFAULT '', premiumOverrideOwned BOOLEAN NOT NULL DEFAULT FALSE, tag VARCHAR(64), nameColor VARCHAR(32), chatColor VARCHAR(32), useGroupTag INT, useGroupNameColor INT, useGroupChatColor INT, webRevision INT NOT NULL DEFAULT 0, UNIQUE KEY uniq_steamid (steamid)) ENGINE=InnoDB;"
+ 
+ #define DEFAULT_VALUE       "--n"
+ #define DEFAULT_GROUP       "default"
+@@ -97,6 +97,7 @@ public Plugin myinfo = {
+ };
+ 
+ enum struct PlayerInfo {
++    int iWebRevision;
+     char sSteamId[SAKA_MAX_STEAMID_LENGTH];
+     char sName[128];
+     char sTag[64];
+@@ -184,4 +185,5 @@ bool g_bPlayerCatalogReady = false;
+ #include "sakaCOLORS/admin_menus.inc"
+ #include "sakaCOLORS/player_menus.inc"
+ #include "sakaCOLORS/chat_input.inc"
++#include "sakaCOLORS/web_sync.inc"
+ #include "sakaCOLORS/core.inc"
+diff --git a/sakaCOLORS/scripting/sakaCOLORS/core.inc b/sakaCOLORS/scripting/sakaCOLORS/core.inc
+index 0cada6c..5d6a3ea 100644
+--- a/sakaCOLORS/scripting/sakaCOLORS/core.inc
++++ b/sakaCOLORS/scripting/sakaCOLORS/core.inc
+@@ -34,6 +34,7 @@ public void OnPluginStart() {
+     LoadAllPlayersFromDB();
+     ReconcileAllPremiumGroups();
+     g_hPremiumReconcileTimer = CreateTimer(PREMIUM_RECONCILE_INTERVAL, Timer_PremiumReconcile, _, TIMER_REPEAT);
++    StartWebPreferenceSync();
+     RegConsoleCmd("sm_scc", MainCommand);
+     RegAdminCmd("sm_scca", AdminCommand, ADMFLAG_CHEATS);
+     HookEvent("teamplay_round_win", RoundEndEvent, EventHookMode_PostNoCopy);
+@@ -43,6 +44,7 @@ public void OnPluginStart() {
+ }
+ 
+ public void OnPluginEnd() {
++    StopWebPreferenceSync();
+     if (g_hPremiumReconcileTimer != null) {
+         delete g_hPremiumReconcileTimer;
+         g_hPremiumReconcileTimer = null;
+@@ -192,6 +194,7 @@ public void OnClientPostAdminCheck(int iClient) {
+ }
+ 
+ public void ResetData(int iClient) {
++    CI[iClient].iWebRevision = 0;
+     g_iClientGeneration[iClient]++;
+     g_bClientLoading[iClient] = false;
+     CI[iClient].sSteamId = "";
+diff --git a/sakaCOLORS/scripting/sakaCOLORS/database.inc b/sakaCOLORS/scripting/sakaCOLORS/database.inc
+index 90525af..d87dc2f 100644
+--- a/sakaCOLORS/scripting/sakaCOLORS/database.inc
++++ b/sakaCOLORS/scripting/sakaCOLORS/database.inc
+@@ -90,6 +90,9 @@ stock bool InspectClientSchemaColumn(const char[] sColumnName, bool &bExists, bo
+                 && iMaximumLength == 32
+                 && StrEqual(sNullable, "NO", false)
+                 && sDefaultUnquoted[0] == '\0';
++        } else if (StrEqual(sColumnName, "webRevision")) {
++            bCompatible = StrEqual(sDataType, "int", false)
++                && StrEqual(sNullable, "NO", false) && StrEqual(sDefaultUnquoted, "0");
+         } else if (StrEqual(sColumnName, "premiumOverrideOwned")) {
+             bCompatible = StrEqual(sDataType, "tinyint", false)
+                 && StrEqual(sNullable, "NO", false)
+@@ -129,7 +132,8 @@ stock bool EnsureClientSchemaColumn(const char[] sColumnName, const char[] sDefi
+ 
+ stock bool EnsurePremiumOwnershipSchema() {
+     return EnsureClientSchemaColumn("premiumPreviousGroup", "VARCHAR(32) NOT NULL DEFAULT '' AFTER groupName")
+-        && EnsureClientSchemaColumn("premiumOverrideOwned", "BOOLEAN NOT NULL DEFAULT FALSE AFTER premiumPreviousGroup");
++        && EnsureClientSchemaColumn("premiumOverrideOwned", "BOOLEAN NOT NULL DEFAULT FALSE AFTER premiumPreviousGroup")
++        && EnsureClientSchemaColumn("webRevision", "INT NOT NULL DEFAULT 0");
+ }
+ 
+ /**
+@@ -247,6 +251,7 @@ stock bool EnsureGroupNameSchema() {
+ 
+ stock StringMap CreatePlayerCacheEntry(PlayerInfo p) {
+     StringMap entry = new StringMap();
++    entry.SetValue("web_revision", p.iWebRevision);
+     entry.SetString("steamid", p.sSteamId);
+     entry.SetString("name", p.sName);
+     entry.SetString("group", p.sGroupName);
+@@ -265,6 +270,7 @@ stock bool ReadPlayerCacheEntry(StringMap entry, PlayerInfo p) {
+     if (entry == null || !entry.GetString("steamid", p.sSteamId, sizeof(p.sSteamId))) {
+         return false;
+     }
++    entry.GetValue("web_revision", p.iWebRevision);
+     entry.GetString("name", p.sName, sizeof(p.sName));
+     entry.GetString("group", p.sGroupName, sizeof(p.sGroupName));
+     entry.GetString("premium_previous", p.sPremiumPreviousGroup, sizeof(p.sPremiumPreviousGroup));
+@@ -297,6 +303,8 @@ stock void CachePlayerPersonalFields(PlayerInfo desired) {
+         CachePlayer(desired);
+         return;
+     }
++    if (desired.iWebRevision < merged.iWebRevision) return;
++    merged.iWebRevision = desired.iWebRevision;
+     strcopy(merged.sName, sizeof(merged.sName), desired.sName);
+     strcopy(merged.sTag, sizeof(merged.sTag), desired.sTag);
+     strcopy(merged.sNameColor, sizeof(merged.sNameColor), desired.sNameColor);
+@@ -390,6 +398,7 @@ public void OnPlayerCatalogLoaded(Database db, DBResultSet results, const char[]
+         p.bUseGroupTag = results.FetchInt(8) == 1;
+         p.bUseGroupNameColor = results.FetchInt(9) == 1;
+         p.bUseGroupChatColor = results.FetchInt(10) == 1;
++    p.iWebRevision = results.FetchInt(11);
+         if (!g_smPlayerCache.ContainsKey(p.sSteamId)) {
+             CachePlayer(p);
+         }
+@@ -417,7 +426,7 @@ public void OnGroupCatalogLoaded(Database db, DBResultSet results, const char[]
+ 
+ stock void BeginAsyncCatalogLoads() {
+     view_as<Database>(DB).Query(OnGroupCatalogLoaded, "SELECT groupName,tag,nameColor,chatColor FROM sakaColors_Groups;");
+-    view_as<Database>(DB).Query(OnPlayerCatalogLoaded, "SELECT steamid,name,groupName,premiumPreviousGroup,premiumOverrideOwned,tag,nameColor,chatColor,useGroupTag,useGroupNameColor,useGroupChatColor FROM sakaColors_Clients;");
++    view_as<Database>(DB).Query(OnPlayerCatalogLoaded, "SELECT steamid,name,groupName,premiumPreviousGroup,premiumOverrideOwned,tag,nameColor,chatColor,useGroupTag,useGroupNameColor,useGroupChatColor,webRevision FROM sakaColors_Clients;");
+ }
+ 
+ stock void ReadPlayerResult(DBResultSet results, PlayerInfo p) {
+@@ -432,6 +441,7 @@ stock void ReadPlayerResult(DBResultSet results, PlayerInfo p) {
+     p.bUseGroupTag = results.FetchInt(8) == 1;
+     p.bUseGroupNameColor = results.FetchInt(9) == 1;
+     p.bUseGroupChatColor = results.FetchInt(10) == 1;
++    p.iWebRevision = results.FetchInt(11);
+ }
+ 
+ public void OnClientPlayerLoaded(Database db, DBResultSet results, const char[] error, any data) {
+@@ -475,7 +485,7 @@ public void OnClientPlayerCreated(Database db, DBResultSet results, const char[]
+     char steamLiteral[SAKA_DATABASE_HEX_LITERAL_SIZE(SAKA_MAX_STEAMID_LENGTH)];
+     EncodeRuntimeValue(steamId, steamLiteral, sizeof(steamLiteral));
+     char query[SAKA_MAX_QUERY_LENGTH];
+-    Format(query, sizeof(query), "SELECT steamid,name,groupName,premiumPreviousGroup,premiumOverrideOwned,tag,nameColor,chatColor,useGroupTag,useGroupNameColor,useGroupChatColor FROM sakaColors_Clients WHERE steamid=CONVERT(%s USING utf8mb4) LIMIT 1;", steamLiteral);
++    Format(query, sizeof(query), "SELECT steamid,name,groupName,premiumPreviousGroup,premiumOverrideOwned,tag,nameColor,chatColor,useGroupTag,useGroupNameColor,useGroupChatColor,webRevision FROM sakaColors_Clients WHERE steamid=CONVERT(%s USING utf8mb4) LIMIT 1;", steamLiteral);
+     view_as<Database>(DB).Query(OnClientPlayerLoaded, query, context);
+ }
+ 
+@@ -578,7 +588,7 @@ stock bool QueuePlayerGroupMutation(PlayerInfo expected, PlayerInfo desired, Pla
+         Format(updateQuery, sizeof(updateQuery), "UPDATE sakaColors_Clients SET groupName=CONVERT(%s USING utf8mb4),premiumPreviousGroup=CONVERT(%s USING utf8mb4),premiumOverrideOwned=%d WHERE steamid=CONVERT(%s USING utf8mb4) AND groupName=CONVERT(%s USING utf8mb4) AND premiumPreviousGroup=CONVERT(%s USING utf8mb4) AND premiumOverrideOwned=%d;", desiredGroupLiteral, desiredPreviousLiteral, desired.bPremiumOverrideOwned, steamLiteral, expectedGroupLiteral, expectedPreviousLiteral, expected.bPremiumOverrideOwned);
+     }
+     char selectQuery[SAKA_MAX_QUERY_LENGTH];
+-    Format(selectQuery, sizeof(selectQuery), "SELECT steamid,name,groupName,premiumPreviousGroup,premiumOverrideOwned,tag,nameColor,chatColor,useGroupTag,useGroupNameColor,useGroupChatColor FROM sakaColors_Clients WHERE steamid=CONVERT(%s USING utf8mb4) LIMIT 1;", steamLiteral);
++    Format(selectQuery, sizeof(selectQuery), "SELECT steamid,name,groupName,premiumPreviousGroup,premiumOverrideOwned,tag,nameColor,chatColor,useGroupTag,useGroupNameColor,useGroupChatColor,webRevision FROM sakaColors_Clients WHERE steamid=CONVERT(%s USING utf8mb4) LIMIT 1;", steamLiteral);
+ 
+     DataPack context = new DataPack();
+     context.WriteCell(kind);
+@@ -817,7 +827,7 @@ stock bool BuildPlayerSnapshotQuery(PlayerInfo p, char[] query, int queryLen) {
+         || !EncodeRuntimeValue(p.sChatColor, chatColorLiteral, sizeof(chatColorLiteral))) {
+         return false;
+     }
+-    Format(query, queryLen, "UPDATE sakaColors_Clients SET name=CONVERT(%s USING utf8mb4),tag=CONVERT(%s USING utf8mb4),nameColor=CONVERT(%s USING utf8mb4),chatColor=CONVERT(%s USING utf8mb4),useGroupTag=%d,useGroupNameColor=%d,useGroupChatColor=%d WHERE steamid=CONVERT(%s USING utf8mb4);", nameLiteral, tagLiteral, nameColorLiteral, chatColorLiteral, p.bUseGroupTag, p.bUseGroupNameColor, p.bUseGroupChatColor, steamLiteral);
++    Format(query, queryLen, "UPDATE sakaColors_Clients SET name=CONVERT(%s USING utf8mb4),tag=CONVERT(%s USING utf8mb4),nameColor=CONVERT(%s USING utf8mb4),chatColor=CONVERT(%s USING utf8mb4),useGroupTag=%d,useGroupNameColor=%d,useGroupChatColor=%d WHERE steamid=CONVERT(%s USING utf8mb4) AND webRevision=%d;", nameLiteral, tagLiteral, nameColorLiteral, chatColorLiteral, p.bUseGroupTag, p.bUseGroupNameColor, p.bUseGroupChatColor, steamLiteral, p.iWebRevision);
+     return true;
+ }
+ 
+@@ -942,7 +952,8 @@ stock bool PlayerSnapshotMatchesCache(PlayerInfo desired) {
+         return false;
+     }
+ 
+-    return StrEqual(cached.sName, desired.sName)
++    return cached.iWebRevision == desired.iWebRevision
++        && StrEqual(cached.sName, desired.sName)
+         && StrEqual(cached.sTag, desired.sTag)
+         && StrEqual(cached.sNameColor, desired.sNameColor)
+         && StrEqual(cached.sChatColor, desired.sChatColor)
+diff --git a/sakaCOLORS/scripting/sakaCOLORS/web_sync.inc b/sakaCOLORS/scripting/sakaCOLORS/web_sync.inc
+new file mode 100644
+--- /dev/null
++++ b/sakaCOLORS/scripting/sakaCOLORS/web_sync.inc
+@@ -0,0 +1,65 @@
++#if defined _sakacolors_web_sync_included
++    #endinput
++#endif
++#define _sakacolors_web_sync_included
++
++// Website writes increment webRevision in the same transaction as the colors.
++// Every game snapshot carries its loaded revision and is conditional on it,
++// including queued retries and synchronous unload saves. The website wins over
++// an older in-memory edit; after refresh, ordinary in-game edits work as before.
++Handle g_hWebPreferenceTimer = null;
++bool g_bWebPreferenceQueryPending = false;
++
++stock void StartWebPreferenceSync() {
++    g_hWebPreferenceTimer = CreateTimer(5.0, Timer_WebPreferences, _, TIMER_REPEAT);
++}
++
++stock void StopWebPreferenceSync() {
++    delete g_hWebPreferenceTimer;
++    g_hWebPreferenceTimer = null;
++}
++
++public Action Timer_WebPreferences(Handle timer) {
++    if (DB == null || g_bWebPreferenceQueryPending) return Plugin_Continue;
++    // Bound the read to connected identities, one query per server per interval.
++    char identities[8192];
++    char literal[SAKA_DATABASE_HEX_LITERAL_SIZE(SAKA_MAX_STEAMID_LENGTH)];
++    bool anyPlayers = false;
++    for (int client = 1; client <= MaxClients; client++) {
++        if (!Saka_IsValidClient(client) || !IsPlayerLoaded(client)) continue;
++        if (!EncodeRuntimeValue(CI[client].sSteamId, literal, sizeof(literal))) continue;
++        if (anyPlayers) StrCat(identities, sizeof(identities), ",");
++        StrCat(identities, sizeof(identities), literal);
++        anyPlayers = true;
++    }
++    if (!anyPlayers) return Plugin_Continue;
++    char query[9216];
++    Format(query, sizeof(query), "SELECT steamid,name,groupName,premiumPreviousGroup,premiumOverrideOwned,tag,nameColor,chatColor,useGroupTag,useGroupNameColor,useGroupChatColor,webRevision FROM sakaColors_Clients WHERE steamid IN (%s);", identities);
++    g_bWebPreferenceQueryPending = true;
++    view_as<Database>(DB).Query(OnWebPreferencesLoaded, query);
++    return Plugin_Continue;
++}
++
++public void OnWebPreferencesLoaded(Database db, DBResultSet results, const char[] error, any data) {
++    g_bWebPreferenceQueryPending = false;
++    if (results == null) {
++        Saka_LogError("database", "action=web_preferences_refresh_failed error=%s", error);
++        return;
++    }
++    while (results.FetchRow()) {
++        PlayerInfo persisted;
++        ReadPlayerResult(results, persisted);
++        int client = FindPlayerBySteamId(persisted.sSteamId);
++        if (!Saka_IsValidClient(client) || !IsPlayerLoaded(client)
++            || persisted.iWebRevision <= CI[client].iWebRevision) continue;
++        // Do not touch premium ownership, admin group changes, or player names.
++        strcopy(CI[client].sTag, sizeof(CI[].sTag), persisted.sTag);
++        strcopy(CI[client].sNameColor, sizeof(CI[].sNameColor), persisted.sNameColor);
++        strcopy(CI[client].sChatColor, sizeof(CI[].sChatColor), persisted.sChatColor);
++        CI[client].bUseGroupTag = persisted.bUseGroupTag;
++        CI[client].bUseGroupNameColor = persisted.bUseGroupNameColor;
++        CI[client].bUseGroupChatColor = persisted.bUseGroupChatColor;
++        CI[client].iWebRevision = persisted.iWebRevision;
++        CachePlayerPersonalFields(CI[client]);
++    }
++}

@@ -48,6 +48,8 @@
             </div>
           </nav>
 
+          <PlayerAccount @opening="closeMobileMenu" />
+
           <!-- Mobile hamburger menu button -->
           <button
             class="mobile-menu-toggle"

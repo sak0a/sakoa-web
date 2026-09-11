@@ -65,3 +65,9 @@ The worker provides `/server-status` for members and administrator-only `/refres
 ## Deployment
 
 Docker Compose defines the public `web` service, the private `bot` worker, and a one-shot `migrate` profile. MySQL is external. See [README.DOCKER.md](README.DOCKER.md) for local Docker and Coolify instructions.
+
+## Player Steam accounts
+
+The public navigation includes a Steam account panel with personal season stats,
+donator expiry and chat styling. See [deployment and validation](integrations/sakacolors/README.md)
+before enabling color writes: the matching COLORS plugin update must run on every game server.

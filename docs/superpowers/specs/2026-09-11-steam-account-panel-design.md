@@ -1,0 +1,13 @@
+# Steam account panel
+
+Approved direction: option 2, a slide-out account panel integrated with the existing public navigation. On mobile it fills the screen. Steam sign-in returns to the open panel. Closing restores focus and scrolling; Escape and the backdrop close it. Public pages and admin authentication keep their existing behavior.
+
+The panel shows the verified Steam identity, current and previous seasonal stats, donator eligibility and expiry, and chat-tag/name-color/message-color preferences with group-default toggles and a live preview. Expiry and tier are read-only. A donation link takes the player to the existing donation section; no automatic payment/renewal fulfillment is introduced.
+
+Steam OpenID assertions are verified with Steam, bound to a single-use browser login state, fixed configured return URL, signed fields and fresh response nonce. Opaque database sessions use HttpOnly cookies; logout revokes the session. Mutations require the session's CSRF token and the configured same origin. Player identity always comes from the session. Personal responses are no-store. Profile service failure does not prevent authentication.
+
+Donator authorization uses sakaDonate_users.is_active plus expiry, independent of public website visibility. Personal reads and updates use an exact Steam3 identity. Stats never fall back to searching by name. Each account section can report an unavailable service without pretending there is no data.
+
+Colors use the existing sakaColors_Clients row and group defaults. A webRevision column provides optimistic concurrency. Website updates lock the row, verify the submitted revision and eligible donor state, and increment webRevision atomically. Plugin snapshots carry the revision they loaded and cannot overwrite newer website revisions. A periodic plugin refresh adopts newer website revisions into the connected player's cache. In-game edits continue to work. All game servers sharing the database must install the updated plugin before website color writes are enabled. Default configuration keeps color writes disabled until that deployment is confirmed.
+
+Validation: OpenID tampering/replay/cancellation, session expiry/logout, CSRF and account isolation, revoked/permanent/expired donor cases, concurrent color saves and stale plugin snapshots, schema migration on a disposable database where available, frontend keyboard/mobile/error states, repository lint/typecheck/tests/build, and SourcePawn compilation. Production Steam login and live game synchronization require configured deployment and a real Steam account; local simulations must be described as such.

@@ -48,7 +48,7 @@ export default defineNuxtConfig({
       }
     }
   },
-  css: ['~/assets/css/main.css', '~/assets/css/admin.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/admin.css', '~/assets/css/player-account.css'],
 
   vite: {
     plugins: [tailwindcss()]
@@ -64,10 +64,11 @@ export default defineNuxtConfig({
     adminPassword: process.env.ADMIN_PASSWORD || '',
     adminSessionSecret: process.env.ADMIN_SESSION_SECRET || '',
     steamApiKey: process.env.STEAM_API_KEY || '',
+    playerColorWritesEnabled: process.env.PLAYER_COLOR_WRITES_ENABLED === 'true',
     // Public keys (exposed to client-side)
     public: {
       serverIp: '',
-      siteUrl: ''
+      siteUrl: process.env.PUBLIC_SITE_URL || ''
     }
   },
   nitro: {
