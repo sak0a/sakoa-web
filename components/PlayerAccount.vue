@@ -33,7 +33,7 @@
             <p v-if="loading" class="account-loading" role="status">Loading your player profile…</p>
             <div v-else-if="loadError" class="account-empty"><p role="alert">{{ loadError }}</p><button type="button" class="account-secondary" @click="loadAccount">Try again</button></div>
             <template v-else-if="account">
-              <section class="account-membership" aria-labelledby="membership-title">
+              <section v-if="account.donor?.active" class="account-membership" aria-labelledby="membership-title">
                 <div><span class="account-eyebrow">YOUR BENEFITS</span><h3 id="membership-title">{{ donorTitle }}</h3><p>{{ donorDescription }}</p></div>
                 <a href="/#donate" class="account-secondary" @click="closePanel">{{ account.donor?.active ? 'Extend support' : 'Support the server' }}</a>
               </section>
@@ -43,9 +43,11 @@
                 <p v-else-if="!account.stats?.player" class="account-muted">No stats for this season yet. Join the server to start playing.</p>
                 <dl v-else class="account-stats-grid"><div v-for="stat in stats" :key="stat.label"><dt>{{ stat.label }}</dt><dd>{{ stat.value }}</dd></div></dl>
               </section>
-              <p v-if="account.unavailable.preferences" class="account-notice">Chat settings are unavailable. <button type="button" class="account-text-button" @click="loadAccount">Retry</button></p>
-              <p v-else-if="!account.preferences" class="account-notice">Join the game server once to create your chat profile.</p>
-              <PlayerChatSettings v-else :preferences="account.preferences" :player-name="account.identity.name" :csrf-token="session.csrfToken" :enabled="canEdit" :disabled-reason="styleDisabledReason" @reload="loadAccount" @saved="onSaved" @expired="loadSession" />
+              <template v-if="hasStyleAccess">
+                <p v-if="account.unavailable.preferences" class="account-notice">Chat settings are unavailable. <button type="button" class="account-text-button" @click="loadAccount">Retry</button></p>
+                <p v-else-if="!account.preferences" class="account-notice">Join the game server once to create your chat profile.</p>
+                <PlayerChatSettings v-else :access-label="account.access?.admin ? 'ADMIN' : 'DONATOR'" :preferences="account.preferences" :player-name="account.identity.name" :csrf-token="session.csrfToken" :enabled="canEdit" :disabled-reason="styleDisabledReason" @reload="loadAccount" @saved="onSaved" @expired="loadSession" />
+              </template>
             </template>
           </template>
         </main>
@@ -76,8 +78,9 @@ const loggingOut = ref(false);
 const selectedSeason = ref(undefined);
 let bodyOverflow = '';
 let requestGeneration = 0;
-const canEdit = computed(() => Boolean(account.value?.donor?.active && account.value.colorWritesEnabled));
-const styleDisabledReason = computed(() => account.value?.unavailable.donor ? 'We cannot verify your benefits right now. Please try again.' : !account.value?.donor?.active ? 'Custom styling is available with active donator benefits.' : 'Website color changes are not enabled yet. Your current settings are shown below.');
+const hasStyleAccess = computed(() => Boolean(account.value?.access?.canStyle));
+const canEdit = computed(() => hasStyleAccess.value && account.value.colorWritesEnabled);
+const styleDisabledReason = computed(() => !hasStyleAccess.value ? 'Donator or admin access is required.' : 'Website color changes are not enabled yet. Your current settings are shown below.');
 const donorTitle = computed(() => account.value?.unavailable.donor ? 'Benefits unavailable' : account.value?.donor?.active ? `${account.value.donor.tier} · Active` : account.value?.donor?.state === 'expired' ? 'Donator benefits expired' : account.value?.donor?.state === 'inactive' ? 'Donator benefits inactive' : 'Player account');
 const donorDescription = computed(() => {
   const donor = account.value?.donor;

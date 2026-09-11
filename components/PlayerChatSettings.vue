@@ -1,6 +1,6 @@
 <template>
   <section class="account-style" aria-labelledby="account-style-title">
-    <div class="account-section-title"><h3 id="account-style-title">Your in-game style</h3><span>DONATOR</span></div>
+    <div class="account-section-title"><h3 id="account-style-title">Your in-game style</h3><span>{{ accessLabel }}</span></div>
     <p class="account-muted">A little personality between airshots.</p>
     <p v-if="!enabled" class="account-notice">{{ disabledReason }}</p>
     <form @submit.prevent="save">
@@ -34,6 +34,7 @@
 
 <script setup>
 const props = defineProps({
+  accessLabel: { type: String, default: 'DONATOR' },
   preferences: { type: Object, required: true },
   playerName: { type: String, default: 'Steam player' },
   enabled: Boolean,

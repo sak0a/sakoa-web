@@ -54,6 +54,21 @@ export async function readPlayerDonor(steamid) {
   return donorStatus(rows[0]);
 }
 
+// SourceBans stores Steam-linked server flags separately from website roles.
+// Generic admin (b) and root (z), including inherited flags, permit personal styling only.
+export async function readPlayerAdmin(steamid, connection = null) {
+  const match = /^\[U:1:(\d+)\]$/.exec(steamid);
+  if (!match || BigInt(match[1]) > 4294967295n) return false;
+  const id = BigInt(match[1]);
+  const steam2 = `${id % 2n}:${id / 2n}`;
+  const identities = [steamid, `STEAM_0:${steam2}`, `STEAM_1:${steam2}`, String(76561197960265728n + id)];
+  const sql = `SELECT a.srv_flags, g.flags AS group_flags
+    FROM sb_admins a LEFT JOIN sb_srvgroups g ON g.name = a.srv_group
+    WHERE a.authid IN (?, ?, ?, ?)${connection ? ' FOR UPDATE' : ''}`;
+  const rows = connection ? (await connection.execute(sql, identities))[0] : await executeQuery(sql, identities);
+  return rows.some(row => /[bz]/.test(`${row.srv_flags || ''}${row.group_flags || ''}`));
+}
+
 export async function readPlayerPreferences(steamid) {
   const rows = await executeQuery(`SELECT c.tag, c.nameColor, c.chatColor, c.useGroupTag, c.useGroupNameColor, c.useGroupChatColor, c.webRevision,
     g.tag AS groupTag, g.nameColor AS groupNameColor, g.chatColor AS groupChatColor
@@ -65,7 +80,9 @@ export async function savePlayerPreferences(steamid, raw) {
   const input = validatePlayerPreferences(raw);
   return withTransaction(async connection => {
     const [donors] = await connection.execute('SELECT is_active, expiry_date, tier FROM sakaDonate_users WHERE steamid = ? LIMIT 1 FOR UPDATE', [steamid]);
-    if (!donorStatus(donors[0]).active) throw createError({ statusCode: 403, statusMessage: 'Active donator benefits are required to change chat styling' });
+    if (!donorStatus(donors[0]).active && !await readPlayerAdmin(steamid, connection)) {
+      throw createError({ statusCode: 403, statusMessage: 'Active donator benefits or admin access are required to change chat styling' });
+    }
     const [rows] = await connection.execute('SELECT tag, nameColor, chatColor, useGroupTag, useGroupNameColor, useGroupChatColor, webRevision FROM sakaColors_Clients WHERE steamid = ? LIMIT 1 FOR UPDATE', [steamid]);
     const row = rows[0];
     if (!row) throw createError({ statusCode: 409, statusMessage: 'Join the game server once to create your color profile' });

@@ -32,7 +32,9 @@ describe.skipIf(!process.env.ACCOUNT_TEST_DB_PORT)('account HTTP and MySQL integ
   beforeAll(async () => {
     database.pool = mysql.createPool({ host: '127.0.0.1', port: Number(process.env.ACCOUNT_TEST_DB_PORT), user: 'root', password: 'local-account-tests', database: 'account_tests', multipleStatements: true, connectionLimit: 4 });
     await database.pool.query(await readFile(new URL('../../database/migrations/003_player_accounts.sql', import.meta.url), 'utf8'));
-    await database.pool.query(`CREATE TABLE IF NOT EXISTS sakaDonate_users (steamid VARCHAR(64) PRIMARY KEY, is_active BOOLEAN, expiry_date BIGINT, tier VARCHAR(32)) ENGINE=InnoDB;
+    await database.pool.query(`CREATE TABLE IF NOT EXISTS sb_admins (aid INT PRIMARY KEY, authid VARCHAR(64), srv_flags VARCHAR(64), srv_group VARCHAR(128)) ENGINE=InnoDB;
+      CREATE TABLE IF NOT EXISTS sb_srvgroups (id INT PRIMARY KEY, name VARCHAR(120), flags VARCHAR(30)) ENGINE=InnoDB;
+      CREATE TABLE IF NOT EXISTS sakaDonate_users (steamid VARCHAR(64) PRIMARY KEY, is_active BOOLEAN, expiry_date BIGINT, tier VARCHAR(32)) ENGINE=InnoDB;
       CREATE TABLE IF NOT EXISTS sakaColors_Groups (groupName VARCHAR(32) PRIMARY KEY, tag VARCHAR(64), nameColor VARCHAR(32), chatColor VARCHAR(32)) ENGINE=InnoDB;
       CREATE TABLE IF NOT EXISTS sakaColors_Clients (steamid VARCHAR(64) PRIMARY KEY, groupName VARCHAR(32), tag VARCHAR(64), nameColor VARCHAR(32), chatColor VARCHAR(32), useGroupTag INT, useGroupNameColor INT, useGroupChatColor INT, webRevision INT NOT NULL DEFAULT 0) ENGINE=InnoDB;`);
     const app = createApp();
@@ -45,7 +47,7 @@ describe.skipIf(!process.env.ACCOUNT_TEST_DB_PORT)('account HTTP and MySQL integ
     testRuntimeConfig.public.siteUrl = base;
   });
   beforeEach(async () => {
-    for (const table of ['player_login_states', 'player_sessions', 'sakaColors_Clients', 'sakaDonate_users']) await query(`DELETE FROM ${table}`);
+    for (const table of ['player_login_states', 'player_sessions', 'sakaColors_Clients', 'sakaDonate_users', 'sb_admins', 'sb_srvgroups']) await query(`DELETE FROM ${table}`);
     for (const id of ['[U:1:1]', '[U:1:2]']) {
       await query('INSERT INTO sakaDonate_users VALUES (?, 1, 0, ?)', [id, 'Premium']);
       await query('INSERT INTO sakaColors_Clients VALUES (?, ?, ?, ?, ?, 0, 0, 0, 0)', [id, 'default', 'VIP', '{#aabbcc}', '--n']);
@@ -91,6 +93,19 @@ describe.skipIf(!process.env.ACCOUNT_TEST_DB_PORT)('account HTTP and MySQL integ
     const { group, revision, ...input } = value;
     return { ...input, tag: 'WEB' };
   }
+  it('allows current Steam-linked admin flags and rejects revoked or unrelated access', async () => {
+    await query('DELETE FROM sakaDonate_users WHERE steamid = ?', ['[U:1:1]']);
+    await expect(savePlayerPreferences('[U:1:1]', await body())).rejects.toMatchObject({ statusCode: 403 });
+    await query("INSERT INTO sb_admins VALUES (1, 'STEAM_0:1:0', 'z', NULL)");
+    await expect(savePlayerPreferences('[U:1:1]', await body())).resolves.toMatchObject({ success: true });
+    await query("UPDATE sb_admins SET srv_flags = '', srv_group = 'Moderators'");
+    await query("INSERT INTO sb_srvgroups VALUES (1, 'Moderators', 'b')");
+    await expect(savePlayerPreferences('[U:1:1]', await body())).resolves.toMatchObject({ success: true });
+    await query("UPDATE sb_srvgroups SET flags = 'ao'");
+    await expect(savePlayerPreferences('[U:1:1]', await body())).rejects.toMatchObject({ statusCode: 403 });
+    await query("UPDATE sb_admins SET authid = 'STEAM_0:0:1', srv_flags = 'z'");
+    await expect(savePlayerPreferences('[U:1:1]', await body())).rejects.toMatchObject({ statusCode: 403 });
+  });
   it('creates a revocable HttpOnly session and atomically rejects callback replay', async () => {
     const attempt = await begin();
     const response = await finish(attempt);
