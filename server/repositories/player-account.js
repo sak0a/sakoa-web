@@ -1,3 +1,4 @@
+import { isSourceColor } from '#shared/source-colors.js';
 import { createHash } from 'node:crypto';
 import { createError } from 'h3';
 import { executeQuery, withTransaction } from '../utils/database.js';
@@ -29,8 +30,8 @@ export function validatePlayerPreferences(input) {
   if (typeof input.tag !== 'string' || Buffer.byteLength(input.tag, 'utf8') > 31
     || /[\p{C}{}]/u.test(input.tag)) throw createError({ statusCode: 400, statusMessage: 'Use a short tag (31 UTF-8 bytes), without control characters or color codes' });
   for (const key of ['nameColor', 'chatColor']) {
-    if (typeof input[key] !== 'string' || !/^(--n|\{#[a-fA-F0-9]{6}\}|\{[a-z]{1,24}\})$/.test(input[key])) {
-      throw createError({ statusCode: 400, statusMessage: 'Choose a valid six-digit color or the default color' });
+    if (!isSourceColor(input[key])) {
+      throw createError({ statusCode: 400, statusMessage: 'Choose a supported named color or the game default' });
     }
   }
   for (const key of ['useGroupTag', 'useGroupNameColor', 'useGroupChatColor']) {
@@ -87,11 +88,6 @@ export async function savePlayerPreferences(steamid, raw) {
     const row = rows[0];
     if (!row) throw createError({ statusCode: 409, statusMessage: 'Join the game server once to create your color profile' });
     if (preferenceVersion(row) !== input.version) throw createError({ statusCode: 409, statusMessage: 'Settings changed in-game or in another tab. Reload them before saving.' });
-    for (const key of ['nameColor', 'chatColor']) {
-      if (/^\{[a-z]+\}$/.test(input[key]) && input[key] !== row[key]) {
-        throw createError({ statusCode: 400, statusMessage: 'Choose a color with the color picker' });
-      }
-    }
     if (Number(row.webRevision) >= 2147483647) throw createError({ statusCode: 503, statusMessage: 'Color settings need administrator maintenance' });
     const [updated] = await connection.execute(`UPDATE sakaColors_Clients SET tag = ?, nameColor = ?, chatColor = ?, useGroupTag = ?, useGroupNameColor = ?, useGroupChatColor = ?, webRevision = webRevision + 1 WHERE steamid = ? AND webRevision = ?`,
       [input.tag, input.nameColor, input.chatColor, input.useGroupTag, input.useGroupNameColor, input.useGroupChatColor, steamid, row.webRevision]);

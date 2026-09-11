@@ -6,7 +6,7 @@ const account = {
   access: { admin: false, canStyle: true },
   identity: { name: 'Rocket', avatar: null, steamid: '[U:1:1]', steam64: session.steam64 },
   donor: { active: true, exists: true, tier: 'Premium', permanent: true, expiresAt: null, state: 'active' },
-  preferences: { tag: 'VIP', nameColor: '{#aabbcc}', chatColor: '{#ddaaff}', useGroupTag: false, useGroupNameColor: false, useGroupChatColor: false, version: 'b'.repeat(64), group: { tag: '--n', nameColor: '{gold}', chatColor: '--n' } },
+  preferences: { tag: 'VIP', nameColor: '{gold}', chatColor: '{unusual}', useGroupTag: false, useGroupNameColor: false, useGroupChatColor: false, version: 'b'.repeat(64), group: { tag: '--n', nameColor: '{gold}', chatColor: '--n' } },
   stats: { currentSeason: 3, season: 3, player: { kills: 120, deaths: 40, rank: 24, points: 2300, deflections: 8420, playtime: 453600 } },
   unavailable: { donor: false, preferences: false, stats: false, profile: false }, colorWritesEnabled: true
 }
@@ -43,9 +43,15 @@ test('donator edits show a preview and submit CSRF-protected personal settings',
   await expect(dialog.getByText('Premium · Active')).toBeVisible()
   await dialog.getByRole('textbox', { name: 'Chat tag' }).fill('ROCKET')
   await expect(dialog.locator('.account-chat-preview')).toContainText('ROCKET')
+  await expect(dialog.locator('input[type=color]')).toHaveCount(0)
+  await dialog.getByRole('button', { name: 'Name color gold', exact: true }).click()
+  await dialog.getByRole('searchbox', { name: 'Search name colors' }).fill('blue')
+  await dialog.getByRole('button', { name: 'blue', exact: true }).click()
+  await expect(dialog.locator('.account-chat-preview p span').nth(1)).toHaveCSS('color', 'rgb(153, 204, 255)')
   await dialog.getByRole('button', { name: 'Save preferences' }).click()
   await expect(dialog.getByText('Preferences saved.', { exact: false })).toBeVisible()
   expect(submitted.tag).toBe('ROCKET')
+  expect(submitted.nameColor).toBe('{blue}')
   expect(submitted).not.toHaveProperty('steamid')
   expect(submitted).not.toHaveProperty('expiry_date')
   expect(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
@@ -116,3 +122,23 @@ for (const admin of [false, true]) {
     }
   })
 }
+
+ test('legacy RGB requires a supported replacement and palette Escape preserves the panel', async ({ page }) => {
+  await page.route('**/api/account/session', route => route.fulfill({ json: session }))
+  await page.route(/\/api\/account(?:\?.*)?$/, route => route.fulfill({ json: { ...account, preferences: { ...account.preferences, nameColor: '{#123456}' } } }))
+  await page.goto('/?account=open')
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('textbox', { name: 'Chat tag' }).fill('NEW')
+  await expect(dialog.getByRole('button', { name: 'Save preferences' })).toBeDisabled()
+  const trigger = dialog.getByRole('button', { name: 'Name color Previous custom color' })
+  await trigger.click()
+  await expect(dialog.getByRole('button', { name: 'unusual', exact: true })).toHaveCount(1)
+  expect(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+  await page.screenshot({ path: `test-results/color-palette-${test.info().project.name}.png` })
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeVisible()
+  await expect(trigger).toBeFocused()
+  await trigger.click()
+  await dialog.getByRole('button', { name: 'Game default', exact: true }).click()
+  await expect(dialog.getByRole('button', { name: 'Save preferences' })).toBeEnabled()
+})

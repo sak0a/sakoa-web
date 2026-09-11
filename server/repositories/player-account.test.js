@@ -1,9 +1,10 @@
+import { sourceColors, sourceColor } from '../../shared/source-colors.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { readPlayerAdmin, donorStatus, preferenceVersion, savePlayerPreferences, readPlayerStats, validatePlayerPreferences } from './player-account.js';
 import { executeQuery, withTransaction } from '../utils/database.js';
 vi.mock('../utils/database.js', () => ({ executeQuery: vi.fn(), withTransaction: vi.fn() }));
 vi.mock('../utils/seasons.js', () => ({ getCurrentSeason: async () => 3, getSeasonTableName: async season => season === 3 ? 'sakaStats' : `sakaStats_s${season}`, getSeasonInfo: async () => ({ displayName: 'Current season' }) }));
-const row = { tag: 'VIP', nameColor: '{#aabbcc}', chatColor: '--n', useGroupTag: 0, useGroupNameColor: 0, useGroupChatColor: 1, webRevision: 2 };
+const row = { tag: 'VIP', nameColor: '{gold}', chatColor: '--n', useGroupTag: 0, useGroupNameColor: 0, useGroupChatColor: 1, webRevision: 2 };
 const valid = () => ({ ...row, useGroupTag: false, useGroupNameColor: false, useGroupChatColor: true, version: preferenceVersion(row), webRevision: undefined });
 function payload() { const value = valid(); delete value.webRevision; return value; }
 
@@ -20,6 +21,18 @@ describe('private account data', () => {
   it('rejects identity, expiry, group ownership and control-code injection', () => {
     for (const extra of [{ steamid: '[U:1:2]' }, { expiry_date: 0 }, { groupName: 'admin' }, { tag: 'x\ny' }, { tag: '{red}admin' }, { tag: '🔥'.repeat(8) }, { useGroupTag: 1 }, { nameColor: '{#aaa}' }]) {
       expect(() => validatePlayerPreferences({ ...payload(), ...extra })).toThrow();
+    }
+  });
+  it('accepts every installed named color and rejects RGB and unknown tokens', () => {
+    expect(sourceColors).toHaveLength(173);
+    expect(sourceColor('{blue}').hex).toBe('#99ccff');
+    expect(sourceColor('{red}').hex).toBe('#ff4040');
+    for (const color of sourceColors) {
+      expect(() => validatePlayerPreferences({ ...payload(), nameColor: color.value, chatColor: color.value })).not.toThrow();
+    }
+    for (const value of ['{#aabbcc}', '{#aabbccdd}', '#ffffff', '{unknown}', '{default}', '{teamcolor}']) {
+      expect(() => validatePlayerPreferences({ ...payload(), nameColor: value })).toThrow();
+      expect(() => validatePlayerPreferences({ ...payload(), chatColor: value })).toThrow();
     }
   });
   it('locks authorization and preferences, writes only the authenticated player, and advances the revision', async () => {

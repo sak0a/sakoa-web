@@ -50,7 +50,7 @@ describe.skipIf(!process.env.ACCOUNT_TEST_DB_PORT)('account HTTP and MySQL integ
     for (const table of ['player_login_states', 'player_sessions', 'sakaColors_Clients', 'sakaDonate_users', 'sb_admins', 'sb_srvgroups']) await query(`DELETE FROM ${table}`);
     for (const id of ['[U:1:1]', '[U:1:2]']) {
       await query('INSERT INTO sakaDonate_users VALUES (?, 1, 0, ?)', [id, 'Premium']);
-      await query('INSERT INTO sakaColors_Clients VALUES (?, ?, ?, ?, ?, 0, 0, 0, 0)', [id, 'default', 'VIP', '{#aabbcc}', '--n']);
+      await query('INSERT INTO sakaColors_Clients VALUES (?, ?, ?, ?, ?, 0, 0, 0, 0)', [id, 'default', 'VIP', '{gold}', '--n']);
     }
     testRuntimeConfig.playerColorWritesEnabled = true;
     vi.stubGlobal('fetch', async (url, options) => {
