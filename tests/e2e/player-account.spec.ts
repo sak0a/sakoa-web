@@ -47,7 +47,7 @@ test('donator edits show a preview and submit CSRF-protected personal settings',
   await dialog.getByRole('button', { name: 'Name color gold', exact: true }).click()
   await dialog.getByRole('searchbox', { name: 'Search name colors' }).fill('blue')
   await dialog.getByRole('button', { name: 'blue', exact: true }).click()
-  await expect(dialog.locator('.account-chat-preview p span').nth(1)).toHaveCSS('color', 'rgb(153, 204, 255)')
+  await expect(dialog.locator('.account-preview-name')).toHaveCSS('color', 'rgb(153, 204, 255)')
   await dialog.getByRole('button', { name: 'Save preferences' }).click()
   await expect(dialog.getByText('Preferences saved.', { exact: false })).toBeVisible()
   expect(submitted.tag).toBe('ROCKET')
@@ -141,4 +141,25 @@ for (const admin of [false, true]) {
   await trigger.click()
   await dialog.getByRole('button', { name: 'Game default', exact: true }).click()
   await expect(dialog.getByRole('button', { name: 'Save preferences' })).toBeEnabled()
+})
+
+test('preview renders existing group tag colors and switches between group, personal and team defaults', async ({ page }) => {
+  await page.route('**/api/account/session', route => route.fulfill({ json: session }))
+  await page.route(/\/api\/account(?:\?.*)?$/, route => route.fulfill({ json: { ...account, preferences: {
+    ...account.preferences, useGroupTag: true, useGroupNameColor: true, useGroupChatColor: true,
+    group: { tag: '{gold}[{RED}ADMIN{gold}]', nameColor: '{#12AB3480}', chatColor: '{BLUE}' }
+  } } }))
+  await page.goto('/?account=open')
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.locator('.account-preview-tag')).toHaveText('[ADMIN] ')
+  await expect(dialog.locator('.account-preview-tag span').nth(1)).toHaveCSS('color', 'rgb(255, 64, 64)')
+  await expect(dialog.locator('.account-preview-name')).toHaveCSS('color', 'rgba(18, 171, 52, 0.5)')
+  await expect(dialog.locator('.account-preview-message')).toHaveCSS('color', 'rgb(153, 204, 255)')
+  await dialog.getByRole('button', { name: 'Name color gold', exact: true }).click()
+  await dialog.getByRole('button', { name: 'Game default', exact: true }).click()
+  await expect(dialog.getByRole('checkbox', { name: 'Use my group’s name color', exact: true })).not.toBeChecked()
+  await dialog.getByLabel('Preview team', { exact: true }).selectOption('blue')
+  await expect(dialog.locator('.account-preview-name')).toHaveCSS('color', 'rgb(153, 204, 255)')
+  await dialog.getByRole('checkbox', { name: 'Use my group’s message color', exact: true }).uncheck()
+  await expect(dialog.locator('.account-preview-message')).toHaveCSS('color', 'rgb(134, 80, 172)')
 })

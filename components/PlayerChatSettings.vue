@@ -8,14 +8,15 @@
         <label class="account-field">Chat tag <input v-model="draft.tag" maxlength="31" placeholder="Your tag" autocomplete="off" @input="changed"></label>
         <label class="account-check"><input v-model="draft.useGroupTag" type="checkbox" @change="changed"> Use my group’s tag</label>
         <div v-for="field in colorFields" :key="field.key" class="account-color-field">
-          <PlayerColorPicker :id="`account-${field.key}`" v-model="draft[field.key]" :label="field.label" @update:model-value="changed" />
+          <PlayerColorPicker :id="`account-${field.key}`" v-model="draft[field.key]" :label="field.label" @update:model-value="selectPersonalColor(field)" />
           <label class="account-check"><input v-model="draft[field.group]" type="checkbox" @change="changed"> Use my group’s {{ field.label.toLowerCase() }}</label>
         </div>
       </fieldset>
       <div class="account-chat-preview" aria-label="Approximate in-game chat preview">
         <span class="account-eyebrow">CHAT PREVIEW</span>
-        <p><span>{{ previewTag }} </span><span :style="{ color: previewNameColor }">{{ playerName }}</span><span> : </span><span :style="{ color: previewChatColor }">nice airshot!</span></p>
-        <small>Preview is approximate; team and group colors may differ in-game.</small>
+        <p><span class="account-preview-tag"><span v-for="(segment, index) in previewTag" :key="index" :style="{ color: segment.color }">{{ segment.text }}</span>{{ previewTag.length ? ' ' : '' }}</span><span class="account-preview-name" :style="{ color: previewNameColor }">{{ playerName }}</span><span style="color:#ffffff"> : </span><span class="account-preview-message" :style="{ color: previewChatColor }">nice airshot!</span></p>
+        <label class="account-preview-team">Preview team <select v-model="previewTeam" aria-label="Preview team"><option value="red">RED</option><option value="blue">BLU</option><option value="grey">Spectator</option></select></label>
+        <small>Uses your selected personal or group settings. Team colors follow the preview team; appearance may vary with game settings.</small>
       </div>
       <p v-if="error" class="account-error" role="alert">{{ error }}</p>
       <div class="account-actions">
@@ -28,7 +29,8 @@
 </template>
 
 <script setup>
-import { isSourceColor, sourceColor } from '#shared/source-colors.js';
+import { isSourceColor } from '#shared/source-colors.js';
+import { previewColor, previewSegments } from '#shared/chat-preview.js';
 const props = defineProps({
   accessLabel: { type: String, default: 'DONATOR' },
   preferences: { type: Object, required: true },
@@ -53,18 +55,13 @@ watch(() => props.preferences, value => {
   error.value = '';
 }, { immediate: true });
 
+function selectPersonalColor(field) { draft[field.group] = false; changed(); }
 function changed() { dirty.value = true; status.value = ''; error.value = ''; }
 const colorsValid = computed(() => isSourceColor(draft.nameColor) && isSourceColor(draft.chatColor));
-function cssColor(value) {
-  const hex = value?.match(/^\{(#[a-f0-9]{6})\}$/i);
-  return sourceColor(value)?.hex || hex?.[1] || '#e6d6f7';
-}
-const previewTag = computed(() => {
-  const tag = draft.useGroupTag ? props.preferences.group?.tag : draft.tag;
-  return !tag || tag === '--n' ? '' : tag.replace(/\{[^}]*\}/g, '');
-});
-const previewNameColor = computed(() => cssColor(draft.useGroupNameColor ? props.preferences.group?.nameColor : draft.nameColor));
-const previewChatColor = computed(() => cssColor(draft.useGroupChatColor ? props.preferences.group?.chatColor : draft.chatColor));
+const previewTeam = ref('red');
+const previewTag = computed(() => previewSegments(draft.useGroupTag ? props.preferences.group?.tag : draft.tag, '#ffffff', previewTeam.value));
+const previewNameColor = computed(() => previewColor(draft.useGroupNameColor ? props.preferences.group?.nameColor : draft.nameColor, previewColor('{teamcolor}', '#ffffff', previewTeam.value), previewTeam.value));
+const previewChatColor = computed(() => previewColor(draft.useGroupChatColor ? props.preferences.group?.chatColor : draft.chatColor, '#ffffff', previewTeam.value));
 async function save() {
   if (!props.enabled || saving.value || !colorsValid.value) return;
   saving.value = true;

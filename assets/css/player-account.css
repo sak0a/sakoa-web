@@ -82,3 +82,5 @@
 .account-palette-choice:hover, .account-palette-default:hover { background:#382547; }
 .account-palette-choice[aria-pressed=true], .account-palette-default[aria-pressed=true] { border-color:#d6b5fa; background:#382547; }
 .account-palette-selected { position:absolute; right:8px; top:10px; color:#d6b5fa; }
+.account-preview-team { display:flex; align-items:center; gap:10px; margin:12px 0; color:#c4b4d0; font-size:12px; }
+.account-preview-team select { padding:5px 8px; background:#23192d; color:#f5effc; border:1px solid #4b3559; border-radius:5px; }

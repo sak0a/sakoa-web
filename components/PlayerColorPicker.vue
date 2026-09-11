@@ -2,7 +2,7 @@
   <div class="account-palette" @keydown.esc="onEscape">
     <label :id="`${id}-label`" :for="id">{{ label }}</label>
     <button :id="id" ref="trigger" type="button" class="account-palette-trigger" :aria-labelledby="`${id}-label ${id}-value`" :aria-expanded="open" :aria-controls="`${id}-palette`" @click="toggle">
-      <span class="account-color-swatch" :style="{ backgroundColor: selected?.hex || '#e6d6f7' }" aria-hidden="true" />
+      <span class="account-color-swatch" :style="{ backgroundColor: previewColor(modelValue) }" aria-hidden="true" />
       <span :id="`${id}-value`">{{ selected?.name || (modelValue === '--n' ? 'Game default' : 'Previous custom color') }}</span>
       <span class="account-palette-chevron" aria-hidden="true">{{ open ? '−' : '+' }}</span>
     </button>
@@ -23,6 +23,7 @@
 </template>
 
 <script setup>
+import { previewColor } from '#shared/chat-preview.js';
 import { isSourceColor, sourceColor, sourceColors } from '#shared/source-colors.js';
 const props = defineProps({ id: { type: String, required: true }, label: { type: String, required: true }, modelValue: { type: String, required: true } });
 const emit = defineEmits(['update:modelValue']);
