@@ -8,8 +8,10 @@ import type {
 
 interface GameDigPlayer {
   name?: string
-  score?: number
-  time?: number
+  raw?: {
+    score?: number
+    time?: number
+  }
 }
 
 export async function queryServerStatus(server: DiscordGameServer): Promise<NormalizedServerStatus> {
@@ -26,8 +28,8 @@ export async function queryServerStatus(server: DiscordGameServer): Promise<Norm
 
     const players: NormalizedPlayer[] = (state.players as GameDigPlayer[]).map(player => ({
       name: typeof player.name === 'string' ? player.name : 'Anonymous',
-      score: typeof player.score === 'number' && Number.isFinite(player.score) ? player.score : null,
-      durationSeconds: typeof player.time === 'number' && Number.isFinite(player.time) ? player.time : null,
+      score: typeof player.raw?.score === 'number' && Number.isFinite(player.raw?.score) ? player.raw?.score : null,
+      durationSeconds: typeof player.raw?.time === 'number' && Number.isFinite(player.raw?.time) ? player.raw?.time : null,
     }))
 
     return {
