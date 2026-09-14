@@ -3,8 +3,8 @@
     <div class="text-center">
       <div
         ref="counterRef"
-        class="text-3xl md:text-4xl font-bold text-white mb-2"
-        :class="{ 'animate-glow': isGlowing }"
+        class="text-3xl md:text-4xl font-bold text-white mb-2 bg-transparent"
+        :class="{ 'stats-text-glow': isGlowing }"
       >
         {{ displayValue }}{{ suffix }}
       </div>
@@ -159,11 +159,11 @@ watch(() => props.value, () => {
   @apply transition-all duration-300;
 }
 
-.animate-glow {
-  animation: glow 2s ease-in-out infinite alternate;
+.stats-text-glow {
+  animation: stats-text-glow 2s ease-in-out infinite alternate;
 }
 
-@keyframes glow {
+@keyframes stats-text-glow {
   from {
     text-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
   }
