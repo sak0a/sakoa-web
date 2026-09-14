@@ -39,7 +39,7 @@ The web health check requests `/api/health`. The bot health check runs its bundl
 
 Generate the session signing secret once with `openssl rand -hex 32`. Keep it stable across web-container restarts; changing it signs every administrator out.
 
-Coolify can build the `web` and `worker` Docker targets itself. To deploy prebuilt GHCR images instead, set `WEB_IMAGE` and `BOT_IMAGE` to immutable version or SHA tags published by the container workflow.
+Coolify builds the `web` and `worker` Docker targets directly from this repository using `docker-compose.yml`. GitHub Actions runs CI checks; it does not publish container images or trigger Coolify deployments.
 
 ## Required configuration
 
