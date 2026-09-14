@@ -154,6 +154,19 @@ export async function updateGameServer(currentId, input, updatedBy) {
           currentId
         ]
       );
+      if (currentId !== server.id) {
+        await connection.execute(
+          'UPDATE discord_status_messages SET server_id = ? WHERE server_id = ?',
+          [server.id, currentId]
+        );
+        await connection.execute(
+          `UPDATE discord_bot_jobs
+           SET payload = JSON_SET(payload, '$.serverId', ?)
+           WHERE job_type = 'publish_one' AND status = 'queued'
+             AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.serverId')) = ?`,
+          [server.id, currentId]
+        );
+      }
       return { missing: false };
     });
 

@@ -47,12 +47,19 @@ function safePlayerName(value: string): string {
   return truncate(clean || 'Anonymous', 80)
 }
 
+function playerTime(seconds: number | null): string {
+  if (seconds === null || !Number.isFinite(seconds)) return '—'
+  const minutes = Math.floor(Math.max(0, seconds) / 60)
+  const hours = Math.floor(minutes / 60)
+  return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`
+}
+
 function playerList(players: NormalizedPlayer[]): string {
   const lines: string[] = []
   let used = 0
 
   for (const player of players) {
-    const line = `• ${safePlayerName(player.name)}`
+    const line = `• ${safePlayerName(player.name)} — ${player.score ?? '—'} points · ${playerTime(player.durationSeconds)}`
     if (used + line.length + 1 > 1000) {
       lines.push(`…and ${players.length - lines.length} more`)
       break
@@ -118,9 +125,9 @@ export function buildDiscordStatusMessage(
   return {
     content: settings.contentText,
     embeds: [{
-      title: truncate(`${settings.embedHeading} — ${server.displayName}`, 256),
+      title: truncate([settings.embedHeading.trim(), server.displayName].filter(Boolean).join(' — '), 256),
       description,
-      color: status.online ? settings.embedAccentColor : 0xe05252,
+      color: status.online ? 0x57f287 : 0xe05252,
       fields,
       timestamp: status.checkedAt.toISOString(),
       footer: { text: managedStatusMarker(server.id) },

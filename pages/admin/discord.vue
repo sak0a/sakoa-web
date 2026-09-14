@@ -78,16 +78,9 @@
                     <span>seconds</span>
                   </div>
                 </label>
-                <label class="admin-field">
-                  <span>Accent color</span>
-                  <div class="color-inputs">
-                    <input v-model="accentHex" type="color" aria-label="Choose embed accent color">
-                    <input v-model.trim="accentHex" pattern="^#[0-9a-fA-F]{6}$" class="admin-code" aria-label="Embed accent hexadecimal value">
-                  </div>
-                </label>
                 <label class="admin-field field-wide">
-                  <span>Embed heading</span>
-                  <input v-model.trim="form.embedHeading" maxlength="256" placeholder="saka Dodgeball">
+                  <span>Optional embed heading</span>
+                  <input v-model.trim="form.embedHeading" maxlength="256" placeholder="Leave empty to show only the server name">
                 </label>
                 <label class="admin-field field-wide">
                   <span>Optional message text</span>
@@ -97,7 +90,7 @@
 
               <label class="discord-player-toggle admin-toggle">
                 <input v-model="form.showPlayerNames" type="checkbox">
-                Include current player names in status embeds
+                Include player names, points, and playing time in status embeds
               </label>
 
               <div class="admin-actions">
@@ -139,7 +132,7 @@
                 </div>
               </section>
 
-              <section v-if="previewData" class="admin-panel embed-preview">
+              <section v-if="previewData" class="admin-panel embed-preview" :style="{ borderLeftColor: previewData.status.online ? '#57f287' : '#e05252' }">
                 <span class="admin-eyebrow">Managed embed preview</span>
                 <h3>{{ previewData.message.embeds[0].title }}</h3>
                 <p>{{ previewData.status.online ? 'Online' : 'Offline' }} · {{ previewData.status.map || 'Unavailable' }}</p>

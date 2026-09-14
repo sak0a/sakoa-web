@@ -16,7 +16,7 @@ export const discordBotSettingsSchema = z.object({
   updateIntervalSeconds: z.number().int()
     .min(MIN_UPDATE_INTERVAL_SECONDS)
     .max(MAX_UPDATE_INTERVAL_SECONDS),
-  embedHeading: z.string().trim().min(1).max(256),
+  embedHeading: z.string().trim().max(256),
   embedAccentColor: z.number().int().min(0).max(0xffffff),
   contentText: z.string().max(2000),
   showPlayerNames: z.boolean(),

@@ -61,7 +61,7 @@
         <div class="admin-panel__body">
           <div v-if="modalError" class="admin-notice admin-notice--error" role="alert">{{ modalError }}</div>
           <div class="admin-form-grid">
-            <label class="admin-field"><span>Stable ID</span><input v-model.trim="form.id" required pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,63}" :disabled="editingIndex !== null"></label>
+            <label class="admin-field"><span>Stable ID</span><input v-model.trim="form.id" required pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,63}"></label>
             <label class="admin-field"><span>Display order</span><input v-model.number="form.displayOrder" type="number" min="0" max="1000000" required></label>
             <label class="admin-field field-wide"><span>Display name</span><input v-model.trim="form.name" required maxlength="160"></label>
             <label class="admin-field"><span>Host / IP</span><input v-model.trim="form.host" required></label>

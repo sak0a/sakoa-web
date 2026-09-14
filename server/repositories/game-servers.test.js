@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { validateGameServer } from './game-servers.js';
+import { updateGameServer, validateGameServer } from './game-servers.js';
+import { withTransaction } from '../utils/database.js';
 
 vi.mock('../utils/database.js', () => ({
   executeQuery: vi.fn(),
   withTransaction: vi.fn()
 }));
+
 
 const validServer = {
   id: 'arena-eu',
@@ -49,5 +51,24 @@ describe('game server validation', () => {
       connectUrl: 'steam://connect/[2001:db8::1]:27015'
     });
     expect(result.success).toBe(true);
+  });
+});
+
+describe('server ID updates', () => {
+  it('moves the message mapping and queued publish jobs in the server transaction', async () => {
+    const execute = vi.fn().mockResolvedValue([{}]);
+    execute.mockResolvedValueOnce([[{ id: 'old-id' }]]);
+    withTransaction.mockImplementationOnce(callback => callback({ execute }));
+    expect(await updateGameServer('old-id', validServer, 'admin')).toEqual({ success: true, data: validServer });
+    expect(execute).toHaveBeenCalledWith(
+      'UPDATE discord_status_messages SET server_id = ? WHERE server_id = ?',
+      ['arena-eu', 'old-id']
+    );
+    expect(execute).toHaveBeenCalledWith(expect.stringContaining("JSON_SET(payload, '$.serverId', ?)"), ['arena-eu', 'old-id']);
+  });
+
+  it('reports duplicate IDs without accepting the rename', async () => {
+    withTransaction.mockRejectedValueOnce({ code: 'ER_DUP_ENTRY' });
+    expect(await updateGameServer('old-id', validServer, 'admin')).toMatchObject({ success: false, conflict: true });
   });
 });
