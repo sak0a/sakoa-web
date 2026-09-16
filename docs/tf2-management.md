@@ -9,7 +9,7 @@ Pages: `/admin/moderation` and `/admin/operations`. Both use the existing admin 
 3. Run migration `004_tf2_operations.sql` through the existing migration runner before serving the new pages. It adds one application table and does not alter SourceBans tables.
 4. Deploy the web application. No game restart or plugin reload is needed.
 
-The application uses the existing shared database and `sb_` prefix. The owner Steam identity must resolve to exactly one row in `sb_admins` to create/revoke punishments. New API routes never return RCON or Pterodactyl credentials. Scope the Pterodactyl key to the deployment host's egress IP. A Client key inherits its account's server permissions; use a dedicated Pterodactyl subuser if additional account isolation is needed later.
+The application uses the existing shared database and `sb_` prefix. The owner Steam identity must resolve to exactly one row in `sb_admins` to create/revoke punishments. New API routes never return RCON or Pterodactyl credentials. Restrict the Pterodactyl key to the source address its API actually sees. In this deployment that is the internal proxy address `172.19.0.6`, not the web host's public egress address. This restriction does not distinguish upstream clients sharing that proxy; the private API key remains the authentication boundary. A Client key inherits its account's server permissions; use a dedicated Pterodactyl subuser if additional account isolation is needed later.
 
 ## Moderation behavior
 
