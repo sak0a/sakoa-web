@@ -1,4 +1,4 @@
-import { getMethod, getRequestURL, setResponseHeader } from 'h3';
+import { createError, getMethod, getRequestURL, setResponseHeader } from 'h3';
 import {
   assertSameOriginRequest,
   isMutation,
@@ -21,5 +21,8 @@ export default defineEventHandler((event) => {
 
   const session = requireAdminSession(event);
   event.context.adminSession = session;
+  if ((pathname === '/api/admin/tf2' || pathname.startsWith('/api/admin/tf2/')) && !session.steam64) {
+    throw createError({ statusCode: 403, statusMessage: 'Sign in with your configured owner Steam account to manage TF2 servers' });
+  }
   if (isMutation(method)) requireCsrfToken(event, session);
 });

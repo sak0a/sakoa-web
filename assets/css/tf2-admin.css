@@ -1,0 +1,18 @@
+.tf2-page { display: grid; gap: 1.5rem; }
+.tf2-page .admin-page-header { margin-bottom: 0; }
+.tf2-page select,.tf2-page input:not([type=checkbox]),.tf2-page textarea { background: #141419; color: #eee; border: 1px solid #3c3945; border-radius: .3rem; padding: .7rem; max-width: 100%; }
+.tf2-page select { min-width: 10rem; }
+.tf2-page small { display: block; color: #9994a6; margin-top: .3rem; }
+.tf2-filters { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.tf2-filters input:not([type=checkbox]) { flex: 1; }
+.tf2-review { border-color: #b79ade; }
+.tf2-page .admin-panel__body > p { color: #b2adbd; margin: .8rem 0 1.2rem; }
+.tf2-page .admin-actions { flex-wrap: wrap; }
+.tf2-editor { display: grid; gap: 1rem; }
+.tf2-editor textarea { width: 100%; min-height: 26rem; font: .8rem/1.6 var(--font-mono); tab-size: 2; resize: vertical; }
+.tf2-files { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: .5rem; }
+.tf2-files button { text-align: left; overflow-wrap: anywhere; }
+.tf2-diff { max-height: 20rem; overflow: auto; padding: 1rem; background: #09090b; white-space: pre-wrap; overflow-wrap: anywhere; font: .75rem/1.6 var(--font-mono); }
+.tf2-diff .added { color: #97d4ac; }.tf2-diff .removed { color: #efacac; }
+.tf2-status { display: flex; flex-wrap: wrap; gap: 1.5rem; color: #b2adbd; }
+@media(max-width:700px) { .tf2-page .admin-panel__header { flex-wrap: wrap; gap: 1rem; } }

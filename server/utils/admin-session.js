@@ -25,13 +25,14 @@ export function signAdminSession(payload, secret) {
   return `${encodedPayload}.${signature}`;
 }
 
-export function createAdminSession(secret, now = Date.now(), csrfToken = randomBytes(32).toString('base64url')) {
+export function createAdminSession(secret, now = Date.now(), csrfToken = randomBytes(32).toString('base64url'), steam64 = null) {
   const issuedAt = Math.floor(now / 1000);
   const payload = {
     version: SESSION_VERSION,
     issuedAt,
     expiresAt: issuedAt + ADMIN_SESSION_MAX_AGE,
-    csrfToken
+    csrfToken,
+    steam64
   };
 
   return { payload, token: signAdminSession(payload, secret) };

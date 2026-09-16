@@ -40,14 +40,14 @@ export const useAdmin = () => {
     }
   };
 
-  const login = async (password) => {
+  const login = async (password, provider = 'password') => {
     try {
       isLoading.value = true;
       error.value = null;
       const response = await $fetch('/api/admin/auth', {
         method: 'POST',
         credentials: 'include',
-        body: { password }
+        body: { password, provider }
       });
 
       isAuthenticated.value = Boolean(response?.authenticated);

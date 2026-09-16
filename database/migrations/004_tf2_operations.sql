@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS tf2_operations (
+  id CHAR(36) NOT NULL PRIMARY KEY,
+  actor_steam64 VARCHAR(20) NOT NULL,
+  action VARCHAR(40) NOT NULL,
+  request_hash CHAR(64) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'started',
+  result_json JSON NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY tf2_operations_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

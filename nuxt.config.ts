@@ -48,7 +48,7 @@ export default defineNuxtConfig({
       }
     }
   },
-  css: ['~/assets/css/main.css', '~/assets/css/admin.css', '~/assets/css/player-account.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/admin.css', '~/assets/css/player-account.css', '~/assets/css/tf2-admin.css'],
 
   vite: {
     plugins: [tailwindcss()]
@@ -63,6 +63,10 @@ export default defineNuxtConfig({
     dbName: process.env.DB_NAME || '',
     adminPassword: process.env.ADMIN_PASSWORD || '',
     adminSessionSecret: process.env.ADMIN_SESSION_SECRET || '',
+    adminSteamIds: process.env.ADMIN_STEAM_IDS || '',
+    pterodactylUrl: process.env.PTERODACTYL_URL || '',
+    pterodactylApiKey: process.env.PTERODACTYL_API_KEY || '',
+    tf2ServerMap: process.env.TF2_SERVER_MAP || '{}',
     steamApiKey: process.env.STEAM_API_KEY || '',
     playerColorWritesEnabled: process.env.PLAYER_COLOR_WRITES_ENABLED === 'true',
     // Public keys (exposed to client-side)

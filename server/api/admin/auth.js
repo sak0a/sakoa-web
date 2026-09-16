@@ -7,6 +7,8 @@ import {
   setAdminSession
 } from '../../utils/admin-auth.js';
 import { constantTimeEqual, createAdminSession } from '../../utils/admin-session.js';
+import { readPlayerSession } from '../../utils/player-auth.js';
+import { isOwnerSteamId } from '../../utils/owner-access.js';
 
 const ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -68,6 +70,17 @@ export default defineEventHandler(async (event) => {
   if (method === 'POST') {
     enforceLoginRateLimit(event);
     const body = await readBody(event);
+    if (body?.provider === 'steam') {
+      const player = await readPlayerSession(event);
+      if (!isOwnerSteamId(player?.steam64, config.adminSteamIds)) {
+        recordLoginFailure(event);
+        throw createError({ statusCode: 403, statusMessage: 'This Steam account is not configured as the panel owner' });
+      }
+      const session = createAdminSession(getAdminSessionSecret(event), Date.now(), undefined, player.steam64);
+      setAdminSession(event, session.token);
+      clearLoginFailures(event);
+      return { authenticated: true, csrfToken: session.payload.csrfToken, expiresAt: session.payload.expiresAt, steam64: player.steam64 };
+    }
     const password = typeof body?.password === 'string' ? body.password : '';
 
     if (!password) {
@@ -96,6 +109,8 @@ export default defineEventHandler(async (event) => {
     const session = readAdminSession(event);
     return {
       authenticated: Boolean(session),
+      steam64: session?.steam64 || null,
+      steamEnabled: Boolean(config.adminSteamIds),
       csrfToken: session?.csrfToken || null,
       expiresAt: session?.expiresAt || null
     };
@@ -106,7 +121,8 @@ export default defineEventHandler(async (event) => {
     const session = createAdminSession(
       getAdminSessionSecret(event),
       Date.now(),
-      currentSession.csrfToken
+      currentSession.csrfToken,
+      currentSession.steam64
     );
     setAdminSession(event, session.token);
     return {

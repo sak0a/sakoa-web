@@ -67,6 +67,8 @@ const mobileOpen = ref(false)
 const primaryItems = [
   { index: '01', label: 'Overview', to: '/admin/dashboard' },
   { index: '02', label: 'Servers', to: '/admin/servers' },
+  { index: '↳', label: 'Moderation', to: '/admin/moderation' },
+  { index: '↳', label: 'Server operations', to: '/admin/operations' },
   { index: '03', label: 'Discord bot', to: '/admin/discord' },
   { index: '04', label: 'Donors', to: '/admin/donors' },
 ]

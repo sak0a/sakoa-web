@@ -1,4 +1,4 @@
-import { defineEventHandler, sendRedirect, setCookie, createError } from 'h3';
+import { defineEventHandler, sendRedirect, setCookie, createError, getQuery } from 'h3';
 import { executeQuery } from '../../utils/database.js';
 import { LOGIN_COOKIE, hashToken, randomToken, playerOrigin, playerCookieOptions, privateResponse } from '../../utils/player-auth.js';
 import { steamLoginUrl } from '../../utils/steam-openid.js';
@@ -15,5 +15,6 @@ export default defineEventHandler(async event => {
   const state = randomToken();
   await executeQuery('INSERT INTO player_login_states (token_hash, address_hash, expires_at) VALUES (?, ?, ?)', [hashToken(state), address, now + 600]);
   setCookie(event, LOGIN_COOKIE, state, playerCookieOptions(event, 600));
+  setCookie(event, 'saka-steam-admin', getQuery(event).admin === '1' ? state : '', playerCookieOptions(event, 600));
   return sendRedirect(event, steamLoginUrl(`${origin}/api/auth/steam/callback?state=${state}`, origin), 302);
 });

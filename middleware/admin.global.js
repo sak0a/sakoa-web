@@ -5,6 +5,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const authenticated = await checkAuth();
 
   if (to.path === '/admin') {
+    if (to.query.steam === '1') return;
     if (authenticated) return navigateTo('/admin/dashboard');
     return;
   }

@@ -9,6 +9,8 @@ export default defineEventHandler(async event => {
   const params = getRequestURL(event).searchParams;
   const state = params.get('state');
   const cookie = getCookie(event, LOGIN_COOKIE);
+  const adminLogin = getCookie(event, 'saka-steam-admin') === state;
+  deleteCookie(event, 'saka-steam-admin', playerCookieOptions(event, 0));
   deleteCookie(event, LOGIN_COOKIE, playerCookieOptions(event, 0));
   try {
     if (!validToken(state) || cookie !== state || params.getAll('state').length !== 1) throw new Error('Invalid login state');
@@ -18,7 +20,7 @@ export default defineEventHandler(async event => {
     if (params.get('openid.mode') === 'cancel') return sendRedirect(event, '/?account=cancelled', 302);
     const steam64 = await verifySteamAssertion(params, `${origin}/api/auth/steam/callback?state=${state}`);
     await issuePlayerSession(event, steam64);
-    return sendRedirect(event, '/?account=open', 302);
+    return sendRedirect(event, adminLogin ? '/admin?steam=1' : '/?account=open', 302);
   } catch {
     // Never echo signed assertions, session tokens, or upstream errors into the URL/log.
     return sendRedirect(event, '/?account=login-failed', 302);

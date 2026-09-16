@@ -8,6 +8,7 @@ import {
   setCookie
 } from 'h3';
 import { useRuntimeConfig } from '#imports';
+import { isOwnerSteamId } from './owner-access.js';
 import {
   ADMIN_SESSION_MAX_AGE,
   constantTimeEqual,
@@ -49,6 +50,10 @@ export function readAdminSession(event) {
   if (!token) return null;
 
   const session = verifyAdminSession(token, getAdminSessionSecret(event));
+  if (session?.steam64 && !isOwnerSteamId(session.steam64, useRuntimeConfig(event).adminSteamIds)) {
+    clearAdminSession(event);
+    return null;
+  }
   if (!session) clearAdminSession(event);
   return session;
 }

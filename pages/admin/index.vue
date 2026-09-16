@@ -19,7 +19,8 @@
       <form class="admin-login__form" @submit.prevent="handleLogin">
         <p class="admin-eyebrow">Authorized access only</p>
         <h2>Sign in</h2>
-        <p>Use the administrator credential configured for this deployment.</p>
+        <p>Use your owner Steam account for moderation and server operations.</p>
+        <a href="/api/auth/steam?admin=1" class="admin-button admin-button-primary">Sign in through Steam</a>
 
         <label class="admin-field">
           <span>Password</span>
@@ -41,6 +42,10 @@ definePageMeta({ layout: false })
 
 const { login, isLoading, error } = useAdmin()
 const password = ref('')
+const route = useRoute()
+onMounted(async () => {
+  if (route.query.steam === '1' && await login('', 'steam')) await navigateTo('/admin/moderation')
+})
 
 async function handleLogin() {
   if (await login(password.value)) await navigateTo('/admin/dashboard')
