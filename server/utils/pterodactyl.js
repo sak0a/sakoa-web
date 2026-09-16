@@ -10,7 +10,10 @@ export const fileRevision = text => createHash('sha256').update(text).digest('he
 export function pteroSettings(event) {
   const config = useRuntimeConfig(event);
   let map;
-  try { map = JSON.parse(config.tf2ServerMap || '{}'); } catch { throw createError({ statusCode: 503, statusMessage: 'TF2_SERVER_MAP must be a JSON object' }); }
+  try {
+    map = typeof config.tf2ServerMap === 'string' ? JSON.parse(config.tf2ServerMap || '{}') : config.tf2ServerMap || {};
+    if (typeof map !== 'object' || map === null || Array.isArray(map)) throw new Error();
+  } catch { throw createError({ statusCode: 503, statusMessage: 'TF2_SERVER_MAP must be a JSON object' }); }
   return { url: config.pterodactylUrl, key: config.pterodactylApiKey, map };
 }
 

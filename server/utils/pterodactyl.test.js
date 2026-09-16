@@ -11,6 +11,11 @@ beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn());
 });
 describe('Pterodactyl integration', () => {
+  it('accepts JSON already parsed by Nuxt runtime configuration', async () => {
+    mocks.runtime.tf2ServerMap = { '2': '29fcc8a6' };
+    fetch.mockResolvedValue(new Response('{}'));
+    await expect(pteroRequest({}, 2, '/resources')).resolves.toEqual({});
+  });
   it('does not let a request choose an unmapped server', async () => {
     await expect(pteroRequest({}, 4, '/resources')).rejects.toMatchObject({ statusCode: 503 });
     expect(fetch).not.toHaveBeenCalled();
